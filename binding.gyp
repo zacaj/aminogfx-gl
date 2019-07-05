@@ -42,7 +42,7 @@
 
             'conditions': [
                 # macOS
-                [ 'OS=="mac"', {
+                [ 'OS == "mac"', {
                     "include_dirs": [
                         " <!@(freetype-config --cflags)",
                         " <!@(pkg-config --cflags glfw3)"
@@ -84,7 +84,7 @@
                 }],
 
                 # Raspberry Pi
-                [ 'OS=="linux"', {
+                [ 'OS == "linux"', {
 					"conditions" : [
 	                    [ "target_arch=='arm'", {
 		                    "sources": [
@@ -111,21 +111,21 @@
                             'conditions': [
                                 # Buster (10)
                                 # TODO
-                                [ '<!@(printf "%s" "$VERSION_ID")==10', {
+                                [ '<!@(printf "%s" "$VERSION_ID") == 10', {
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
                                     ]
                                 }],
                                 # Stretch (9)
-                                [ '<!@(printf "%s" "$VERSION_ID")==9', {
+                                [ '<!@(printf "%s" "$VERSION_ID") == 9', {
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
                                     ]
                                 }],
                                 # Jessie (8)
-                                [ '<!@(printf "%s" "$VERSION_ID")==8', {
+                                [ '<!@(printf "%s" "$VERSION_ID") == 8', {
                                     'libraries': [
                                         "-lGLESv2",
 		                                "-lEGL",
@@ -156,26 +156,6 @@
                                 "-funwind-tables",
                                 "-rdynamic"
                             ]
-		                }],
-
-		                [ "target_arch!='arm'", {
-		                    "sources": [
-		                        "src/mac.cpp"
-		                    ],
-		                    "libraries":[
-		                        '<!@(freetype-config --libs)',
-		                        "-lglfw",
-                                "-ljpeg",
-                                "-lpng"
-		                    ],
-		                    "defines": [
-		                        "GL_GLEXT_PROTOTYPES",
-		                        "LINUX"
-		                    ],
-		                    "include_dirs": [
-		                        "/usr/include/freetype2",
-		                        "<!@(freetype-config --cflags)"
-		                    ]
 		                }]
 		            ]
                 }]
