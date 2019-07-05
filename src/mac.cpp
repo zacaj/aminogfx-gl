@@ -11,10 +11,6 @@
 /**
  * Mac AminoGfx implementation.
  *
- * Notes:
- *
- *  - swapInterval is not supported
- *  - getting high CPU usage while display is off because > 1000 FPS are rendered!
  */
 class AminoGfxMac : public AminoGfx {
 public:
@@ -255,13 +251,15 @@ private:
         glfwMakeContextCurrent(window);
 
         //swap interval
-        if (swapInterval != 0) {
-            //debug
-            //printf("swap interval: %i\n", (int)swapInterval);
-
-            //Note: no change seen on macOS!
-            glfwSwapInterval(swapInterval);
+        if (swapInterval == 0) {
+            //limit to screen (others as fast as possible)
+            swapInterval = 1;
         }
+
+        //debug
+        //printf("swap interval: %i\n", (int)swapInterval);
+
+        glfwSwapInterval(swapInterval);
 
         //set bindings
         glfwSetKeyCallback(window, handleKeyEvents);
