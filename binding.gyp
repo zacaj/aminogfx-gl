@@ -2,7 +2,7 @@
     "targets": [
         {
             "target_name": "aminonative",
-            "sources":[
+            "sources": [
                 "src/base.cpp",
                 "src/base_js.cpp",
                 "src/base_weak.cpp",
@@ -42,7 +42,7 @@
 
             'conditions': [
                 # macOS
-                ['OS=="mac"', {
+                [ 'OS=="mac"', {
                     "include_dirs": [
                         " <!@(freetype-config --cflags)",
                         " <!@(pkg-config --cflags glfw3)"
@@ -84,9 +84,9 @@
                 }],
 
                 # Raspberry Pi
-                ['OS=="linux"', {
+                [ 'OS=="linux"', {
 					"conditions" : [
-	                    ["target_arch=='arm'", {
+	                    [ "target_arch=='arm'", {
 		                    "sources": [
                                 "src/ilclient/ilclient.c",
                                 "src/ilclient/ilcore.c",
@@ -96,12 +96,6 @@
 		                    "libraries": [
 		                        "-L/opt/vc/lib/",
                                 "-lbcm_host",
-                                # Jessie
-                                "-lGLESv2",
-		                        "-lEGL",
-                                # Stretch
-		                        #"-lbrcmGLESv2",
-		                        #"-lbrcmEGL",
                                 "-lopenmaxil",
                                 "-lvcos",
                                 "-lvchiq_arm",
@@ -113,6 +107,31 @@
                                 '-lavutil',
                                 '-lswscale'
 		                    ],
+                            # OS specific libraries
+                            'conditions': [
+                                # Buster (10)
+                                # TODO
+                                [ '<!@(printf "%s" "$VERSION_ID")==10', {
+                                    'libraries': [
+                                        "-lbrcmGLESv2",
+		                                "-lbrcmEGL"
+                                    ]
+                                }],
+                                # Stretch (9)
+                                [ '<!@(printf "%s" "$VERSION_ID")==9', {
+                                    'libraries': [
+                                        "-lbrcmGLESv2",
+		                                "-lbrcmEGL"
+                                    ]
+                                }],
+                                # Jessie (8)
+                                [ '<!@(printf "%s" "$VERSION_ID")==8', {
+                                    'libraries': [
+                                        "-lGLESv2",
+		                                "-lEGL",
+                                    ]
+                                }]
+                            ],
 		                    "defines": [
 		                        "RPI"
 		                    ],
@@ -139,7 +158,7 @@
                             ]
 		                }],
 
-		                ["target_arch!='arm'", {
+		                [ "target_arch!='arm'", {
 		                    "sources": [
 		                        "src/mac.cpp"
 		                    ],
