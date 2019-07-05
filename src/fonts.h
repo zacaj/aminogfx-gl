@@ -55,7 +55,7 @@ public:
     AminoFont();
     ~AminoFont();
 
-    texture_font_t *getFontWithSize(int size);
+    texture_font_t *getFontWithSize(uint32_t size);
     std::string getFontInfo();
 
     //creation
@@ -77,7 +77,7 @@ protected:
     AminoFonts *fonts = NULL;
     texture_atlas_t *atlas = NULL;
     Nan::Persistent<v8::Object> fontData;
-    std::map<int, texture_font_t *> fontSizes;
+    std::map<uint32_t, texture_font_t *> fontSizes;
 
     void destroy() override;
     void destroyAminoFont();

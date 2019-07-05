@@ -150,7 +150,7 @@ void AminoGfx::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
 
     //check params
     if (info.Length() >= 1 && info[0]->IsObject()) {
-        v8::Local<v8::Object> obj = info[0]->ToObject();
+        v8::Local<v8::Object> obj = Nan::To<v8::Object>(info[0]).ToLocalChecked();
 
         //store
         createParams.Reset(obj);
@@ -270,7 +270,7 @@ void AminoGfx::initRenderer() {
             v8::Local<v8::Value> swapIntervalValue = swapIntervalMaybe.ToLocalChecked();
 
             if (swapIntervalValue->IsInt32()) {
-                swapInterval = swapIntervalValue->Int32Value();
+                swapInterval = Nan::To<v8::Integer>(swapIntervalValue).ToLocalChecked()->Value();
             }
         }
     }
@@ -299,7 +299,7 @@ void AminoGfx::setupRenderer() {
             v8::Local<v8::Value> perspectiveValue = perspectiveMaybe.ToLocalChecked();
 
             if (perspectiveValue->IsObject()) {
-                v8::Local<v8::Object> perspective = perspectiveValue->ToObject();
+                v8::Local<v8::Object> perspective = Nan::To<v8::Object>(perspectiveValue).ToLocalChecked();
 
                 renderer->setupPerspective(perspective);
             }
@@ -882,7 +882,7 @@ NAN_METHOD(AminoGfx::SetRoot) {
     if (info.Length() == 0 || info[0]->IsNull() || info[0]->IsUndefined()) {
         group = NULL;
     } else {
-        group = Nan::ObjectWrap::Unwrap<AminoGroup>(info[0]->ToObject());
+        group = Nan::ObjectWrap::Unwrap<AminoGroup>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
         assert(group);
     }
@@ -925,7 +925,7 @@ NAN_METHOD(AminoGfx::UpdatePerspective) {
     assert(gfx);
 
     //data
-    v8::Local<v8::Object> perspective = info[0]->ToObject();
+    v8::Local<v8::Object> perspective = Nan::To<v8::Object>(info[0]).ToLocalChecked();
 
     gfx->renderer->setupPerspective(perspective);
 

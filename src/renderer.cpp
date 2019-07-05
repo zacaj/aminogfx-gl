@@ -125,7 +125,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> nearValue = nearMaybe.ToLocalChecked();
 
         if (nearValue->IsNumber()) {
-            near = nearValue->NumberValue();
+            near = Nan::To<v8::Number>(nearValue).ToLocalChecked()->Value();
         }
     }
 
@@ -136,7 +136,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> farValue = farMaybe.ToLocalChecked();
 
         if (farValue->IsNumber()) {
-            far = farValue->NumberValue();
+            far = Nan::To<v8::Number>(farValue).ToLocalChecked()->Value();
         } else {
             //set default value
             if (orthographic) {
@@ -155,7 +155,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> eyeValue = eyeMaybe.ToLocalChecked();
 
         if (eyeValue->IsNumber()) {
-            eye = eyeValue->NumberValue();
+            eye = Nan::To<v8::Number>(eyeValue).ToLocalChecked()->Value();
         }
     }
 
@@ -171,8 +171,8 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
 
             assert(count == 2);
 
-            vanishingPoint[0] = (GLfloat)(arr->Get(0)->NumberValue());
-            vanishingPoint[1] = (GLfloat)(arr->Get(1)->NumberValue());
+            vanishingPoint[0] = (GLfloat)Nan::To<v8::Number>(arr->Get(0)).ToLocalChecked()->Value();
+            vanishingPoint[1] = (GLfloat)Nan::To<v8::Number>(arr->Get(1)).ToLocalChecked()->Value();
         }
     }
 
@@ -189,7 +189,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
             assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
-                corrSrc[i] = (GLfloat)(arr->Get(i)->NumberValue());
+                corrSrc[i] = (GLfloat)Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value();
             }
 
             corrUsed = true;
@@ -208,7 +208,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
             assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
-                corrDst[i] = (GLfloat)(arr->Get(i)->NumberValue());
+                corrDst[i] = (GLfloat)Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value();
             }
 
             corrUsed = true;

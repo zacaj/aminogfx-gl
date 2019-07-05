@@ -263,7 +263,7 @@ public:
         assert(info.Length() >= 1);
 
         //set amino instance
-        v8::Local<v8::Object> jsObj = info[0]->ToObject();
+        v8::Local<v8::Object> jsObj = Nan::To<v8::Object>(info[0]).ToLocalChecked();
         AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(jsObj);
 
         assert(obj);
@@ -679,17 +679,17 @@ private:
     bool ended = false;
 
     //properties
-    float start;
-    float end;
-    int count;
-    float duration;
+    double start;
+    double end;
+    int32_t count;
+    double duration;
     bool autoreverse;
-    int direction = FORWARD;
-    int timeFunc = TF_CUBIC_IN_OUT;
+    int32_t direction = FORWARD;
+    int32_t timeFunc = TF_CUBIC_IN_OUT;
     Nan::Callback *then = NULL;
 
     //start pos
-    float zeroPos;
+    double zeroPos;
     bool hasZeroPos = false;
 
     //sync time
@@ -700,16 +700,16 @@ private:
     double lastTime  = 0;
     double pauseTime = 0;
 
-    static const int FORWARD  = 1;
-    static const int BACKWARD = 2;
+    static const int32_t FORWARD  = 1;
+    static const int32_t BACKWARD = 2;
 
-    static const int FOREVER = -1;
+    static const int32_t FOREVER = -1;
 
 public:
-    static const int TF_LINEAR       = 0x0;
-    static const int TF_CUBIC_IN     = 0x1;
-    static const int TF_CUBIC_OUT    = 0x2;
-    static const int TF_CUBIC_IN_OUT = 0x3;
+    static const int32_t TF_LINEAR       = 0x0;
+    static const int32_t TF_CUBIC_IN     = 0x1;
+    static const int32_t TF_CUBIC_OUT    = 0x2;
+    static const int32_t TF_CUBIC_IN_OUT = 0x3;
 
     AminoAnim(): AminoJSObject(getFactory()->name) {
         //empty
@@ -728,9 +728,9 @@ public:
         assert(info.Length() == 3);
 
         //params
-        AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(info[0]->ToObject());
-        AminoNode *node = Nan::ObjectWrap::Unwrap<AminoNode>(info[1]->ToObject());
-        unsigned int propId = info[2]->Uint32Value();
+        AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
+        AminoNode *node = Nan::ObjectWrap::Unwrap<AminoNode>(Nan::To<v8::Object>(info[1]).ToLocalChecked());
+        uint32_t propId = Nan::To<v8::Uint32>(info[2]).ToLocalChecked()->Value();
 
         assert(obj);
         assert(node);
@@ -831,7 +831,7 @@ public:
         assert(info.Length() == 1);
 
         AminoAnim *obj = Nan::ObjectWrap::Unwrap<AminoAnim>(info.This());
-        v8::Local<v8::Object> data = info[0]->ToObject();
+        v8::Local<v8::Object> data = Nan::To<v8::Object>(info[0]).ToLocalChecked();
 
         assert(obj);
 
@@ -848,11 +848,11 @@ public:
         }
 
         //parameters
-        start       = Nan::Get(data, Nan::New<v8::String>("from").ToLocalChecked()).ToLocalChecked()->NumberValue();
-        end         = Nan::Get(data, Nan::New<v8::String>("to").ToLocalChecked()).ToLocalChecked()->NumberValue();
-        duration    = Nan::Get(data, Nan::New<v8::String>("duration").ToLocalChecked()).ToLocalChecked()->NumberValue();
-        count       = Nan::Get(data, Nan::New<v8::String>("count").ToLocalChecked()).ToLocalChecked()->IntegerValue();
-        autoreverse = Nan::Get(data, Nan::New<v8::String>("autoreverse").ToLocalChecked()).ToLocalChecked()->BooleanValue();
+        start       = Nan::To<v8::Number>(Nan::Get(data, Nan::New<v8::String>("from").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+        end         = Nan::To<v8::Number>(Nan::Get(data, Nan::New<v8::String>("to").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+        duration    = Nan::To<v8::Number>(Nan::Get(data, Nan::New<v8::String>("duration").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+        count       = Nan::To<v8::Integer>(Nan::Get(data, Nan::New<v8::String>("count").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+        autoreverse = Nan::To<v8::Boolean>(Nan::Get(data, Nan::New<v8::String>("autoreverse").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
 
         //time func
         Nan::Utf8String str(Nan::Get(data, Nan::New<v8::String>("timeFunc").ToLocalChecked()).ToLocalChecked());
@@ -891,7 +891,7 @@ public:
 
             if (posLocal->IsNumber()) {
                 hasZeroPos = true;
-                zeroPos = posLocal->NumberValue();
+                zeroPos = Nan::To<v8::Number>(posLocal).ToLocalChecked()->Value();
             }
         }
 
@@ -903,7 +903,7 @@ public:
 
             if (refTimeLocal->IsNumber()) {
                 hasRefTime = true;
-                refTime = refTimeLocal->NumberValue();
+                refTime = Nan::To<v8::Number>(refTimeLocal).ToLocalChecked()->Value();
             }
         }
 
@@ -914,21 +914,21 @@ public:
     /**
      * Cubic-in time function.
      */
-    static float cubicIn(float t) {
+    static double cubicIn(double t) {
         return pow(t, 3);
     }
 
     /**
      * Cubic-out time function.
      */
-    static float cubicOut(float t) {
+    static double cubicOut(double t) {
         return 1 - cubicIn(1 - t);
     }
 
     /**
      * Cubic-in-out time function.
      */
-    static float cubicInOut(float t) {
+    static double cubicInOut(double t) {
         if (t < 0.5) {
             return cubicIn(t * 2.0) / 2.0;
         }
@@ -939,8 +939,8 @@ public:
     /**
      * Call time function.
      */
-    float timeToPosition(float t) {
-        float t2 = 0;
+    float timeToPosition(double t) {
+        double t2 = 0;
 
         switch (timeFunc) {
             case TF_CUBIC_IN:
@@ -984,11 +984,12 @@ public:
      *
      * @param value current property value.
      */
-    void applyValue(float value) {
+    void applyValue(double value) {
         if (!prop) {
             return;
         }
 
+        //Note: only float properties supported
         FloatProperty *floatProp = static_cast<FloatProperty *>(prop);
 
         floatProp->setValue(value);
@@ -1143,7 +1144,7 @@ public:
 
             //adjust animation position
             if (hasZeroPos && zeroPos > start && zeroPos <= end) {
-                float pos = (zeroPos - start) / (end - start);
+                double pos = (zeroPos - start) / (end - start);
 
                 //shift start time
                 startTime -= pos * duration;
@@ -1159,7 +1160,7 @@ public:
 
         //process
         double timePassed = currentTime - startTime;
-        float t = timePassed / duration;
+        double t = timePassed / duration;
 
         lastTime = currentTime;
 
@@ -1215,7 +1216,7 @@ public:
         }
 
         //apply time function
-        float value = timeToPosition(t);
+        double value = timeToPosition(t);
 
         applyValue(value);
     }
@@ -1808,7 +1809,7 @@ private:
         assert(info.Length() == 1);
 
         AminoGroup *group = Nan::ObjectWrap::Unwrap<AminoGroup>(info.This());
-        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(info[0]->ToObject());
+        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
         assert(group);
         assert(child);
@@ -1856,8 +1857,8 @@ private:
 
         AminoGroup *group = Nan::ObjectWrap::Unwrap<AminoGroup>(info.This());
         v8::Local<v8::Value> childValue = info[0];
-        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(childValue->ToObject());
-        int pos = info[1]->Int32Value();
+        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(Nan::To<v8::Object>(childValue).ToLocalChecked());
+        int32_t pos = Nan::To<v8::Integer>(info[1]).ToLocalChecked()->Value();
 
         assert(group);
         assert(child);
@@ -1911,7 +1912,7 @@ private:
         assert(info.Length() == 1);
 
         AminoGroup *group = Nan::ObjectWrap::Unwrap<AminoGroup>(info.This());
-        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(info[0]->ToObject());
+        AminoNode *child = Nan::ObjectWrap::Unwrap<AminoNode>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
         assert(group);
         assert(child);

@@ -60,7 +60,7 @@ AminoJSObject::~AminoJSObject() {
     }
 
     //free properties
-    for (std::map<int, AnyProperty *>::iterator iter = propertyMap.begin(); iter != propertyMap.end(); iter++) {
+    for (std::map<uint32_t, AnyProperty *>::iterator iter = propertyMap.begin(); iter != propertyMap.end(); iter++) {
         delete iter->second;
     }
 
@@ -250,7 +250,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
  *
  * Note: has to be called in JS scope of setup()!
  */
-bool AminoJSObject::addPropertyWatcher(std::string name, int id, v8::Local<v8::Value> &jsValue) {
+bool AminoJSObject::addPropertyWatcher(std::string name, uint32_t id, v8::Local<v8::Value> &jsValue) {
     if (DEBUG_BASE) {
         printf("addPropertyWatcher(): %s\n", name.c_str());
     }
@@ -318,7 +318,7 @@ Nan::Persistent<v8::Function>* AminoJSObject::propertyUpdatedFunc = NULL;
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::FloatProperty* AminoJSObject::createFloatProperty(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     FloatProperty *prop = new FloatProperty(this, name, id);
 
     addProperty(prop);
@@ -332,8 +332,22 @@ AminoJSObject::FloatProperty* AminoJSObject::createFloatProperty(std::string nam
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::FloatArrayProperty* AminoJSObject::createFloatArrayProperty(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     FloatArrayProperty *prop = new FloatArrayProperty(this, name, id);
+
+    addProperty(prop);
+
+    return prop;
+}
+
+/**
+ * Create float property (bound to JS property).
+ *
+ * Note: has to be called in JS scope of setup()!
+ */
+AminoJSObject::DoubleProperty* AminoJSObject::createDoubleProperty(std::string name) {
+    uint32_t id = ++lastPropertyId;
+    DoubleProperty *prop = new DoubleProperty(this, name, id);
 
     addProperty(prop);
 
@@ -346,7 +360,7 @@ AminoJSObject::FloatArrayProperty* AminoJSObject::createFloatArrayProperty(std::
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::UShortArrayProperty* AminoJSObject::createUShortArrayProperty(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     UShortArrayProperty *prop = new UShortArrayProperty(this, name, id);
 
     addProperty(prop);
@@ -360,7 +374,7 @@ AminoJSObject::UShortArrayProperty* AminoJSObject::createUShortArrayProperty(std
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::Int32Property* AminoJSObject::createInt32Property(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     Int32Property *prop = new Int32Property(this, name, id);
 
     addProperty(prop);
@@ -374,7 +388,7 @@ AminoJSObject::Int32Property* AminoJSObject::createInt32Property(std::string nam
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::UInt32Property* AminoJSObject::createUInt32Property(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     UInt32Property *prop = new UInt32Property(this, name, id);
 
     addProperty(prop);
@@ -388,7 +402,7 @@ AminoJSObject::UInt32Property* AminoJSObject::createUInt32Property(std::string n
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::BooleanProperty* AminoJSObject::createBooleanProperty(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     BooleanProperty *prop = new BooleanProperty(this, name, id);
 
     addProperty(prop);
@@ -402,7 +416,7 @@ AminoJSObject::BooleanProperty* AminoJSObject::createBooleanProperty(std::string
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::Utf8Property* AminoJSObject::createUtf8Property(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     Utf8Property *prop = new Utf8Property(this, name, id);
 
     addProperty(prop);
@@ -416,7 +430,7 @@ AminoJSObject::Utf8Property* AminoJSObject::createUtf8Property(std::string name)
  * Note: has to be called in JS scope of setup()!
  */
 AminoJSObject::ObjectProperty* AminoJSObject::createObjectProperty(std::string name) {
-    int id = ++lastPropertyId;
+    uint32_t id = ++lastPropertyId;
     ObjectProperty *prop = new ObjectProperty(this, name, id);
 
     addProperty(prop);
@@ -463,7 +477,7 @@ NAN_METHOD(AminoJSObject::PropertyUpdated) {
     assert(info.Length() == 3);
 
     //params: value, propId, object
-    int id = info[1]->IntegerValue();
+    uint32_t id = Nan::To<v8::Uint32>(info[1]).ToLocalChecked()->Value();
 
     //pass to object instance
     v8::Local<v8::Value> value = info[0];
@@ -630,7 +644,7 @@ AminoJSEventObject* AminoJSObject::getEventHandler() {
  *
  * Note: called on main thread.
  */
-bool AminoJSObject::enqueuePropertyUpdate(int id, v8::Local<v8::Value> &value) {
+bool AminoJSObject::enqueuePropertyUpdate(uint32_t id, v8::Local<v8::Value> &value) {
     //check queue exists
     AminoJSEventObject *eventHandler = getEventHandler();
 
@@ -692,8 +706,8 @@ bool AminoJSObject::enqueueJSCallbackUpdate(jsUpdateCallback callbackApply, jsUp
 /**
  * Get property with id.
  */
-AminoJSObject::AnyProperty* AminoJSObject::getPropertyWithId(int id) {
-    std::map<int, AnyProperty *>::iterator iter = propertyMap.find(id);
+AminoJSObject::AnyProperty* AminoJSObject::getPropertyWithId(uint32_t id) {
+    std::map<uint32_t, AnyProperty *>::iterator iter = propertyMap.find(id);
 
     if (iter == propertyMap.end()) {
         //property not found
@@ -707,7 +721,7 @@ AminoJSObject::AnyProperty* AminoJSObject::getPropertyWithId(int id) {
  * Get property with name.
  */
 AminoJSObject::AnyProperty* AminoJSObject::getPropertyWithName(std::string name) {
-    for (std::map<int, AnyProperty *>::iterator iter = propertyMap.begin(); iter != propertyMap.end(); iter++) {
+    for (std::map<uint32_t, AnyProperty *>::iterator iter = propertyMap.begin(); iter != propertyMap.end(); iter++) {
         if (iter->second->name == name) {
             return iter->second;
         }
@@ -815,8 +829,8 @@ std::string* AminoJSObject::toNewString(v8::Local<v8::Value> &value) {
 }
 
 //static initializers
-int AminoJSObject::activeInstances = 0;
-int AminoJSObject::totalInstances = 0;
+uint32_t AminoJSObject::activeInstances = 0;
+uint32_t AminoJSObject::totalInstances = 0;
 std::vector<AminoJSObject *> AminoJSObject::jsInstances;
 
 //
@@ -826,7 +840,7 @@ std::vector<AminoJSObject *> AminoJSObject::jsInstances;
 /**
  * AnyProperty constructor.
  */
-AminoJSObject::AnyProperty::AnyProperty(int type, AminoJSObject *obj, std::string name, int id): type(type), obj(obj), name(name), id(id) {
+AminoJSObject::AnyProperty::AnyProperty(int type, AminoJSObject *obj, std::string name, uint32_t id): type(type), obj(obj), name(name), id(id) {
     //empty
 
     assert(obj);
@@ -861,7 +875,7 @@ void AminoJSObject::AnyProperty::release() {
 /**
  * FloatProperty constructor.
  */
-AminoJSObject::FloatProperty::FloatProperty(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_FLOAT, obj, name, id) {
+AminoJSObject::FloatProperty::FloatProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_FLOAT, obj, name, id) {
     //empty
 }
 
@@ -907,7 +921,7 @@ v8::Local<v8::Value> AminoJSObject::FloatProperty::toValue() {
 void* AminoJSObject::FloatProperty::getAsyncData(v8::Local<v8::Value> &value, bool &valid) {
     if (value->IsNumber()) {
         //double to float
-        float f = value->NumberValue();
+        float f = Nan::To<v8::Number>(value).ToLocalChecked()->Value();
         float *res = new float;
 
         *res = f;
@@ -950,7 +964,7 @@ void AminoJSObject::FloatProperty::freeAsyncData(void *data) {
 /**
  * FloatArrayProperty constructor.
  */
-AminoJSObject::FloatArrayProperty::FloatArrayProperty(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_FLOAT_ARRAY, obj, name, id) {
+AminoJSObject::FloatArrayProperty::FloatArrayProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_FLOAT_ARRAY, obj, name, id) {
     //empty
 }
 
@@ -1053,7 +1067,7 @@ void* AminoJSObject::FloatArrayProperty::getAsyncData(v8::Local<v8::Value> &valu
         vector = new std::vector<float>();
 
         for (std::size_t i = 0; i < count; i++) {
-            vector->push_back((float)(arr->Get(i)->NumberValue()));
+            vector->push_back((float)(Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value()));
         }
 
         valid = true;
@@ -1086,13 +1100,101 @@ void AminoJSObject::FloatArrayProperty::freeAsyncData(void *data) {
 }
 
 //
+// AminoJSObject::DoubleProperty
+//
+
+/**
+ * DoubleProperty constructor.
+ */
+AminoJSObject::DoubleProperty::DoubleProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_DOUBLE, obj, name, id) {
+    //empty
+}
+
+/**
+ * DoubleProperty destructor.
+ */
+AminoJSObject::DoubleProperty::~DoubleProperty() {
+    //empty
+}
+
+/**
+ * Update the double value.
+ *
+ * Note: only updates the JS value if modified!
+ */
+void AminoJSObject::DoubleProperty::setValue(double newValue) {
+    if (value != newValue) {
+        value = newValue;
+
+        if (connected) {
+            obj->updateProperty(this);
+        }
+    }
+}
+
+/**
+ * Convert to string value.
+ */
+std::string AminoJSObject::DoubleProperty::toString() {
+    return std::to_string(value);
+}
+
+/**
+ * Get JS value.
+ */
+v8::Local<v8::Value> AminoJSObject::DoubleProperty::toValue() {
+    return Nan::New<v8::Number>(value);
+}
+
+/**
+ * Get async data representation.
+ */
+void* AminoJSObject::DoubleProperty::getAsyncData(v8::Local<v8::Value> &value, bool &valid) {
+    if (value->IsNumber()) {
+        double d = Nan::To<v8::Number>(value).ToLocalChecked()->Value();
+        double *res = new double;
+
+        *res = d;
+        valid = true;
+
+        return res;
+    } else {
+        if (DEBUG_BASE) {
+            printf("-> default value not a number!\n");
+        }
+
+        valid = false;
+
+        return NULL;
+    }
+}
+
+/**
+ * Apply async data.
+ */
+void AminoJSObject::DoubleProperty::setAsyncData(AsyncPropertyUpdate *update, void *data) {
+    if (data) {
+        value = *((double *)data);
+    }
+}
+
+/**
+ * Free async data.
+ */
+void AminoJSObject::DoubleProperty::freeAsyncData(void *data) {
+    if (data) {
+        delete (double *)data;
+    }
+}
+
+//
 // AminoJSObject::UShortArrayProperty
 //
 
 /**
  * UShortArrayProperty constructor.
  */
-AminoJSObject::UShortArrayProperty::UShortArrayProperty(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_USHORT_ARRAY, obj, name, id) {
+AminoJSObject::UShortArrayProperty::UShortArrayProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_USHORT_ARRAY, obj, name, id) {
     //empty
 }
 
@@ -1195,7 +1297,7 @@ void* AminoJSObject::UShortArrayProperty::getAsyncData(v8::Local<v8::Value> &val
         vector = new std::vector<ushort>();
 
         for (std::size_t i = 0; i < count; i++) {
-            vector->push_back((ushort)(arr->Get(i)->Uint32Value()));
+            vector->push_back((ushort)(Nan::To<v8::Uint32>(arr->Get(i)).ToLocalChecked()->Value()));
         }
 
         valid = true;
@@ -1234,7 +1336,7 @@ void AminoJSObject::UShortArrayProperty::freeAsyncData(void *data) {
 /**
  * Int32Property constructor.
  */
-AminoJSObject::Int32Property::Int32Property(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_INT32, obj, name, id) {
+AminoJSObject::Int32Property::Int32Property(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_INT32, obj, name, id) {
     //empty
 }
 
@@ -1280,8 +1382,8 @@ v8::Local<v8::Value> AminoJSObject::Int32Property::toValue() {
 void* AminoJSObject::Int32Property::getAsyncData(v8::Local<v8::Value> &value, bool &valid) {
     if (value->IsNumber()) {
         //UInt32
-        int i = value->Int32Value();
-        int *res = new int;
+        int32_t i = Nan::To<v8::Int32>(value).ToLocalChecked()->Value();
+        int32_t *res = new int32_t;
 
         *res = i;
         valid = true;
@@ -1303,7 +1405,7 @@ void* AminoJSObject::Int32Property::getAsyncData(v8::Local<v8::Value> &value, bo
  */
 void AminoJSObject::Int32Property::setAsyncData(AsyncPropertyUpdate *update, void *data) {
     if (data) {
-        value = *((int *)data);
+        value = *((int32_t *)data);
     }
 }
 
@@ -1312,7 +1414,7 @@ void AminoJSObject::Int32Property::setAsyncData(AsyncPropertyUpdate *update, voi
  */
 void AminoJSObject::Int32Property::freeAsyncData(void *data) {
     if (data) {
-        delete (int *)data;
+        delete (int32_t *)data;
     }
 }
 
@@ -1323,7 +1425,7 @@ void AminoJSObject::Int32Property::freeAsyncData(void *data) {
 /**
  * UInt32Property constructor.
  */
-AminoJSObject::UInt32Property::UInt32Property(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_UINT32, obj, name, id) {
+AminoJSObject::UInt32Property::UInt32Property(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_UINT32, obj, name, id) {
     //empty
 }
 
@@ -1369,8 +1471,8 @@ v8::Local<v8::Value> AminoJSObject::UInt32Property::toValue() {
 void* AminoJSObject::UInt32Property::getAsyncData(v8::Local<v8::Value> &value, bool &valid) {
     if (value->IsNumber()) {
         //UInt32
-        unsigned int ui = value->Uint32Value();
-        unsigned int *res = new unsigned int;
+        uint32_t ui = Nan::To<v8::Uint32>(value).ToLocalChecked()->Value();
+        uint32_t *res = new uint32_t;
 
         *res = ui;
         valid = true;
@@ -1392,7 +1494,7 @@ void* AminoJSObject::UInt32Property::getAsyncData(v8::Local<v8::Value> &value, b
  */
 void AminoJSObject::UInt32Property::setAsyncData(AsyncPropertyUpdate *update, void *data) {
     if (data) {
-        value = *((unsigned int *)data);
+        value = *((uint32_t *)data);
     }
 }
 
@@ -1401,7 +1503,7 @@ void AminoJSObject::UInt32Property::setAsyncData(AsyncPropertyUpdate *update, vo
  */
 void AminoJSObject::UInt32Property::freeAsyncData(void *data) {
     if (data) {
-        delete (unsigned int *)data;
+        delete (uint32_t *)data;
     }
 }
 
@@ -1412,7 +1514,7 @@ void AminoJSObject::UInt32Property::freeAsyncData(void *data) {
 /**
  * BooleanProperty constructor.
  */
-AminoJSObject::BooleanProperty::BooleanProperty(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_BOOLEAN, obj, name, id) {
+AminoJSObject::BooleanProperty::BooleanProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_BOOLEAN, obj, name, id) {
     //empty
 }
 
@@ -1500,7 +1602,7 @@ void AminoJSObject::BooleanProperty::freeAsyncData(void *data) {
 /**
  * Utf8Property constructor.
  */
-AminoJSObject::Utf8Property::Utf8Property(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_UTF8, obj, name, id) {
+AminoJSObject::Utf8Property::Utf8Property(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_UTF8, obj, name, id) {
     //empty
 }
 
@@ -1588,7 +1690,7 @@ void AminoJSObject::Utf8Property::freeAsyncData(void *data) {
  *
  * Note: retains the reference automatically.
  */
-AminoJSObject::ObjectProperty::ObjectProperty(AminoJSObject *obj, std::string name, int id): AnyProperty(PROPERTY_OBJECT, obj, name, id) {
+AminoJSObject::ObjectProperty::ObjectProperty(AminoJSObject *obj, std::string name, uint32_t id): AnyProperty(PROPERTY_OBJECT, obj, name, id) {
     //empty
 }
 
@@ -1654,7 +1756,7 @@ void* AminoJSObject::ObjectProperty::getAsyncData(v8::Local<v8::Value> &value, b
     valid = true;
 
     if (value->IsObject()) {
-        v8::Local<v8::Object> jsObj = value->ToObject();
+        v8::Local<v8::Object> jsObj = Nan::To<v8::Object>(value).ToLocalChecked();
         AminoJSObject *obj = Nan::ObjectWrap::Unwrap<AminoJSObject>(jsObj);
 
         assert(obj);
@@ -1715,7 +1817,7 @@ void AminoJSObject::ObjectProperty::freeAsyncData(void *data) {
 // AminoJSObject::AnyAsyncUpdate
 //
 
-AminoJSObject::AnyAsyncUpdate::AnyAsyncUpdate(int type): type(type) {
+AminoJSObject::AnyAsyncUpdate::AnyAsyncUpdate(int32_t type): type(type) {
     //empty
 }
 

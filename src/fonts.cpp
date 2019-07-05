@@ -109,7 +109,7 @@ void AminoFont::destroy() {
  */
 void AminoFont::destroyAminoFont() {
     //font sizes
-    for (std::map<int, texture_font_t *>::iterator it = fontSizes.begin(); it != fontSizes.end(); it++) {
+    for (std::map<uint32_t, texture_font_t *>::iterator it = fontSizes.begin(); it != fontSizes.end(); it++) {
         texture_font_delete(it->second);
     }
 
@@ -163,15 +163,15 @@ NAN_METHOD(AminoFont::New) {
 void AminoFont::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
     assert(info.Length() == 2);
 
-    AminoFonts *fonts = Nan::ObjectWrap::Unwrap<AminoFonts>(info[0]->ToObject());
-    v8::Local<v8::Object> fontData = info[1]->ToObject();
+    AminoFonts *fonts = Nan::ObjectWrap::Unwrap<AminoFonts>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
+    v8::Local<v8::Object> fontData = Nan::To<v8::Object>(info[1]).ToLocalChecked();
 
     assert(fonts);
 
     this->fonts = fonts;
 
     //store font (in memory)
-    v8::Local<v8::Object> bufferObj =  Nan::Get(fontData, Nan::New<v8::String>("data").ToLocalChecked()).ToLocalChecked()->ToObject();
+    v8::Local<v8::Object> bufferObj = Nan::To<v8::Object>(Nan::Get(fontData, Nan::New<v8::String>("data").ToLocalChecked()).ToLocalChecked()).ToLocalChecked();
 
     this->fontData.Reset(bufferObj);
 
@@ -188,7 +188,7 @@ void AminoFont::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
     v8::Local<v8::Value> styleValue = Nan::Get(fontData, Nan::New<v8::String>("style").ToLocalChecked()).ToLocalChecked();
 
     fontName = AminoJSObject::toString(nameValue);
-    fontWeight = Nan::Get(fontData, Nan::New<v8::String>("weight").ToLocalChecked()).ToLocalChecked()->NumberValue();
+    fontWeight = Nan::To<v8::Integer>(Nan::Get(fontData, Nan::New<v8::String>("weight").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
     fontStyle = AminoJSObject::toString(styleValue);
 
     if (DEBUG_FONTS) {
@@ -201,9 +201,9 @@ void AminoFont::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
  *
  * Note: has to be called in v8 thread.
  */
-texture_font_t *AminoFont::getFontWithSize(int size) {
+texture_font_t *AminoFont::getFontWithSize(uint32_t size) {
     //check cache
-    std::map<int, texture_font_t *>::iterator it = fontSizes.find(size);
+    std::map<uint32_t, texture_font_t *>::iterator it = fontSizes.find(size);
     texture_font_t *fontSize;
 
     if (it == fontSizes.end()) {
@@ -311,8 +311,8 @@ NAN_METHOD(AminoFontSize::New) {
 void AminoFontSize::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
     assert(info.Length() == 2);
 
-    AminoFont *font = Nan::ObjectWrap::Unwrap<AminoFont>(info[0]->ToObject());
-    int size = (int)round(info[1]->NumberValue());
+    AminoFont *font = Nan::ObjectWrap::Unwrap<AminoFont>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
+    uint32_t size = Nan::To<v8::Uint32>(info[1]).ToLocalChecked()->Value();
 
     assert(font);
 

@@ -28,7 +28,7 @@ AminoVideo::~AminoVideo()  {
 /**
  * Get playback loop value.
  */
-bool AminoVideo::getPlaybackLoop(int &loop) {
+bool AminoVideo::getPlaybackLoop(int32_t &loop) {
     Nan::MaybeLocal<v8::Value> loopValue = Nan::Get(handle(), Nan::New<v8::String>("loop").ToLocalChecked());
 
     if (loopValue.IsEmpty()) {
@@ -46,7 +46,7 @@ bool AminoVideo::getPlaybackLoop(int &loop) {
 
         return true;
     } else if (loopLocal->IsInt32()) {
-        loop = loopLocal->Int32Value();
+        loop = Nan::To<v8::Int32>(loopLocal).ToLocalChecked()->Value();
 
         if (loop < 0) {
             loop = -1;
@@ -248,7 +248,7 @@ std::string AminoVideoPlayer::getLastError() {
 /**
  * Get video dimensions.
  */
-void AminoVideoPlayer::getVideoDimension(int &w, int &h) {
+void AminoVideoPlayer::getVideoDimension(int32_t &w, int32_t &h) {
     w = videoW;
     h = videoH;
 }

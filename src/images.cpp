@@ -76,18 +76,18 @@ private:
     //input buffer
     char *buffer;
     size_t bufferLen;
-    int maxWH;
+    int32_t maxWH;
 
     //image
     char *imgData = NULL;
-    int imgDataLen = 0;
-    int imgW;
-    int imgH;
+    int32_t imgDataLen = 0;
+    int32_t imgW;
+    int32_t imgH;
     bool imgAlpha;
-    int imgBPP;
+    int32_t imgBPP;
 
 public:
-    AsyncImageWorker(Nan::Callback *callback, v8::Local<v8::Object> &obj, v8::Local<v8::Value> &bufferObj, int maxWH) : AsyncWorker(callback) {
+    AsyncImageWorker(Nan::Callback *callback, v8::Local<v8::Object> &obj, v8::Local<v8::Value> &bufferObj, int32_t maxWH) : AsyncWorker(callback) {
         SaveToPersistent("object", obj);
 
         //process buffer
@@ -524,7 +524,7 @@ public:
         //Note: scope already created (but needed in HandleErrorCallback())
 
         //result
-        v8::Local<v8::Object> obj = GetFromPersistent("object")->ToObject();
+        v8::Local<v8::Object> obj = Nan::To<v8::Object>(GetFromPersistent("object")).ToLocalChecked();
         v8::Local<v8::Object> buff;
 
         //transfer ownership
@@ -742,7 +742,7 @@ NAN_METHOD(AminoImage::loadImage) {
 
     v8::Local<v8::Value> bufferObj = info[0];
     Nan::Callback *callback = new Nan::Callback(info[1].As<v8::Function>());
-    int maxWH = params >= 3 ? info[2]->Int32Value():0;
+    int32_t maxWH = params >= 3 ? Nan::To<v8::Int32>(info[2]).ToLocalChecked()->Value():0;
     v8::Local<v8::Object> obj = info.This();
 
     //async loading
@@ -926,7 +926,7 @@ void AminoTexture::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
     assert(info.Length() == 1);
 
     //set amino instance
-    v8::Local<v8::Object> jsObj = info[0]->ToObject();
+    v8::Local<v8::Object> jsObj = Nan::To<v8::Object>(info[0]).ToLocalChecked();
     AminoJSEventObject *obj = Nan::ObjectWrap::Unwrap<AminoJSEventObject>(jsObj);
 
     assert(obj);
@@ -976,7 +976,7 @@ NAN_METHOD(AminoTexture::LoadTextureFromImage) {
     }
 
     //image
-    AminoImage *img = Nan::ObjectWrap::Unwrap<AminoImage>(info[0]->ToObject());
+    AminoImage *img = Nan::ObjectWrap::Unwrap<AminoImage>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
     assert(img);
 
@@ -1103,7 +1103,7 @@ NAN_METHOD(AminoTexture::LoadTextureFromVideo) {
     }
 
     //video
-    AminoVideo *video = Nan::ObjectWrap::Unwrap<AminoVideo>(info[0]->ToObject());
+    AminoVideo *video = Nan::ObjectWrap::Unwrap<AminoVideo>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
     assert(video);
 
@@ -1418,9 +1418,9 @@ void AminoTexture::handleFireVideoEvent(JSCallbackUpdate *update) {
 typedef struct {
     char *bufferData;
     size_t bufferLen;
-    int w;
-    int h;
-    int bpp;
+    int32_t w;
+    int32_t h;
+    int32_t bpp;
     Nan::Callback *callback;
 } amino_texture_t;
 
@@ -1441,16 +1441,16 @@ NAN_METHOD(AminoTexture::LoadTextureFromBuffer) {
 
     //data
     v8::Local<v8::Value> data = info[0];
-    v8::Local<v8::Object> dataObj = data->ToObject();
-    v8::Local<v8::Object> bufferObj = Nan::Get(dataObj, Nan::New<v8::String>("buffer").ToLocalChecked()).ToLocalChecked()->ToObject();
+    v8::Local<v8::Object> dataObj = Nan::To<v8::Object>(data).ToLocalChecked();
+    v8::Local<v8::Object> bufferObj = Nan::To<v8::Object>(Nan::Get(dataObj, Nan::New<v8::String>("buffer").ToLocalChecked()).ToLocalChecked()).ToLocalChecked();
     amino_texture_t *textureData = new amino_texture_t();
 
     textureData->bufferData = node::Buffer::Data(bufferObj);
     textureData->bufferLen = node::Buffer::Length(bufferObj);
 
-    textureData->w = Nan::Get(dataObj, Nan::New<v8::String>("w").ToLocalChecked()).ToLocalChecked()->IntegerValue();
-    textureData->h = Nan::Get(dataObj, Nan::New<v8::String>("h").ToLocalChecked()).ToLocalChecked()->IntegerValue();
-    textureData->bpp = Nan::Get(dataObj, Nan::New<v8::String>("bpp").ToLocalChecked()).ToLocalChecked()->IntegerValue();
+    textureData->w = Nan::To<v8::Int32>(Nan::Get(dataObj, Nan::New<v8::String>("w").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+    textureData->h = Nan::To<v8::Int32>(Nan::Get(dataObj, Nan::New<v8::String>("h").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
+    textureData->bpp = Nan::To<v8::Int32>(Nan::Get(dataObj, Nan::New<v8::String>("bpp").ToLocalChecked()).ToLocalChecked()).ToLocalChecked()->Value();
 
     //callback
     v8::Local<v8::Function> callback = info[1].As<v8::Function>();
@@ -1572,7 +1572,7 @@ NAN_METHOD(AminoTexture::LoadTextureFromFont) {
     }
 
     //font
-    AminoFontSize *fontSize = Nan::ObjectWrap::Unwrap<AminoFontSize>(info[0]->ToObject());
+    AminoFontSize *fontSize = Nan::ObjectWrap::Unwrap<AminoFontSize>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
     if (DEBUG_BASE) {
         printf("enqueue: create texture from font\n");

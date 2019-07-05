@@ -50,8 +50,8 @@ protected:
     bool destroyed = false;
 
     //stats
-    static int activeInstances;
-    static int totalInstances;
+    static uint32_t activeInstances;
+    static uint32_t totalInstances;
     static std::vector<AminoJSObject *> jsInstances;
 
     AminoJSObject(std::string name);
@@ -68,26 +68,27 @@ protected:
     static std::string toString(v8::Local<v8::Value> &value);
     static std::string* toNewString(v8::Local<v8::Value> &value);
 
-    static const int PROPERTY_FLOAT        = 1;
-    static const int PROPERTY_FLOAT_ARRAY  = 2;
-    static const int PROPERTY_USHORT_ARRAY = 3;
-    static const int PROPERTY_INT32        = 4;
-    static const int PROPERTY_UINT32       = 5;
-    static const int PROPERTY_BOOLEAN      = 6;
-    static const int PROPERTY_UTF8         = 7;
-    static const int PROPERTY_OBJECT       = 8;
+    static const int32_t PROPERTY_FLOAT        = 1;
+    static const int32_t PROPERTY_FLOAT_ARRAY  = 2;
+    static const int32_t PROPERTY_DOUBLE       = 3;
+    static const int32_t PROPERTY_USHORT_ARRAY = 4;
+    static const int32_t PROPERTY_INT32        = 5;
+    static const int32_t PROPERTY_UINT32       = 6;
+    static const int32_t PROPERTY_BOOLEAN      = 7;
+    static const int32_t PROPERTY_UTF8         = 8;
+    static const int32_t PROPERTY_OBJECT       = 9;
 
     class AsyncPropertyUpdate;
 
     class AnyProperty {
     public:
-        int type;
+        int32_t type;
         AminoJSObject *obj;
         std::string name;
-        int id;
+        uint32_t id;
         bool connected = false;
 
-        AnyProperty(int type, AminoJSObject *obj, std::string name, int id);
+        AnyProperty(int32_t type, AminoJSObject *obj, std::string name, uint32_t id);
         virtual ~AnyProperty();
 
         virtual std::string toString() = 0;
@@ -109,7 +110,7 @@ protected:
     public:
         float value = 0;
 
-        FloatProperty(AminoJSObject *obj, std::string name, int id);
+        FloatProperty(AminoJSObject *obj, std::string name, uint32_t id);
         ~FloatProperty();
 
         void setValue(float newValue);
@@ -129,10 +130,30 @@ protected:
     public:
         std::vector<float> value;
 
-        FloatArrayProperty(AminoJSObject *obj, std::string name, int id);
+        FloatArrayProperty(AminoJSObject *obj, std::string name, uint32_t id);
         ~FloatArrayProperty();
 
         void setValue(std::vector<float> newValue);
+
+        std::string toString() override;
+
+        //sync handling
+        v8::Local<v8::Value> toValue() override;
+
+        //async handling
+        void* getAsyncData(v8::Local<v8::Value> &value, bool &valid) override;
+        void setAsyncData(AsyncPropertyUpdate *update, void *data) override;
+        void freeAsyncData(void *data) override;
+    };
+
+    class DoubleProperty : public AnyProperty {
+    public:
+        double value = 0;
+
+        DoubleProperty(AminoJSObject *obj, std::string name, uint32_t id);
+        ~DoubleProperty();
+
+        void setValue(double newValue);
 
         std::string toString() override;
 
@@ -149,7 +170,7 @@ protected:
     public:
         std::vector<ushort> value;
 
-        UShortArrayProperty(AminoJSObject *obj, std::string name, int id);
+        UShortArrayProperty(AminoJSObject *obj, std::string name, uint32_t id);
         ~UShortArrayProperty();
 
         void setValue(std::vector<ushort> newValue);
@@ -167,12 +188,12 @@ protected:
 
     class Int32Property : public AnyProperty {
     public:
-        int value = 0;
+        int32_t value = 0;
 
-        Int32Property(AminoJSObject *obj, std::string name, int id);
+        Int32Property(AminoJSObject *obj, std::string name, uint32_t id);
         ~Int32Property();
 
-        void setValue(int newValue);
+        void setValue(int32_t newValue);
 
         std::string toString() override;
 
@@ -187,12 +208,12 @@ protected:
 
     class UInt32Property : public AnyProperty {
     public:
-        unsigned int value = 0;
+        uint32_t value = 0;
 
-        UInt32Property(AminoJSObject *obj, std::string name, int id);
+        UInt32Property(AminoJSObject *obj, std::string name, uint32_t id);
         ~UInt32Property();
 
-        void setValue(unsigned int newValue);
+        void setValue(uint32_t newValue);
 
         std::string toString() override;
 
@@ -209,7 +230,7 @@ protected:
     public:
         bool value = false;
 
-        BooleanProperty(AminoJSObject *obj, std::string name, int id);
+        BooleanProperty(AminoJSObject *obj, std::string name, uint32_t id);
         ~BooleanProperty();
 
         void setValue(bool newValue);
@@ -229,7 +250,7 @@ protected:
     public:
         std::string value;
 
-        Utf8Property(AminoJSObject *obj, std::string name, int id);
+        Utf8Property(AminoJSObject *obj, std::string name, uint32_t id);
         ~Utf8Property();
 
         void setValue(std::string newValue);
@@ -250,7 +271,7 @@ protected:
     public:
         AminoJSObject *value = NULL;
 
-        ObjectProperty(AminoJSObject *obj, std::string name, int id);
+        ObjectProperty(AminoJSObject *obj, std::string name, uint32_t id);
         ~ObjectProperty();
 
         void destroy();
@@ -272,6 +293,7 @@ protected:
 
     FloatProperty* createFloatProperty(std::string name);
     FloatArrayProperty* createFloatArrayProperty(std::string name);
+    DoubleProperty* createDoubleProperty(std::string name);
     UShortArrayProperty* createUShortArrayProperty(std::string name);
     Int32Property* createInt32Property(std::string name);
     UInt32Property* createUInt32Property(std::string name);
@@ -286,9 +308,9 @@ protected:
 
     class AnyAsyncUpdate {
     public:
-        int type;
+        int32_t type;
 
-        AnyAsyncUpdate(int type);
+        AnyAsyncUpdate(int32_t type);
         virtual ~AnyAsyncUpdate();
 
         virtual void apply() = 0;
@@ -379,14 +401,14 @@ protected:
 
 private:
     //properties
-    int lastPropertyId = 0;
-    std::map<int, AnyProperty *> propertyMap;
+    uint32_t lastPropertyId = 0;
+    std::map<uint32_t, AnyProperty *> propertyMap;
 
-    bool addPropertyWatcher(std::string name, int id, v8::Local<v8::Value> &jsValue);
+    bool addPropertyWatcher(std::string name, uint32_t id, v8::Local<v8::Value> &jsValue);
     void addProperty(AnyProperty *prop);
 
     //async updates
-    bool enqueuePropertyUpdate(int id, v8::Local<v8::Value> &value);
+    bool enqueuePropertyUpdate(uint32_t id, v8::Local<v8::Value> &value);
     static NAN_METHOD(PropertyUpdated);
     static Nan::Persistent<v8::Function> *propertyUpdatedFunc;
 
@@ -400,7 +422,7 @@ public:
     void release();
     int getReferenceCount();
 
-    AnyProperty* getPropertyWithId(int id);
+    AnyProperty* getPropertyWithId(uint32_t id);
     AnyProperty* getPropertyWithName(std::string name);
 
     virtual AminoJSEventObject* getEventHandler();

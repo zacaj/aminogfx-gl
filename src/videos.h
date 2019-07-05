@@ -25,7 +25,7 @@ public:
     AminoVideo();
     ~AminoVideo();
 
-    bool getPlaybackLoop(int &loop);
+    bool getPlaybackLoop(int32_t &loop);
     std::string getPlaybackSource();
     std::string getPlaybackOptions();
 
@@ -73,7 +73,7 @@ public:
     std::string getLastError();
 
     //metadata
-    void getVideoDimension(int &w, int &h);
+    void getVideoDimension(int32_t &w, int32_t &h);
     virtual double getMediaTime() = 0;
     virtual double getDuration() = 0;
     virtual double getFramerate() = 0;
@@ -97,11 +97,11 @@ protected:
     std::string lastError;
 
     //settings
-    int loop = -1;
+    int32_t loop = -1;
 
     //video
-    int videoW = 0;
-    int videoH = 0;
+    int32_t videoW = 0;
+    int32_t videoH = 0;
 
     void handlePlaybackDone();
     void handlePlaybackError();

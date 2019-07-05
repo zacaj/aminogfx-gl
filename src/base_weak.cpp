@@ -214,7 +214,7 @@ void AminoJSWeakReference::preInit(Nan::NAN_METHOD_ARGS_TYPE info) {
         return;
     }
 
-    v8::Local<v8::Object> value = info[0]->ToObject();
+    v8::Local<v8::Object> value = Nan::To<v8::Object>(info[0]).ToLocalChecked();
 
     weak = new AminoWeakReference(value);
 
