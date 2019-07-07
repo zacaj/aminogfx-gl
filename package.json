@@ -17,8 +17,6 @@
   },
   "dependencies": {
     "async": "^3.1.0",
-    "feedparser": "^2.2.9",
-    "moment": "^2.24.0",
     "nan": "^2.14.0",
     "node-pre-gyp": "0.13.x",
     "onecolor": "^3.1.0",
@@ -41,5 +39,8 @@
   "bugs": {
     "url": "https://github.com/joshmarinacci/aminogfx-gl/issues"
   },
-  "homepage": "https://github.com/joshmarinacci/aminogfx-gl"
+  "homepage": "https://github.com/joshmarinacci/aminogfx-gl",
+  "devDependencies": {
+    "feedparser": "^2.2.9"
+  }
 }
