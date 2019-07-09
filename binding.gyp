@@ -154,7 +154,9 @@
                                 "-DUSE_VCHIQ_ARM",
                                 # get stack trace on ARM
                                 "-funwind-tables",
-                                "-rdynamic"
+                                "-rdynamic",
+                                # NAN warnings (remove later)
+                                "-Wno-cast-function-type"
                             ]
 		                }]
 		            ]
