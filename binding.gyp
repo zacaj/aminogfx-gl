@@ -156,7 +156,8 @@
                                 "-funwind-tables",
                                 "-rdynamic",
                                 # NAN warnings (remove later)
-                                "-Wno-cast-function-type"
+                                "-Wno-cast-function-type",
+                                "-Wno-class-memaccess"
                             ]
 		                }]
 		            ]
