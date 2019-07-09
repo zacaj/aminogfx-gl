@@ -155,8 +155,12 @@
                                 # get stack trace on ARM
                                 "-funwind-tables",
                                 "-rdynamic",
-                                # NAN warnings (remove later)
+                                # NAN warnings (remove later; see https://github.com/nodejs/nan/issues/807)
                                 "-Wno-cast-function-type",
+
+                            ],
+                            "cflags_cc": [
+                                # NAN weak reference warning (remove later)
                                 "-Wno-class-memaccess"
                             ]
 		                }]

@@ -81,3 +81,10 @@ node demos/circle.js
 ```
 
 Example of all supported features are in the demos subfolder.
+
+## Troubleshooting
+
+* failed to add service - already in use?
+  * switch to "Original non-GL desktop driver"
+* node: ../src/rpi.cpp:209: void AminoGfxRPi::initEGL(): Assertion `success >= 0' failed.
+  * select a screen resolution with raspi-config
