@@ -111,21 +111,21 @@
                             'conditions': [
                                 # Buster (10)
                                 # TODO
-                                [ '<!@(printf "%s" "$VERSION_ID") == 10', {
+                                [ '<!@(lsb_release -r -s) == 10', {
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
                                     ]
                                 }],
                                 # Stretch (9)
-                                [ '<!@(printf "%s" "$VERSION_ID") == 9', {
+                                [ '<!@(lsb_release -r -s) == 9', {
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
                                     ]
                                 }],
                                 # Jessie (8)
-                                [ '<!@(printf "%s" "$VERSION_ID") == 8', {
+                                [ '<!@(lsb_release -r -s) == 8', {
                                     'libraries': [
                                         "-lGLESv2",
 		                                "-lEGL",
