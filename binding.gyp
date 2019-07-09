@@ -44,7 +44,7 @@
                 # macOS
                 [ 'OS == "mac"', {
                     "include_dirs": [
-                        " <!@(freetype-config --cflags)",
+                        " <!@(pkg-config --cflags freetype2)",
                         " <!@(pkg-config --cflags glfw3)"
                     ],
                     "libraries": [
@@ -52,7 +52,7 @@
                         '-framework OpenGL',
                         '-framework OpenCL',
                         '-framework IOKit',
-                        '<!@(pkg-config --cflags freetype2)',
+                        '<!@(pkg-config --libs freetype2)',
                         '-ljpeg',
                         '-lpng',
                         '-lavcodec',
@@ -99,7 +99,7 @@
                                 "-lopenmaxil",
                                 "-lvcos",
                                 "-lvchiq_arm",
-		                        '<!@(pkg-config --cflags freetype2)',
+		                        '<!@(pkg-config --libs freetype2)',
                                 "-ljpeg",
                                 "-lpng",
                                 '-lavcodec',
@@ -142,7 +142,7 @@
 		                        "/opt/vc/include/interface/vcos/pthreads",
 		                        "/opt/vc/include/interface/vmcs_host/linux",
                                 "/opt/vc/include/interface/vchiq/",
-		                        '<!@(freetype-config --cflags)'
+		                        '<!@(pkg-config --cflags freetype2)'
 		                    ],
                             "cflags": [
                                 "-DHAVE_LIBOPENMAX=2",
