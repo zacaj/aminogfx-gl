@@ -10,10 +10,11 @@
 
 #define gettid() syscall(SYS_gettid)
 
-#define DEBUG_GLES false
-#define DEBUG_RENDER false
+//cbxx FIXME debugging
+#define DEBUG_GLES true
+#define DEBUG_RENDER true
 #define DEBUG_INPUT false
-#define DEBUG_HDMI false
+#define DEBUG_HDMI true
 
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
@@ -206,7 +207,7 @@ void AminoGfxRPi::initEGL() {
     //get display size (see http://elinux.org/Raspberry_Pi_VideoCore_APIs#graphics_get_display_size)
     int32_t success = graphics_get_display_size(0 /* LCD */, &screenW, &screenH);
 
-    assert(success >= 0);
+    assert(success >= 0); //Note: check display resolution (force if not connected to display)
     assert(screenW > 0);
     assert(screenH > 0);
 
