@@ -764,6 +764,11 @@ void AminoGfxRPi::renderingDone() {
     EGLBoolean res = eglSwapBuffers(display, surface);
 
     assert(res == EGL_TRUE);
+
+    //cbxx TODO  check
+    if (DEBUG_GLES) {
+        printf("-> EGL buffers swapped\n");
+    }
 }
 
 void AminoGfxRPi::handleSystemEvents() {

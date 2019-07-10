@@ -501,12 +501,18 @@ void AminoGfx::startRenderingThread() {
         return;
     }
 
+    if (DEBUG_RENDERER || DEBUG_THREADS) {
+        printf("startRenderingThread()\n");
+    }
+
+    //create rendering thread
     int res = uv_thread_create(&thread, renderingThread, this);
 
     assert(res == 0);
 
     threadRunning = true;
 
+    //setup async rendering JS event handler
     asyncHandle.data = this;
     uv_async_init(uv_default_loop(), &asyncHandle, AminoGfx::handleRenderEvents);
 
@@ -633,7 +639,7 @@ void AminoGfx::render() {
 
     renderingDone();
     rendering = false;
-
+//cbxx FIXME not reached!!!
     if (DEBUG_RENDERER) {
         printf("-> renderer: done\n");
     }
