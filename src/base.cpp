@@ -6,7 +6,8 @@
 #include "renderer.h"
 #include "fonts/utf8-utils.h"
 
-#define DEBUG_RENDERER false
+//debug FIXME cbxx
+#define DEBUG_RENDERER true
 #define DEBUG_FONT_TEXTURE false
 #define DEBUG_FONT_UPDATES false
 

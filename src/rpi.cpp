@@ -486,9 +486,9 @@ void AminoGfxRPi::switchHdmiOff() {
  */
 void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     if (DEBUG_GLES) {
-        printf("populateRuntimeProperties\n");
+        printf("populateRuntimeProperties()\n");
     }
-
+//cbxx FIXME stops here
     AminoGfx::populateRuntimeProperties(obj);
 
     //GLES
@@ -731,6 +731,10 @@ void AminoGfxRPi::initInput() {
 }
 
 void AminoGfxRPi::start() {
+    if (DEBUG_GLES) {
+        printf("start()\n");
+    }
+
     //ready to get control back to JS code
     ready();
 
