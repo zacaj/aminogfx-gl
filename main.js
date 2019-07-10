@@ -84,6 +84,16 @@ AminoGfx.prototype.init = function () {
 
     //input handler
     this.inputHandler = input.createEventHandler(this);
+
+    //process handler
+    /*
+    process.on('SIGINT', () => {
+        console.log('-> CTRL-C');
+
+        //stop
+        process.exit();
+    });
+    */
 };
 
 /**

@@ -72,11 +72,19 @@ void AminoGfxRPi::setup() {
 
     //init OpenGL ES
     if (!glESInitialized) {
+        if (DEBUG_GLES) {
+            printf("-> initializing VideoCore\n");
+        }
+
         //VideoCore IV
         bcm_host_init();
 
         //Note: tvservice and others are already initialized by bcm_host_init() call!
         //      see https://github.com/raspberrypi/userland/blob/master/host_applications/linux/libs/bcm_host/bcm_host.c
+
+        if (DEBUG_GLES) {
+            printf("-> ready\n");
+        }
 
         /*
          * register callback
@@ -147,6 +155,10 @@ void AminoGfxRPi::setup() {
  * Initialize EGL and get display size.
  */
 void AminoGfxRPi::initEGL() {
+    if (DEBUG_GLES) {
+        printf("AminoGfxRPi::initEGL()\n");
+    }
+
     //get an EGL display connection
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
@@ -765,7 +777,6 @@ void AminoGfxRPi::renderingDone() {
 
     assert(res == EGL_TRUE);
 
-    //cbxx TODO  check
     if (DEBUG_GLES) {
         printf("-> EGL buffers swapped\n");
     }
