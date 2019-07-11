@@ -118,7 +118,8 @@
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL",
-                                        '<!@(pkg-config --libs libdrm)'
+                                        '<!@(pkg-config --libs libdrm)',
+                                        '-lgbm'
                                     ],
                                     'defines': [
                                         "EGL_GBM"
