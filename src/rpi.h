@@ -72,6 +72,8 @@ private:
 
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;
+    void initDispmanxSurface();
+    void initGbmSurface();
 
     bool startsWith(const char *pre, const char *str);
     void initInput();
