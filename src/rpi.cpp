@@ -8,6 +8,11 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+//GBM
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#include <gbm.h>
+
 #define gettid() syscall(SYS_gettid)
 
 //cbxx FIXME debugging
@@ -158,16 +163,16 @@ void AminoGfxRPi::initEGL() {
     if (DEBUG_GLES) {
         printf("AminoGfxRPi::initEGL()\n");
     }
-
+//cbxx hangs somewhere here on RPi 4 (Dispmanx)
     //get an EGL display connection
-    display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    display = eglGetDisplay(displayType);
 
     assert(display != EGL_NO_DISPLAY);
 
     //initialize the EGL display connection
     EGLBoolean res = eglInitialize(display, NULL, NULL);
 
-    assert(EGL_FALSE != res);
+    assert(res != EGL_FALSE);
 
     //get an appropriate EGL frame buffer configuration
     //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
@@ -231,7 +236,7 @@ void AminoGfxRPi::initEGL() {
 /**
  * Get the current display state.
  *
- * Returns null if no display is connected.
+ * Returns NULL if no display is connected.
  */
 TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
     /*
@@ -548,6 +553,36 @@ void AminoGfxRPi::initRenderer() {
         printf("-> init Dispmanx\n");
     }
 
+#ifdef EGL_DISPMANX
+    //Dispmanx
+    initDispmanxSurface();
+#endif
+
+#ifdef EGL_GBM
+    //GBM
+    initGbmSurface();
+#endif
+
+    //activate context (needed by JS code to create shaders)
+    EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
+
+    assert(EGL_FALSE != res);
+
+    //swap interval
+    if (swapInterval != 0) {
+        res = eglSwapInterval(display, swapInterval);
+
+        assert(res == EGL_TRUE);
+    }
+
+    //input
+    initInput();
+}
+
+/**
+ * Get EGL surface from Dispmanx (RPi 3 and lower).
+ */
+void AminoGfxRPi::initDispmanxSurface() {
     //Dispmanx init
     DISPMANX_DISPLAY_HANDLE_T dispman_display = vc_dispmanx_display_open(0); //LCD
     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
@@ -605,21 +640,84 @@ void AminoGfxRPi::initRenderer() {
 
     //Note: happens for instance if there is a resource leak (restart the RPi in this case)
     assert(surface != EGL_NO_SURFACE);
+}
 
-    //activate context (needed by JS code to create shaders)
-    EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
+/**
+ * Get EGL surface from GBM.
+ */
+void AminoGfxRPi::initGbmSurface() {
+    //access OpenGL driver (available if OpenGL driver is loaded)
+    //cbxx TODO switch dynamically between Dispmanx and GBM
+    int device = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
-    assert(EGL_FALSE != res);
+    assert(device > 0);
 
-    //swap interval
-    if (swapInterval != 0) {
-        res = eglSwapInterval(display, swapInterval);
+    //get display resolutions
+    drmModeRes *resources = drmModeGetResources(device);
 
-        assert(res == EGL_TRUE);
+    assert(resources);
+
+    //find connector
+    drmModeConnector *connector = NULL;
+    uint32_t connector_id = 0;
+
+	for (int i = 0; i < resources->count_connectors; i++) {
+		drmModeConnector *connector2 = drmModeGetConnector(device, resources->connectors[i]);
+
+		// pick the first connected connector
+		if (connector2->connection == DRM_MODE_CONNECTED) {
+            //Note: have to free instance later
+			connector = connector2;
+            break;
+		}
+
+		drmModeFreeConnector(connector2);
+	}
+
+    assert(connector);
+
+	connector_id = connector->connector_id;
+
+	//show mode
+	drmModeModeInfo mode_info = connector->modes[0];
+
+    if (DEBUG_GLES) {
+	    printf ("resolution: %ix%i\n", mode_info.hdisplay, mode_info.vdisplay);
     }
 
-    //input
-    initInput();
+	//find an encoder
+    assert(connector->encoder_id);
+
+    drmModeEncoder *encoder = drmModeGetEncoder(device, connector->encoder_id);
+
+    assert(encoder);
+
+	//find a CRTC
+    drmModeCrtc *crtc = NULL;
+
+	if (encoder->crtc_id) {
+		crtc = drmModeGetCrtc(device, encoder->crtc_id);
+	}
+
+	drmModeFreeEncoder(encoder);
+	drmModeFreeConnector(connector);
+	drmModeFreeResources(resources);
+
+    //create GBM device
+    struct gbm_device *gbm_device = gbm_create_device(device);
+
+    assert(gbm_device);
+
+    displayType = gbm_device;
+
+    //create surface
+    gbm_surface *gbm_surface = gbm_surface_create(gbm_device, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+
+    assert(gbm_surface);
+
+	surface = eglCreateWindowSurface(display, config, gbm_surface, NULL);
+
+    assert(surface != EGL_NO_SURFACE);
 }
 
 bool AminoGfxRPi::startsWith(const char *pre, const char *str) {
@@ -771,7 +869,7 @@ void AminoGfxRPi::renderingDone() {
     if (DEBUG_GLES) {
         printf("renderingDone()\n");
     }
-
+//cbxx hangs here after reboot on RPi 4
     //swap buffer
     EGLBoolean res = eglSwapBuffers(display, surface);
 

@@ -36,6 +36,7 @@ private:
     static bool glESInitialized;
 
     //OpenGL ES
+    NativeDisplayType displayType = EGL_DEFAULT_DISPLAY;
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLContext context = EGL_NO_CONTEXT;
     EGLSurface surface = EGL_NO_SURFACE;

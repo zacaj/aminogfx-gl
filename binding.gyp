@@ -115,13 +115,19 @@
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
-                                    ]
+                                    ],
+                                    'defines': [
+                                        "EGL_GBM"
+                                    ]'
                                 }],
                                 # Stretch (9)
                                 [ '<!@(lsb_release -r -s) == 9', {
                                     'libraries': [
                                         "-lbrcmGLESv2",
 		                                "-lbrcmEGL"
+                                    ],
+                                    'defines': [
+                                        "EGL_DISPMANX"
                                     ]
                                 }],
                                 # Jessie (8)
@@ -129,6 +135,9 @@
                                     'libraries': [
                                         "-lGLESv2",
 		                                "-lEGL",
+                                    ],
+                                    'defines': [
+                                        "EGL_DISPMANX"
                                     ]
                                 }]
                             ],
