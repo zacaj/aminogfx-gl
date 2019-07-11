@@ -112,9 +112,13 @@
                                 # Buster (10)
                                 # TODO
                                 [ '<!@(lsb_release -r -s) == 10', {
+                                    "include_dirs": [
+                                        " <!@(pkg-config --cflags libdrm)"
+                                    ],
                                     'libraries': [
                                         "-lbrcmGLESv2",
-		                                "-lbrcmEGL"
+		                                "-lbrcmEGL",
+                                        '<!@(pkg-config --libs libdrm)'
                                     ],
                                     'defines': [
                                         "EGL_GBM"
