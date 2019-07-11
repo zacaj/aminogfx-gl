@@ -84,6 +84,13 @@ void AminoGfxRPi::setup() {
         //VideoCore IV
         bcm_host_init();
 
+#ifdef EGL_GBM
+    //access OpenGL driver (available if OpenGL driver is loaded)
+    //cbxx TODO switch dynamically between Dispmanx and GBM
+    driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
+
+    assert(driDevice > 0);
+#endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
         //      see https://github.com/raspberrypi/userland/blob/master/host_applications/linux/libs/bcm_host/bcm_host.c
 
@@ -164,6 +171,13 @@ void AminoGfxRPi::initEGL() {
         printf("AminoGfxRPi::initEGL()\n");
     }
 //cbxx hangs somewhere here on RPi 4 (Dispmanx)
+#ifdef EGL_GBM
+    //create GBM device
+    displayType = gbm_create_device(driDevice);
+
+    assert(displayType);
+#endif
+
     //get an EGL display connection
     display = eglGetDisplay(displayType);
 
@@ -555,12 +569,12 @@ void AminoGfxRPi::initRenderer() {
 
 #ifdef EGL_DISPMANX
     //Dispmanx
-    initDispmanxSurface();
+    surface = createDispmanxSurface();
 #endif
 
 #ifdef EGL_GBM
     //GBM
-    initGbmSurface();
+    surface = createGbmSurface();
 #endif
 
     //activate context (needed by JS code to create shaders)
@@ -582,7 +596,7 @@ void AminoGfxRPi::initRenderer() {
 /**
  * Get EGL surface from Dispmanx (RPi 3 and lower).
  */
-void AminoGfxRPi::initDispmanxSurface() {
+void AminoGfxRPi::createDispmanxSurface() {
     //Dispmanx init
     DISPMANX_DISPLAY_HANDLE_T dispman_display = vc_dispmanx_display_open(0); //LCD
     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
@@ -636,33 +650,29 @@ void AminoGfxRPi::initDispmanxSurface() {
     native_window.width = screenW;
     native_window.height = screenH;
 
-    surface = eglCreateWindowSurface(display, config, &native_window, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, &native_window, NULL);
 
     //Note: happens for instance if there is a resource leak (restart the RPi in this case)
     assert(surface != EGL_NO_SURFACE);
+
+    return surface;
 }
 
 /**
  * Get EGL surface from GBM.
  */
-void AminoGfxRPi::initGbmSurface() {
-    //access OpenGL driver (available if OpenGL driver is loaded)
-    //cbxx TODO switch dynamically between Dispmanx and GBM
-    int device = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
-
-    assert(device > 0);
-
+void AminoGfxRPi::createGbmSurface() {
     //get display resolutions
-    drmModeRes *resources = drmModeGetResources(device);
+    drmModeRes *resources = drmModeGetResources(driDevice);
 
     assert(resources);
 
     //find connector
     drmModeConnector *connector = NULL;
-    uint32_t connector_id = 0;
+    uint32_t connector_id = 0; //cbxx FIXME not used
 
 	for (int i = 0; i < resources->count_connectors; i++) {
-		drmModeConnector *connector2 = drmModeGetConnector(device, resources->connectors[i]);
+		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
 
 		// pick the first connected connector
 		if (connector2->connection == DRM_MODE_CONNECTED) {
@@ -688,36 +698,32 @@ void AminoGfxRPi::initGbmSurface() {
 	//find an encoder
     assert(connector->encoder_id);
 
-    drmModeEncoder *encoder = drmModeGetEncoder(device, connector->encoder_id);
+    drmModeEncoder *encoder = drmModeGetEncoder(driDevice, connector->encoder_id);
 
     assert(encoder);
 
 	//find a CRTC
+//cbxx FIXME not used
     drmModeCrtc *crtc = NULL;
 
 	if (encoder->crtc_id) {
-		crtc = drmModeGetCrtc(device, encoder->crtc_id);
+		crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
 	}
 
 	drmModeFreeEncoder(encoder);
 	drmModeFreeConnector(connector);
 	drmModeFreeResources(resources);
 
-    //create GBM device
-    struct gbm_device *gbm_device = gbm_create_device(device);
-
-    assert(gbm_device);
-
-    displayType = gbm_device;
-
     //create surface
-    gbm_surface *gbm_surface = gbm_surface_create(gbm_device, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    gbm_surface *gbm_surface = gbm_surface_create(displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
     assert(gbm_surface);
 
-	surface = eglCreateWindowSurface(display, config, gbm_surface, NULL);
+	EGLSurface surface = eglCreateWindowSurface(display, config, gbm_surface, NULL);
 
     assert(surface != EGL_NO_SURFACE);
+
+    return surface;
 }
 
 bool AminoGfxRPi::startsWith(const char *pre, const char *str) {

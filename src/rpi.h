@@ -44,6 +44,9 @@ private:
     uint32_t screenW = 0;
     uint32_t screenH = 0;
 
+    //DRM/GBM
+    int driDevice = 0;
+
     //resolution
     static sem_t resSem;
     static bool resSemValid;
@@ -72,8 +75,9 @@ private:
 
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;
-    void initDispmanxSurface();
-    void initGbmSurface();
+
+    EGLSurface createDispmanxSurface();
+    EGLSurface createGbmSurface();
 
     bool startsWith(const char *pre, const char *str);
     void initInput();
