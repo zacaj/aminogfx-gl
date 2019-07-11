@@ -369,7 +369,7 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
 
 	    if (previous_bo) {
 		    drmModeRmFB(driDevice, previous_fb);
-		    gbm_surface_release_buffer(gbm_surface, previous_bo);
+		    gbm_surface_release_buffer(gbmSurface, previous_bo);
 	    }
 #endif
 
@@ -384,9 +384,9 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         }
 
 #ifdef EGL_GBM
-        if (gbm_surface) {
-            gbm_surface_destroy(gbm_surface);
-            gbm_surface = NULL;
+        if (gbmSurface) {
+            gbm_surface_destroy(gbmSurface);
+            gbmSurface = NULL;
         }
 #endif
 
@@ -749,11 +749,11 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 	drmModeFreeResources(resources);
 
     //create surface
-    gbm_surface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    gbmSurface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
-    assert(gbm_surface);
+    assert(gbmSurface);
 
-	EGLSurface surface = eglCreateWindowSurface(display, config, gbm_surface, NULL);
+	EGLSurface surface = eglCreateWindowSurface(display, config, gbmSurface, NULL);
 
     assert(surface != EGL_NO_SURFACE);
 
@@ -916,7 +916,7 @@ void AminoGfxRPi::renderingDone() {
     assert(res == EGL_TRUE);
 
 #ifdef EGL_GBM
-    struct gbm_bo *bo = gbm_surface_lock_front_buffer(gbm_surface);
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(gbmSurface);
 	uint32_t handle = gbm_bo_get_handle(bo).u32;
 	uint32_t pitch = gbm_bo_get_stride(bo);
 	uint32_t fb;
@@ -926,7 +926,7 @@ void AminoGfxRPi::renderingDone() {
 
 	if (previous_bo) {
 		drmModeRmFB(driDevice, previous_fb);
-		gbm_surface_release_buffer(gbm_surface, previous_bo);
+		gbm_surface_release_buffer(gbmSurface, previous_bo);
 	}
 
 	previous_bo = bo;
