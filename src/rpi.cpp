@@ -596,7 +596,7 @@ void AminoGfxRPi::initRenderer() {
 /**
  * Get EGL surface from Dispmanx (RPi 3 and lower).
  */
-void AminoGfxRPi::createDispmanxSurface() {
+EGLSurface AminoGfxRPi::createDispmanxSurface() {
     //Dispmanx init
     DISPMANX_DISPLAY_HANDLE_T dispman_display = vc_dispmanx_display_open(0); //LCD
     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
@@ -661,7 +661,7 @@ void AminoGfxRPi::createDispmanxSurface() {
 /**
  * Get EGL surface from GBM.
  */
-void AminoGfxRPi::createGbmSurface() {
+EGLSurface AminoGfxRPi::createGbmSurface() {
     //get display resolutions
     drmModeRes *resources = drmModeGetResources(driDevice);
 
