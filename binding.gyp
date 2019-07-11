@@ -118,7 +118,7 @@
                                     ],
                                     'defines': [
                                         "EGL_GBM"
-                                    ]'
+                                    ]
                                 }],
                                 # Stretch (9)
                                 [ '<!@(lsb_release -r -s) == 9', {
