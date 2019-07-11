@@ -75,9 +75,9 @@ void AminoGfxRPi::setup() {
         if (DEBUG_GLES) {
             printf("-> initializing VideoCore\n");
         }
-
+//cbxx TODO check if needed
         //VideoCore IV
-        bcm_host_init();
+//        bcm_host_init();
 
 #ifdef EGL_GBM
     //access OpenGL driver (available if OpenGL driver is loaded)
@@ -102,7 +102,8 @@ void AminoGfxRPi::setup() {
          *
          * Note: never called with "hdmi_force_hotplug=1".
          */
-        vc_tv_register_callback(tvservice_cb, NULL);
+//cbxx TODO check if needed
+//        vc_tv_register_callback(tvservice_cb, NULL);
 
         //show info screen (Note: seems not to work!)
         //vc_tv_show_info(1);
@@ -170,7 +171,6 @@ void AminoGfxRPi::initEGL() {
         printf("AminoGfxRPi::initEGL()\n");
     }
 //cbxx hangs somewhere here on RPi 4 (Dispmanx)
-//cbxx FIXME failed to add service - already in use?
 #ifdef EGL_GBM
     //create GBM device
     displayType = gbm_create_device(driDevice);
@@ -181,7 +181,7 @@ void AminoGfxRPi::initEGL() {
         printf("-> created GBM device\n");
     }
 #endif
-
+//cbxx FIXME failed to add service - already in use?
     //get an EGL display connection
     display = eglGetDisplay(displayType);
 
