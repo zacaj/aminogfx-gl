@@ -715,7 +715,7 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 	drmModeFreeResources(resources);
 
     //create surface
-    gbm_surface *gbm_surface = gbm_surface_create(displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    gbm_surface *gbm_surface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
     assert(gbm_surface);
 
