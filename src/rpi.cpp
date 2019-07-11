@@ -176,6 +176,10 @@ void AminoGfxRPi::initEGL() {
     displayType = gbm_create_device(driDevice);
 
     assert(displayType);
+
+    if (DEBUG_GLES) {
+        printf("-> created GBM device\n");
+    }
 #endif
 
     //get an EGL display connection
