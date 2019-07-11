@@ -90,6 +90,10 @@ void AminoGfxRPi::setup() {
     driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
     assert(driDevice > 0);
+
+    if (DEBUG_GLES) {
+        printf("-> DRI device ready\n");
+    }
 #endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
         //      see https://github.com/raspberrypi/userland/blob/master/host_applications/linux/libs/bcm_host/bcm_host.c
@@ -171,6 +175,7 @@ void AminoGfxRPi::initEGL() {
         printf("AminoGfxRPi::initEGL()\n");
     }
 //cbxx hangs somewhere here on RPi 4 (Dispmanx)
+//cbxx FIXME failed to add service - already in use?
 #ifdef EGL_GBM
     //create GBM device
     displayType = gbm_create_device(driDevice);
@@ -183,10 +188,18 @@ void AminoGfxRPi::initEGL() {
 
     assert(display != EGL_NO_DISPLAY);
 
+    if (DEBUG_GLES) {
+        printf("-> got EGL display\n");
+    }
+
     //initialize the EGL display connection
     EGLBoolean res = eglInitialize(display, NULL, NULL);
 
     assert(res != EGL_FALSE);
+
+    if (DEBUG_GLES) {
+        printf("-> EGL initialized\n");
+    }
 
     //get an appropriate EGL frame buffer configuration
     //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
@@ -354,6 +367,17 @@ void AminoGfxRPi::destroy() {
 void AminoGfxRPi::destroyAminoGfxRPi() {
     //OpenGL ES
     if (display != EGL_NO_DISPLAY) {
+#ifdef EGL_GBM
+        //set the previous crtc
+	    drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
+	    drmModeFreeCrtc(crtc);
+
+	    if (previous_bo) {
+		    drmModeRmFB(driDevice, previous_fb);
+		    gbm_surface_release_buffer(gbm_surface, previous_bo);
+	    }
+#endif
+
         if (context != EGL_NO_CONTEXT) {
             eglDestroyContext(display, context);
             context = EGL_NO_CONTEXT;
@@ -364,8 +388,27 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
             surface = EGL_NO_SURFACE;
         }
 
+#ifdef EGL_GBM
+        if (gbm_surface) {
+            gbm_surface_destroy(gbm_surface);
+            gbm_surface = NULL;
+        }
+#endif
+
         eglTerminate(display);
         display = EGL_NO_DISPLAY;
+
+#ifdef EGL_GBM
+        if (displayType) {
+            gbm_device_destroy((gbm_device*)displayType);
+            displayType = EGL_DEFAULT_DISPLAY;
+        }
+
+        if (driDevice) {
+            close(driDevice);
+            driDevice = 0;
+        }
+#endif
     }
 
     removeInstance();
@@ -669,7 +712,6 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 
     //find connector
     drmModeConnector *connector = NULL;
-    uint32_t connector_id = 0; //cbxx FIXME not used
 
 	for (int i = 0; i < resources->count_connectors; i++) {
 		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
@@ -689,7 +731,7 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 	connector_id = connector->connector_id;
 
 	//show mode
-	drmModeModeInfo mode_info = connector->modes[0];
+	mode_info = connector->modes[0];
 
     if (DEBUG_GLES) {
 	    printf ("resolution: %ix%i\n", mode_info.hdisplay, mode_info.vdisplay);
@@ -703,9 +745,6 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
     assert(encoder);
 
 	//find a CRTC
-//cbxx FIXME not used
-    drmModeCrtc *crtc = NULL;
-
 	if (encoder->crtc_id) {
 		crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
 	}
@@ -715,7 +754,7 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 	drmModeFreeResources(resources);
 
     //create surface
-    gbm_surface *gbm_surface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    gbm_surface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
     assert(gbm_surface);
 
@@ -880,6 +919,24 @@ void AminoGfxRPi::renderingDone() {
     EGLBoolean res = eglSwapBuffers(display, surface);
 
     assert(res == EGL_TRUE);
+
+#ifdef EGL_GBM
+    struct gbm_bo *bo = gbm_surface_lock_front_buffer(gbm_surface);
+	uint32_t handle = gbm_bo_get_handle(bo).u32;
+	uint32_t pitch = gbm_bo_get_stride(bo);
+	uint32_t fb;
+
+	drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+	drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+	if (previous_bo) {
+		drmModeRmFB(driDevice, previous_fb);
+		gbm_surface_release_buffer(gbm_surface, previous_bo);
+	}
+
+	previous_bo = bo;
+	previous_fb = fb;
+#endif
 
     if (DEBUG_GLES) {
         printf("-> EGL buffers swapped\n");

@@ -46,6 +46,12 @@ private:
 
     //DRM/GBM
     int driDevice = 0;
+    uint32_t connector_id = 0;
+    drmModeModeInfo mode_info;
+    gbm_surface *gbm_surface = NULL;
+    drmModeCrtc *crtc = NULL;
+    gbm_bo *previous_bo = NULL;
+    uint32_t previous_fb = 0;
 
     //resolution
     static sem_t resSem;
