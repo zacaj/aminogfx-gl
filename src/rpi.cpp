@@ -8,11 +8,6 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
-//GBM
-#include <xf86drm.h>
-#include <xf86drmMode.h>
-#include <gbm.h>
-
 #define gettid() syscall(SYS_gettid)
 
 //cbxx FIXME debugging

@@ -8,6 +8,11 @@
 #include "bcm_host.h"
 #include "interface/vchiq_arm/vchiq_if.h"
 
+//GBM
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#include <gbm.h>
+
 #include <semaphore.h>
 #include <linux/input.h>
 
