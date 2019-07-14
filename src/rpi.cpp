@@ -80,15 +80,15 @@ void AminoGfxRPi::setup() {
 //        bcm_host_init();
 
 #ifdef EGL_GBM
-    //access OpenGL driver (available if OpenGL driver is loaded)
-    //cbxx TODO switch dynamically between Dispmanx and GBM
-    driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
+        //access OpenGL driver (available if OpenGL driver is loaded)
+        //cbxx TODO switch dynamically between Dispmanx and GBM
+        driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
-    assert(driDevice > 0);
+        assert(driDevice > 0);
 
-    if (DEBUG_GLES) {
-        printf("-> DRI device ready\n");
-    }
+        if (DEBUG_GLES) {
+            printf("-> DRI device ready\n");
+        }
 #endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
         //      see https://github.com/raspberrypi/userland/blob/master/host_applications/linux/libs/bcm_host/bcm_host.c
@@ -156,11 +156,71 @@ void AminoGfxRPi::setup() {
     //instance
     addInstance();
 
+    //init display
+    initDisplay();
+
     //basic EGL to get screen size
     initEGL();
 
     //base class
     AminoGfx::setup();
+}
+
+void AminoGfxRPi::initDisplay() {
+    if (DEBUG_GLES) {
+        printf("AminoGfxRPi::initDisplay()\n");
+
+    }
+
+#ifdef EGL_GBM
+    //get display resolutions
+    drmModeRes *resources = drmModeGetResources(driDevice);
+
+    assert(resources);
+
+    //find connector
+    drmModeConnector *connector = NULL;
+
+	for (int i = 0; i < resources->count_connectors; i++) {
+		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
+
+		// pick the first connected connector
+		if (connector2->connection == DRM_MODE_CONNECTED) {
+            //Note: have to free instance later
+			connector = connector2;
+            break;
+		}
+
+		drmModeFreeConnector(connector2);
+	}
+
+    assert(connector);
+
+	connector_id = connector->connector_id;
+
+	//show mode
+	mode_info = connector->modes[0];
+
+    if (DEBUG_GLES) {
+	    printf ("resolution: %ix%i\n", mode_info.hdisplay, mode_info.vdisplay);
+    }
+
+	//find an encoder
+    assert(connector->encoder_id);
+
+    drmModeEncoder *encoder = drmModeGetEncoder(driDevice, connector->encoder_id);
+
+    assert(encoder);
+
+	//find a CRTC
+	if (encoder->crtc_id) {
+		crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
+	}
+
+	drmModeFreeEncoder(encoder);
+	drmModeFreeConnector(connector);
+	drmModeFreeResources(resources);
+#endif
 }
 
 /**
@@ -272,7 +332,7 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
      * - https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h
      */
     TV_DISPLAY_STATE_T *tvstate = (TV_DISPLAY_STATE_T *)malloc(sizeof(TV_DISPLAY_STATE_T));
-
+//cbxx TODO check RPi 4 handling
     assert(tvstate);
 
     if (vc_tv_get_display_state(tvstate) != 0) {
@@ -433,7 +493,7 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
     if (DEBUG_GLES) {
         printf("getScreenInfo\n");
     }
-
+//cbxx TODO check RPi 4 handling
     TV_DISPLAY_STATE_T *tvState = getDisplayState();
 
     //get display properties
@@ -704,54 +764,6 @@ EGLSurface AminoGfxRPi::createDispmanxSurface() {
  * Get EGL surface from GBM.
  */
 EGLSurface AminoGfxRPi::createGbmSurface() {
-    //get display resolutions
-    drmModeRes *resources = drmModeGetResources(driDevice);
-
-    assert(resources);
-
-    //find connector
-    drmModeConnector *connector = NULL;
-
-	for (int i = 0; i < resources->count_connectors; i++) {
-		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
-
-		// pick the first connected connector
-		if (connector2->connection == DRM_MODE_CONNECTED) {
-            //Note: have to free instance later
-			connector = connector2;
-            break;
-		}
-
-		drmModeFreeConnector(connector2);
-	}
-
-    assert(connector);
-
-	connector_id = connector->connector_id;
-
-	//show mode
-	mode_info = connector->modes[0];
-
-    if (DEBUG_GLES) {
-	    printf ("resolution: %ix%i\n", mode_info.hdisplay, mode_info.vdisplay);
-    }
-
-	//find an encoder
-    assert(connector->encoder_id);
-
-    drmModeEncoder *encoder = drmModeGetEncoder(driDevice, connector->encoder_id);
-
-    assert(encoder);
-
-	//find a CRTC
-	if (encoder->crtc_id) {
-		crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
-	}
-
-	drmModeFreeEncoder(encoder);
-	drmModeFreeConnector(connector);
-	drmModeFreeResources(resources);
-
     //create surface
     gbmSurface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
