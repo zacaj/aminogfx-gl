@@ -275,8 +275,8 @@ void AminoGfxRPi::initEGL() {
         if (DEBUG_GLES) {
             printf("-> format: %i %c%c%c%c\n", id, (char)(id & 0xFF), (char)((id >> 8) & 0xFF), (char)((id >> 16) & 0xFF), (char)((id >> 24) & 0xFF));
         }
-//cbxx FIXME mismatch
-        if (id == GBM_FORMAT_XRGB8888) {
+
+        if (id == GBM_FORMAT_ARGB8888) {
             pos = i;
             break;
         }
