@@ -639,7 +639,7 @@ void AminoGfx::render() {
 
     renderingDone();
     rendering = false;
-//cbxx FIXME not reached!!!
+
     if (DEBUG_RENDERER) {
         printf("-> renderer: done\n");
     }

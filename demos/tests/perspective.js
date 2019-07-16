@@ -3,7 +3,8 @@
 /*
  * Notes:
  *
- *  - only 33 fps on Raspberry Pi:
+ *  - only 2 fps on Raspberry Pi 4 (1080p@60)!
+ *  - only 33 fps on Raspberry Pi 3:
  *    - reason: fullscreen alpha rectangles are slow
  *    - full screen rate at group.opacity(1.) or text only rendering
  */

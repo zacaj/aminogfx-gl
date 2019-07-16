@@ -205,7 +205,7 @@ void AminoGfxRPi::initEGL() {
     if (DEBUG_GLES) {
         printf("-> EGL initialized\n");
     }
-//cbxx FIXME GBM version
+
     //get an appropriate EGL frame buffer configuration
     static const EGLint attribute_list[] = {
         //RGBA
@@ -213,7 +213,7 @@ void AminoGfxRPi::initEGL() {
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
-//cbxx check
+
         //OpenGL ES 2.0
         EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
@@ -663,7 +663,7 @@ void AminoGfxRPi::forceHdmiMode(uint32_t code) {
     if (DEBUG_HDMI) {
         printf("Changing resolution to CEA code %i\n", (int)code);
     }
-
+//cbxx TODO RPi 4
     //Note: mode change takes some time (is asynchronous)
     //      see https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h
     sem_init(&resSem, 0, 0);
@@ -687,7 +687,7 @@ void AminoGfxRPi::switchHdmiOff() {
     if (DEBUG_HDMI) {
         printf("Switching HDMI off.\n");
     }
-
+//cbxx TODO RPi 4
     vc_tv_power_off();
 }
 
