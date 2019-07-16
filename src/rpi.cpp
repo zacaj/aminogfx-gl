@@ -87,7 +87,6 @@ void AminoGfxRPi::setup() {
         }
 
         //access OpenGL driver (available if OpenGL driver is loaded)
-        //cbxx TODO switch dynamically between Dispmanx and GBM
         driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
         assert(driDevice > 0);
@@ -281,7 +280,7 @@ void AminoGfxRPi::initEGL() {
             break;
         }
     }
-//cbxx FIXME fails
+
     assert(pos != -1);
 
     config = configs[pos];
@@ -318,6 +317,10 @@ void AminoGfxRPi::initEGL() {
 
     //find connector
     drmModeConnector *connector = NULL;
+
+    if (DEBUG_GLES) {
+        printf("DRM connectors: %i\n", resources->count_connectors);
+    }
 
 	for (int i = 0; i < resources->count_connectors; i++) {
 		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
@@ -368,7 +371,7 @@ void AminoGfxRPi::initEGL() {
 }
 
 /**
- * Get the current display state.
+ * Get the current display state (Dispmanx version).
  *
  * Returns NULL if no display is connected.
  */
@@ -380,7 +383,7 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
      * - https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h
      */
     TV_DISPLAY_STATE_T *tvstate = (TV_DISPLAY_STATE_T *)malloc(sizeof(TV_DISPLAY_STATE_T));
-//cbxx TODO check RPi 4 handling
+
     assert(tvstate);
 
     if (vc_tv_get_display_state(tvstate) != 0) {
@@ -541,15 +544,25 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
     if (DEBUG_GLES) {
         printf("getScreenInfo\n");
     }
-//cbxx TODO check RPi 4 handling
-    TV_DISPLAY_STATE_T *tvState = getDisplayState();
 
-    //get display properties
+    //default values
     w = screenW;
     h = screenH;
     refreshRate = 0; //unknown
     fullscreen = true;
 
+#ifdef EGL_GBM
+		drmModeConnector *connector = drmModeGetConnector(driDevice, connector_id);
+
+        refreshRate = connector->modes[0].vrefresh;
+
+		drmModeFreeConnector(connector);
+#endif
+
+#ifdef EGL_DISPMANX
+    TV_DISPLAY_STATE_T *tvState = getDisplayState();
+
+    //get display properties
     if (tvState) {
         //depends on attached screen
         refreshRate = tvState->display.hdmi.frame_rate;
@@ -559,6 +572,7 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
     if (tvState) {
         free(tvState);
     }
+#endif
 
     return true;
 }
@@ -713,16 +727,20 @@ void AminoGfxRPi::initRenderer() {
     viewportH = screenH;
     viewportChanged = true;
 
+#ifdef EGL_DISPMANX
     if (DEBUG_HDMI) {
         printf("-> init Dispmanx\n");
     }
 
-#ifdef EGL_DISPMANX
     //Dispmanx
     surface = createDispmanxSurface();
 #endif
 
 #ifdef EGL_GBM
+    if (DEBUG_HDMI) {
+        printf("-> init GBM\n");
+    }
+
     //GBM
     surface = createGbmSurface();
 #endif
