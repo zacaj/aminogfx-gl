@@ -257,21 +257,28 @@ void AminoGfxRPi::initEGL() {
     assert(EGL_FALSE != res);
 
     //find matching config
-    EGLint id = -1;
+    int pos = -1;
 
-    for (EGLint i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
+        EGLint id;
+
         if (!eglGetConfigAttrib(display, configs[i], EGL_NATIVE_VISUAL_ID, &id)) {
             continue;
         }
 
+        if (DEBUG_GLES) {
+            printf("-> format: %i\n", id);
+        }
+
         if (id == GBM_FORMAT_XRGB8888) {
+            pos = i;
             break;
         }
     }
 
-    assert(id != -1);
+    assert(pos != -1);
 
-    config = configs[id];
+    config = configs[pos];
     free(configs);
 #endif
 
