@@ -140,7 +140,7 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
                 typeStr = "fragment shader";
             }
 
-            printf("shader compilation error: %s\ntype: %s\n", messages, typeStr.c_str());
+            printf("shader compilation error: %s\ntype: %s\n\n%s\n", messages, typeStr.c_str(), src);
         }
 
         error = std::string(messages);
