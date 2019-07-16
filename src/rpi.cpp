@@ -217,14 +217,14 @@ void AminoGfxRPi::initEGL() {
         //OpenGL ES 2.0
 //        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, //cbxx added
-//cbxx check
+
         //buffers
         EGL_STENCIL_SIZE, 8,
         EGL_DEPTH_SIZE, 16,
-
+//cbxx check
         //sampling (quality)
-//        EGL_SAMPLE_BUFFERS, 1,
-//        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+        EGL_SAMPLE_BUFFERS, 1,
+        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
 
         //window
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,

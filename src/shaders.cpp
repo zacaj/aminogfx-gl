@@ -294,7 +294,10 @@ void AnyAminoShader::drawElements(GLushort *indices, GLsizei elements, GLenum mo
  */
 ColorShader::ColorShader() : AnyAminoShader() {
     //shaders
+//cbxx precision
     fragmentShader = R"(
+        precision mediump float;
+
         uniform vec4 color;
 
         void main() {
@@ -350,10 +353,11 @@ ColorLightingShader::ColorLightingShader() : ColorShader() {
             lightFac = abs(dot(normalTrans.xyz, -lightDir));
         }
     )";
-
+//cbxx precision
     fragmentShader = R"(
-        varying float lightFac;
+        precision mediump float;
 
+        varying float lightFac;
         uniform vec4 color;
 
         void main() {
