@@ -40,6 +40,7 @@ brew install freetype
 
 ### Raspberry Pi
 
+* libegl1-mesa-dev
 * libdrm-dev
 * libgbm-dev
 * libfreetype6-dev
@@ -53,7 +54,7 @@ Setup:
 
 ```
 sudo rpi-update
-sudo apt-get install libdrm-dev libgbm-dev libfreetype6-dev libjpeg-dev libavformat-dev libswscale-dev libavcodec-dev
+sudo apt-get install libegl1-mesa-dev libdrm-dev libgbm-dev libfreetype6-dev libjpeg-dev libavformat-dev libswscale-dev libavcodec-dev
 ```
 
 ## Installation
@@ -86,7 +87,5 @@ Example of all supported features are in the demos subfolder.
 
 ## Troubleshooting
 
-* failed to add service - already in use?
-  * switch to "Original non-GL desktop driver"
 * node: ../src/rpi.cpp:209: void AminoGfxRPi::initEGL(): Assertion `success >= 0' failed.
   * select a screen resolution with raspi-config

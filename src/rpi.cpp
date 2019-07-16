@@ -85,7 +85,7 @@ void AminoGfxRPi::setup() {
         driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
         assert(driDevice > 0);
-
+//cbxx drmGetDeviceNameFromFd
         if (DEBUG_GLES) {
             printf("-> DRI device ready\n");
         }
@@ -166,6 +166,9 @@ void AminoGfxRPi::setup() {
     AminoGfx::setup();
 }
 
+/**
+ * Initialize the display.
+ */
 void AminoGfxRPi::initDisplay() {
     if (DEBUG_GLES) {
         printf("AminoGfxRPi::initDisplay()\n");
@@ -184,7 +187,7 @@ void AminoGfxRPi::initDisplay() {
 	for (int i = 0; i < resources->count_connectors; i++) {
 		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
 
-		// pick the first connected connector
+		//pick the first connected connector
 		if (connector2->connection == DRM_MODE_CONNECTED) {
             //Note: have to free instance later
 			connector = connector2;

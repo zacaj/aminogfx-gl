@@ -116,8 +116,8 @@
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
                                     'libraries': [
-                                        "-lbrcmGLESv2",
-		                                "-lbrcmEGL",
+                                        "-lGL",
+		                                "-lEGL",
                                         '<!@(pkg-config --libs libdrm)',
                                         '-lgbm'
                                     ],
