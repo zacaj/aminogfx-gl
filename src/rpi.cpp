@@ -72,16 +72,20 @@ void AminoGfxRPi::setup() {
 
     //init OpenGL ES
     if (!glESInitialized) {
+#ifdef EGL_DISPMANX
         if (DEBUG_GLES) {
             printf("-> initializing VideoCore\n");
         }
 
-#ifdef EGL_DISPMANX
         //VideoCore IV
         bcm_host_init();
 #endif
 
 #ifdef EGL_GBM
+        if (DEBUG_GLES) {
+            printf("-> initializing OpenGL driver\n");
+        }
+
         //access OpenGL driver (available if OpenGL driver is loaded)
         //cbxx TODO switch dynamically between Dispmanx and GBM
         driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
@@ -212,16 +216,16 @@ void AminoGfxRPi::initEGL() {
         EGL_ALPHA_SIZE, 8,
 
         //OpenGL ES 2.0
-        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+//        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, //cbxx added
 
         //buffers
-        EGL_STENCIL_SIZE, 8,
-        EGL_DEPTH_SIZE, 16,
+//        EGL_STENCIL_SIZE, 8,
+//        EGL_DEPTH_SIZE, 16,
 
         //sampling (quality)
-        EGL_SAMPLE_BUFFERS, 1,
-        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+//        EGL_SAMPLE_BUFFERS, 1,
+//        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
 
         //window
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
