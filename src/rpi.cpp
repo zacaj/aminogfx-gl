@@ -223,8 +223,8 @@ void AminoGfxRPi::initEGL() {
         EGL_DEPTH_SIZE, 16,
 //cbxx check
         //sampling (quality)
-        EGL_SAMPLE_BUFFERS, 1,
-        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+//        EGL_SAMPLE_BUFFERS, 1,
+//        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
 
         //window
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -265,6 +265,18 @@ void AminoGfxRPi::initEGL() {
     int pos = -1;
 
     for (int i = 0; i < count; i++) {
+        if (DEBUG_GLES) {
+            EGLint value;
+
+            if (eglGetConfigAttrib(display, configs[i], EGL_SAMPLE_BUFFERS, &value)) {
+                printf("-> EGL_SAMPLE_BUFFERS: %i\n", value);
+            }
+
+            if (eglGetConfigAttrib(display, configs[i], EGL_SAMPLES, &value)) {
+                printf("-> EGL_SAMPLES: %i\n", value);
+            }
+        }
+
         EGLint id;
 
         if (eglGetConfigAttrib(display, configs[i], EGL_NATIVE_VISUAL_ID, &id) == EGL_FALSE) {
