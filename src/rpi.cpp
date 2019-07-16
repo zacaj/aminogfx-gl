@@ -75,9 +75,11 @@ void AminoGfxRPi::setup() {
         if (DEBUG_GLES) {
             printf("-> initializing VideoCore\n");
         }
-//cbxx TODO check if needed
+
+#ifdef EGL_DISPMANX
         //VideoCore IV
-//        bcm_host_init();
+        bcm_host_init();
+#endif
 
 #ifdef EGL_GBM
         //access OpenGL driver (available if OpenGL driver is loaded)
@@ -97,16 +99,17 @@ void AminoGfxRPi::setup() {
             printf("-> ready\n");
         }
 
+#ifdef EGL_DISPMANX
         /*
          * register callback
          *
          * Note: never called with "hdmi_force_hotplug=1".
          */
-//cbxx TODO check if needed
-//        vc_tv_register_callback(tvservice_cb, NULL);
+        vc_tv_register_callback(tvservice_cb, NULL);
 
         //show info screen (Note: seems not to work!)
         //vc_tv_show_info(1);
+#endif
 
         //handle preferred resolution
         if (!createParams.IsEmpty()) {
@@ -156,9 +159,6 @@ void AminoGfxRPi::setup() {
     //instance
     addInstance();
 
-    //init display
-    initDisplay();
-
     //basic EGL to get screen size
     initEGL();
 
@@ -167,13 +167,135 @@ void AminoGfxRPi::setup() {
 }
 
 /**
- * Initialize the display.
+ * Initialize EGL and get display size.
  */
-void AminoGfxRPi::initDisplay() {
+void AminoGfxRPi::initEGL() {
     if (DEBUG_GLES) {
-        printf("AminoGfxRPi::initDisplay()\n");
-
+        printf("AminoGfxRPi::initEGL()\n");
     }
+
+#ifdef EGL_GBM
+    //create GBM device
+    displayType = gbm_create_device(driDevice);
+
+    assert(displayType);
+
+    if (DEBUG_GLES) {
+        printf("-> created GBM device\n");
+    }
+#endif
+
+    //get an EGL display connection
+    display = eglGetDisplay(displayType);
+
+    assert(display != EGL_NO_DISPLAY);
+
+    if (DEBUG_GLES) {
+        printf("-> got EGL display\n");
+    }
+
+    //initialize the EGL display connection
+    EGLBoolean res = eglInitialize(display, NULL, NULL);
+
+    assert(res != EGL_FALSE);
+
+    if (DEBUG_GLES) {
+        printf("-> EGL initialized\n");
+    }
+
+    //get an appropriate EGL frame buffer configuration
+    static const EGLint attribute_list[] = {
+        //RGBA
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+
+        //OpenGL ES 2.0
+        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+
+        //buffers
+        EGL_STENCIL_SIZE, 8,
+        EGL_DEPTH_SIZE, 16,
+
+        //sampling (quality)
+        EGL_SAMPLE_BUFFERS, 1,
+        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+
+        //window
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+
+        EGL_NONE
+    };
+
+    EGLint num_config;
+
+#ifdef EGL_DISPMANX
+    //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
+    res = eglSaneChooseConfigBRCM(display, attribute_list, &config, 1, &num_config);
+
+    assert(EGL_FALSE != res);
+#endif
+
+#ifdef EGL_GBM
+    //get config count
+    EGLint count = 0;
+
+    res = eglGetConfigs(display, NULL, 0, &count);
+
+    assert(EGL_FALSE != res);
+
+    if (DEBUG_GLES) {
+        printf("-> configs found: %i\n", count);
+    }
+
+    //get configs
+    EGLConfig *configs = malloc(count * sizeof *configs);
+
+    res = eglChooseConfig(display, attribute_list, configs, count, &num_config);
+
+    assert(EGL_FALSE != res);
+
+    //find matching config
+    EGLint id = -1;
+
+    for (EGLint i = 0; i < count; i++) {
+        if (!eglGetConfigAttrib(display, configs[i], EGL_NATIVE_VISUAL_ID, &id)) {
+            continue;
+        }
+
+        if (id == GBM_FORMAT_XRGB8888) {
+            break;
+        }
+    }
+
+    assert(id != -1);
+
+    config = configs[id];
+    free(configs);
+#endif
+
+    //choose OpenGL ES 2
+    res = eglBindAPI(EGL_OPENGL_ES_API);
+
+    assert(EGL_FALSE != res);
+
+    //create an EGL rendering context
+    static const EGLint context_attributes[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
+
+    context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
+
+    assert(context != EGL_NO_CONTEXT);
+
+#ifdef EGL_DISPMANX
+    //get display size (see http://elinux.org/Raspberry_Pi_VideoCore_APIs#graphics_get_display_size)
+    int32_t success = graphics_get_display_size(0 /* LCD */, &screenW, &screenH);
+
+    assert(success >= 0); //Note: check display resolution (force if not connected to display)
+#endif
 
 #ifdef EGL_GBM
     //get display resolutions
@@ -204,9 +326,8 @@ void AminoGfxRPi::initDisplay() {
 	//show mode
 	mode_info = connector->modes[0];
 
-    if (DEBUG_GLES) {
-	    printf ("resolution: %ix%i\n", mode_info.hdisplay, mode_info.vdisplay);
-    }
+    screenW = mode_info.hdisplay;
+    screenH = mode_info.vdisplay;
 
 	//find an encoder
     assert(connector->encoder_id);
@@ -224,96 +345,7 @@ void AminoGfxRPi::initDisplay() {
 	drmModeFreeConnector(connector);
 	drmModeFreeResources(resources);
 #endif
-}
 
-/**
- * Initialize EGL and get display size.
- */
-void AminoGfxRPi::initEGL() {
-    if (DEBUG_GLES) {
-        printf("AminoGfxRPi::initEGL()\n");
-    }
-//cbxx hangs somewhere here on RPi 4 (Dispmanx)
-#ifdef EGL_GBM
-    //create GBM device
-    displayType = gbm_create_device(driDevice);
-
-    assert(displayType);
-
-    if (DEBUG_GLES) {
-        printf("-> created GBM device\n");
-    }
-#endif
-//cbxx FIXME failed to add service - already in use?
-    //get an EGL display connection
-    display = eglGetDisplay(displayType);
-
-    assert(display != EGL_NO_DISPLAY);
-
-    if (DEBUG_GLES) {
-        printf("-> got EGL display\n");
-    }
-
-    //initialize the EGL display connection
-    EGLBoolean res = eglInitialize(display, NULL, NULL);
-
-    assert(res != EGL_FALSE);
-
-    if (DEBUG_GLES) {
-        printf("-> EGL initialized\n");
-    }
-
-    //get an appropriate EGL frame buffer configuration
-    //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
-    static const EGLint attribute_list[] = {
-        //RGBA
-        EGL_RED_SIZE, 8,
-        EGL_GREEN_SIZE, 8,
-        EGL_BLUE_SIZE, 8,
-        EGL_ALPHA_SIZE, 8,
-
-        //OpenGL ES 2.0
-        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
-
-        //buffers
-        EGL_STENCIL_SIZE, 8,
-        EGL_DEPTH_SIZE, 16,
-
-        //sampling (quality)
-        EGL_SAMPLE_BUFFERS, 1,
-        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
-
-        //window
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-
-        EGL_NONE
-    };
-
-    EGLint num_config;
-
-    res = eglSaneChooseConfigBRCM(display, attribute_list, &config, 1, &num_config);
-
-    assert(EGL_FALSE != res);
-
-    //choose OpenGL ES 2
-    res = eglBindAPI(EGL_OPENGL_ES_API);
-
-    assert(EGL_FALSE != res);
-
-    //create an EGL rendering context
-    static const EGLint context_attributes[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
-    };
-
-    context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
-
-    assert(context != EGL_NO_CONTEXT);
-
-    //get display size (see http://elinux.org/Raspberry_Pi_VideoCore_APIs#graphics_get_display_size)
-    int32_t success = graphics_get_display_size(0 /* LCD */, &screenW, &screenH);
-
-    assert(success >= 0); //Note: check display resolution (force if not connected to display)
     assert(screenW > 0);
     assert(screenH > 0);
 
@@ -384,7 +416,7 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
 }
 
 /**
- * HDMI tvservice callback.
+ * HDMI tvservice callback (Dispmanx implementation).
  */
 void AminoGfxRPi::tvservice_cb(void *callback_data, uint32_t reason, uint32_t param1, uint32_t param2) {
     //http://www.m2x.nl/videolan/vlc/blob/1d2b56c68bbc3287e17f6140bdf8c8c3efe08fdc/modules/hw/mmal/vout.c
@@ -624,7 +656,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     if (DEBUG_GLES) {
         printf("populateRuntimeProperties()\n");
     }
-//cbxx FIXME stops here
+
     AminoGfx::populateRuntimeProperties(obj);
 
     //GLES
@@ -928,7 +960,7 @@ void AminoGfxRPi::renderingDone() {
     if (DEBUG_GLES) {
         printf("renderingDone()\n");
     }
-//cbxx hangs here after reboot on RPi 4
+
     //swap buffer
     EGLBoolean res = eglSwapBuffers(display, surface);
 

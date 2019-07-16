@@ -70,7 +70,6 @@ private:
     static NAN_METHOD(New);
 
     void setup() override;
-    void initDisplay();
     void initEGL();
 
     static TV_DISPLAY_STATE_T* getDisplayState();
