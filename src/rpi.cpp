@@ -228,9 +228,9 @@ void AminoGfxRPi::initEGL() {
         EGL_NONE
     };
 
+#ifdef EGL_DISPMANX
     EGLint num_config;
 
-#ifdef EGL_DISPMANX
     //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
     res = eglSaneChooseConfigBRCM(display, attribute_list, &config, 1, &num_config);
 
@@ -245,16 +245,17 @@ void AminoGfxRPi::initEGL() {
 
     assert(EGL_FALSE != res);
 
-    if (DEBUG_GLES) {
-        printf("-> configs found: %i\n", count);
-    }
-
     //get configs
     EGLConfig *configs = (EGLConfig *)malloc(count * sizeof *configs);
 
-    res = eglChooseConfig(display, attribute_list, configs, count, &num_config);
+    res = eglChooseConfig(display, attribute_list, configs, count, &count);
 
     assert(EGL_FALSE != res);
+    assert(count > 0);
+
+    if (DEBUG_GLES) {
+        printf("-> configs found: %i\n", count);
+    }
 
     //find matching config
     int pos = -1;
@@ -262,7 +263,7 @@ void AminoGfxRPi::initEGL() {
     for (int i = 0; i < count; i++) {
         EGLint id;
 
-        if (!eglGetConfigAttrib(display, configs[i], EGL_NATIVE_VISUAL_ID, &id)) {
+        if (eglGetConfigAttrib(display, configs[i], EGL_NATIVE_VISUAL_ID, &id) == EGL_FALSE) {
             continue;
         }
 
@@ -275,7 +276,7 @@ void AminoGfxRPi::initEGL() {
             break;
         }
     }
-
+//cbxx FIXME fails
     assert(pos != -1);
 
     config = configs[pos];
