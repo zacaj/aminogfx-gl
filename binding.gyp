@@ -94,18 +94,13 @@
                                 "src/rpi_video.cpp"
 		                    ],
 		                    "libraries": [
-		                        #cbxx "-L/opt/vc/lib/",
-                                "-lbcm_host",
-                                "-lopenmaxil",
-                                "-lvcos",
-                                "-lvchiq_arm",
 		                        '<!@(pkg-config --libs freetype2)',
                                 "-ljpeg",
                                 "-lpng",
                                 '-lavcodec',
                                 '-lavformat',
                                 '-lavutil',
-                                '-lswscale'
+                                '-lswscale',
 		                    ],
                             # OS specific libraries
                             'conditions': [
@@ -127,8 +122,15 @@
                                 # Stretch (9)
                                 [ '<!@(lsb_release -r -s) == 9', {
                                     'libraries': [
+                                        # OpenGL
                                         "-lbrcmGLESv2",
-		                                "-lbrcmEGL"
+		                                "-lbrcmEGL",
+                                        # VideoCore
+                                        "-L/opt/vc/lib/",
+                                        "-lbcm_host",
+                                        "-lopenmaxil",
+                                        "-lvcos",
+                                        "-lvchiq_arm"
                                     ],
                                     'defines': [
                                         "EGL_DISPMANX"
@@ -137,8 +139,15 @@
                                 # Jessie (8)
                                 [ '<!@(lsb_release -r -s) == 8', {
                                     'libraries': [
+                                        # OpenGL
                                         "-lGLESv2",
 		                                "-lEGL",
+                                        # VideoCore
+                                        "-L/opt/vc/lib/",
+                                        "-lbcm_host",
+                                        "-lopenmaxil",
+                                        "-lvcos",
+                                        "-lvchiq_arm"
                                     ],
                                     'defines': [
                                         "EGL_DISPMANX"
@@ -149,15 +158,17 @@
 		                        "RPI"
 		                    ],
 		                    "include_dirs": [
+                                # VideoCore
 		                        "/opt/vc/include/",
                                 "/opt/vc/include/IL/",
-		                        "/usr/include/freetype2",
 		                        "/opt/vc/include/interface/vcos/pthreads",
 		                        "/opt/vc/include/interface/vmcs_host/linux",
                                 "/opt/vc/include/interface/vchiq/",
+                                # Freetype
 		                        '<!@(pkg-config --cflags freetype2)'
 		                    ],
                             "cflags": [
+                                # VideoCore
                                 "-DHAVE_LIBOPENMAX=2",
                                 "-DOMX",
                                 "-DOMX_SKIP64BIT",
