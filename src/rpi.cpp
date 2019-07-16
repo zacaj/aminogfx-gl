@@ -213,18 +213,21 @@ void AminoGfxRPi::initEGL() {
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
-
+//cbxx check
         //OpenGL ES 2.0
-//        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, //cbxx added
+        EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 
         //buffers
         EGL_STENCIL_SIZE, 8,
         EGL_DEPTH_SIZE, 16,
-//cbxx check
+
         //sampling (quality)
-//        EGL_SAMPLE_BUFFERS, 1,
-//        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+        //Note: does not work on RPi 4 (GBM) -> no config
+#ifdef EGL_DISPMANX
+        EGL_SAMPLE_BUFFERS, 1,
+        EGL_SAMPLES, AMINO_EGL_SAMPLES, //4: 4x MSAA
+#endif
 
         //window
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,

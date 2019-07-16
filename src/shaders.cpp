@@ -459,9 +459,11 @@ TextureShader::TextureShader() : AnyAminoShader() {
             uv = texCoord;
         }
     )";
-
+//cbxx precision
     //supports opacity and discarding of fully transparent pixels
     fragmentShader = R"(
+        precision mediump float;
+
         varying vec2 uv;
 
         uniform float opacity;
@@ -558,7 +560,10 @@ void TextureShader::drawElements(GLushort *indices, GLsizei elements, GLenum mod
 
 TextureClampToBorderShader::TextureClampToBorderShader() : TextureShader() {
     //Note: supports clamp to border, using transparent texture
+//cbxx precision
     fragmentShader = R"(
+        precision mediump float;
+
         varying vec2 uv;
 
         uniform float opacity;
