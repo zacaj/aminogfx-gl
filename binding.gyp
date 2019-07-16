@@ -94,7 +94,7 @@
                                 "src/rpi_video.cpp"
 		                    ],
 		                    "libraries": [
-		                        "-L/opt/vc/lib/",
+		                        #cbxx "-L/opt/vc/lib/",
                                 "-lbcm_host",
                                 "-lopenmaxil",
                                 "-lvcos",
@@ -110,7 +110,6 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10)
-                                # TODO
                                 [ '<!@(lsb_release -r -s) == 10', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
