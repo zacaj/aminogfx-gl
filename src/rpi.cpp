@@ -202,7 +202,7 @@ void AminoGfxRPi::initEGL() {
     if (DEBUG_GLES) {
         printf("-> EGL initialized\n");
     }
-
+//cbxx FIXME GBM version
     //get an appropriate EGL frame buffer configuration
     static const EGLint attribute_list[] = {
         //RGBA
@@ -213,6 +213,7 @@ void AminoGfxRPi::initEGL() {
 
         //OpenGL ES 2.0
         EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, //cbxx added
 
         //buffers
         EGL_STENCIL_SIZE, 8,
