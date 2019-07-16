@@ -250,7 +250,7 @@ void AminoGfxRPi::initEGL() {
     }
 
     //get configs
-    EGLConfig *configs = malloc(count * sizeof *configs);
+    EGLConfig *configs = (EGLConfig *)malloc(count * sizeof *configs);
 
     res = eglChooseConfig(display, attribute_list, configs, count, &num_config);
 
