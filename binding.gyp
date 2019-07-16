@@ -165,6 +165,7 @@
 		                        "/opt/vc/include/interface/vmcs_host/linux",
                                 "/opt/vc/include/interface/vchiq/",
                                 # Freetype
+                                "/usr/include/freetype2",
 		                        '<!@(pkg-config --cflags freetype2)'
 		                    ],
                             "cflags": [
