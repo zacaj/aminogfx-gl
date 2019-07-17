@@ -732,18 +732,21 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     drmVersionPtr version = drmGetVersion(driDevice);
     std::ostringstream ss;
 
-    ss << version->version_major << "." << version-> version_minor << " (" << version-> name << ", " << version->date << ", " << version->desc;
+    //Note: major and minor not set!
+    ss << version->version_major << "." << version->version_minor << " (" << version-> name << ", " << version->date << ", " << version->desc << ")";
 
     Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str()).ToLocalChecked());
 
     drmFreeVersion(version);
 #endif
 
-    //cbxx TODO check VC support
+    //cbxx TODO determine gpu_mem
+
     //VC
-//#ifdef EGL_DISPMANX
+#ifdef EGL_DISPMANX
     char resp[80] = "";
 
+    //Note: does not work on RPi 4!
     if (vc_gencmd(resp, sizeof resp, "get_mem gpu") == 0) {
         //GPU memory in MB
         int gpuMem = 0;
@@ -757,7 +760,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
-//#endif
+#endif
 }
 
 /**
