@@ -87,6 +87,8 @@ private:
     static TV_DISPLAY_STATE_T* getDisplayState();
     static void tvservice_cb(void *callback_data, uint32_t reason, uint32_t param1, uint32_t param2);
 #endif
+    //cbxx test
+    static TV_DISPLAY_STATE_T* getDisplayState();
 
     void destroy() override;
     void destroyAminoGfxRPi();

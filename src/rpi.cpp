@@ -393,7 +393,8 @@ void AminoGfxRPi::initEGL() {
     }
 }
 
-#ifdef EGL_DISPMANX
+//cbxx test
+//#ifdef EGL_DISPMANX
 /**
  * Get the current display state (Dispmanx version).
  *
@@ -454,7 +455,8 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
 
     return tvstate;
 }
-
+//cbxx test
+#ifdef EGL_DISPMANX
 /**
  * HDMI tvservice callback (Dispmanx implementation).
  */
