@@ -5,13 +5,13 @@
 #include "renderer.h"
 #include "rpi_video.h"
 
+//VideoCore
+#include "bcm_host.h"
+
 //Dispmanx
 #ifdef EGL_DISPMANX
-#include "bcm_host.h"
 #include "interface/vchiq_arm/vchiq_if.h"
 #endif
-//cbxx test
-#include "bcm_host.h"
 
 //GBM
 #ifdef EGL_GBM

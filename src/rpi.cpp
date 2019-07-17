@@ -74,16 +74,14 @@ void AminoGfxRPi::setup() {
 
     //init OpenGL ES
     if (!glESInitialized) {
-#ifdef EGL_DISPMANX
+        //Note: needed in GBM case too to access VC6 APIs
         if (DEBUG_GLES) {
             printf("-> initializing VideoCore\n");
         }
 
         //VideoCore IV
         bcm_host_init();
-#endif
-//cbxx test
-bcm_host_init();
+
 #ifdef EGL_GBM
         if (DEBUG_GLES) {
             printf("-> initializing OpenGL driver\n");
@@ -558,10 +556,10 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
 #ifdef EGL_DISPMANX
         //tvservice
         vc_tv_unregister_callback(tvservice_cb);
+#endif
 
         //VideoCore IV
         bcm_host_deinit();
-#endif
 
         glESInitialized = false;
     }
@@ -616,8 +614,8 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
     AminoGfx::getStats(obj);
 
     //cbxx TODO GCM/DRM implementation
-
-#ifdef EGL_DISPMANX
+//cbxx check again
+//#ifdef EGL_DISPMANX
     //HDMI (see https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h)
     TV_DISPLAY_STATE_T *tvState = getDisplayState();
 
@@ -674,7 +672,7 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
         Nan::Set(deviceObj, Nan::New("monitorName").ToLocalChecked(), Nan::New(id.monitor_name).ToLocalChecked());
         Nan::Set(deviceObj, Nan::New("serialNum").ToLocalChecked(), Nan::New(id.serial_num));
     }
-#endif
+//#endif
 }
 
 #ifdef EGL_DISPMANX
@@ -741,10 +739,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     drmFreeVersion(version);
 #endif
 
-    //cbxx TODO determine gpu_mem
-//cbxx TODO check again (works in vcgencmd get_mem )
-    //VC
-//#ifdef EGL_DISPMANX
+    //VC (Note: works on RPi 4 too)
     char resp[80] = "";
 
     //Note: does not work on RPi 4!
@@ -761,7 +756,6 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
-//#endif
 }
 
 /**
