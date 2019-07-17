@@ -86,7 +86,7 @@
                 # Raspberry Pi
                 [ 'OS == "linux"', {
 					"conditions" : [
-	                    [ "target_arch=='arm'", {
+	                    [ "target_arch == 'arm'", {
 		                    "sources": [
                                 "src/ilclient/ilclient.c",
                                 "src/ilclient/ilcore.c",
@@ -105,7 +105,7 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10.x)
-                                [ '<!@(lsb_release -c -s) == buster', {
+                                [ '<!@(lsb_release -c -s) == "buster"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
