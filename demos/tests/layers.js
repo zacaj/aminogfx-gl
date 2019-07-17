@@ -12,6 +12,8 @@ if (process.argv.length == 2) {
  *
  *   - 1: 20 fps !!!
  *   - 12: 2 fps !!!
+ *
+ *   Notes: mediump, lowp -> no difference
  *  cbxx TODO check shaders
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)

@@ -66,5 +66,4 @@ gfx.start(function (err) {
 
     //jumps from 300 to 0 before animation starts
     iv2.x.anim().delay(1000).from(0).to(1000).dur(3000).start();
-
 });
