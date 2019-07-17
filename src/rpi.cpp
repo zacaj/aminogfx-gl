@@ -82,7 +82,8 @@ void AminoGfxRPi::setup() {
         //VideoCore IV
         bcm_host_init();
 #endif
-
+//cbxx test
+bcm_host_init();
 #ifdef EGL_GBM
         if (DEBUG_GLES) {
             printf("-> initializing OpenGL driver\n");
@@ -741,9 +742,9 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
 #endif
 
     //cbxx TODO determine gpu_mem
-
+//cbxx TODO check again (works in vcgencmd get_mem )
     //VC
-#ifdef EGL_DISPMANX
+//#ifdef EGL_DISPMANX
     char resp[80] = "";
 
     //Note: does not work on RPi 4!
@@ -760,7 +761,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
-#endif
+//#endif
 }
 
 /**
