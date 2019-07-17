@@ -10,11 +10,11 @@
 
 #define gettid() syscall(SYS_gettid)
 
-//cbxx FIXME debugging
-#define DEBUG_GLES true
-#define DEBUG_RENDER true
+//debug
+#define DEBUG_GLES false
+#define DEBUG_RENDER false
 #define DEBUG_INPUT false
-#define DEBUG_HDMI true
+#define DEBUG_HDMI false
 
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))

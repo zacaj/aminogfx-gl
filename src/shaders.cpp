@@ -294,9 +294,9 @@ void AnyAminoShader::drawElements(GLushort *indices, GLsizei elements, GLenum mo
  */
 ColorShader::ColorShader() : AnyAminoShader() {
     //shaders
-//cbxx precision
+//cbxx precision -> mediump
     fragmentShader = R"(
-        precision mediump float;
+        precision lowp float;
 
         uniform vec4 color;
 
@@ -355,7 +355,7 @@ ColorLightingShader::ColorLightingShader() : ColorShader() {
     )";
 //cbxx precision
     fragmentShader = R"(
-        precision mediump float;
+        precision lowp float;
 
         varying float lightFac;
         uniform vec4 color;
@@ -462,7 +462,7 @@ TextureShader::TextureShader() : AnyAminoShader() {
 //cbxx precision
     //supports opacity and discarding of fully transparent pixels
     fragmentShader = R"(
-        precision mediump float;
+        precision lowp float;
 
         varying vec2 uv;
 
@@ -562,7 +562,7 @@ TextureClampToBorderShader::TextureClampToBorderShader() : TextureShader() {
     //Note: supports clamp to border, using transparent texture
 //cbxx precision
     fragmentShader = R"(
-        precision mediump float;
+        precision lowp float;
 
         varying vec2 uv;
 
