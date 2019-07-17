@@ -8,7 +8,13 @@ if (process.argv.length == 2) {
 /*
  * Results:
  *
- *  1) Raspberry Pi: 1080p (2016-09-22)
+ *  1) Raspberry Pi 4B: 1080p60 (2019-07-17)
+ *
+ *   - 1: 20 fps !!!
+ *   - 12: 2 fps !!!
+ *  cbxx TODO check shaders
+ *
+ *  2) Raspberry Pi 3B: 1080p (2016-09-22)
  *
  *    - 5:  60 fps (10.3 MP)
  *    - 6:  52 fps (12.4 MP)
@@ -18,7 +24,7 @@ if (process.argv.length == 2) {
  *
  *    => limit at 5 fullscreen layers (ca. 10 MP)
  *
- *  2) Raspberry Pi: 720p (2016-09-22)
+ *  3) Raspberry Pi 3B: 720p (2016-09-22)
  *
  *    - 12: 60 fps (11.1 MP)
  *    - 14: 50 fps (12.9 MP

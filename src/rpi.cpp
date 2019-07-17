@@ -90,7 +90,7 @@ void AminoGfxRPi::setup() {
         driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
 
         assert(driDevice > 0);
-//cbxx drmGetDeviceNameFromFd
+
         if (DEBUG_GLES) {
             printf("-> DRI device ready\n");
         }
@@ -325,6 +325,8 @@ void AminoGfxRPi::initEGL() {
 #endif
 
 #ifdef EGL_GBM
+//cbxx drmVersionPtr drmGetVersion
+//cbxx drmFreeVersion.
     //get display resolutions
     drmModeRes *resources = drmModeGetResources(driDevice);
 
@@ -568,7 +570,7 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
 
 #ifdef EGL_GBM
 		drmModeConnector *connector = drmModeGetConnector(driDevice, connector_id);
-
+//cbxx check res
         refreshRate = connector->modes[0].vrefresh;
 
 		drmModeFreeConnector(connector);

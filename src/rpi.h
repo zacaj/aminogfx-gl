@@ -9,9 +9,11 @@
 #include "interface/vchiq_arm/vchiq_if.h"
 
 //GBM
+#ifdef EGL_GBM
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 #include <gbm.h>
+#endif
 
 #include <semaphore.h>
 #include <linux/input.h>
@@ -50,6 +52,7 @@ private:
     uint32_t screenH = 0;
 
     //DRM/GBM
+#ifdef EGL_GBM
     int driDevice = 0;
     uint32_t connector_id = 0;
     drmModeModeInfo mode_info;
@@ -57,6 +60,7 @@ private:
     drmModeCrtc *crtc = NULL;
     gbm_bo *previous_bo = NULL;
     uint32_t previous_fb = 0;
+#endif
 
     //resolution
     static sem_t resSem;
