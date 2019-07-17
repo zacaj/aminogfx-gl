@@ -294,7 +294,7 @@ void AnyAminoShader::drawElements(GLushort *indices, GLsizei elements, GLenum mo
  */
 ColorShader::ColorShader() : AnyAminoShader() {
     //shaders
-//cbxx precision -> mediump
+    //Note: no performance difference seen between highp, mediump and lowp!
     fragmentShader = R"(
         precision highp float;
 
@@ -353,7 +353,7 @@ ColorLightingShader::ColorLightingShader() : ColorShader() {
             lightFac = abs(dot(normalTrans.xyz, -lightDir));
         }
     )";
-//cbxx precision
+
     fragmentShader = R"(
         precision highp float;
 
@@ -459,7 +459,7 @@ TextureShader::TextureShader() : AnyAminoShader() {
             uv = texCoord;
         }
     )";
-//cbxx precision
+
     //supports opacity and discarding of fully transparent pixels
     fragmentShader = R"(
         precision highp float;
@@ -560,7 +560,6 @@ void TextureShader::drawElements(GLushort *indices, GLsizei elements, GLenum mod
 
 TextureClampToBorderShader::TextureClampToBorderShader() : TextureShader() {
     //Note: supports clamp to border, using transparent texture
-//cbxx precision
     fragmentShader = R"(
         precision highp float;
 

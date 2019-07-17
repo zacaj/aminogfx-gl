@@ -11,10 +11,12 @@ if (process.argv.length == 2) {
  *  1) Raspberry Pi 4B: 1080p60 (2019-07-17)
  *
  *   - 1: 20 fps !!!
+ *   - 5:  5 fps !!!
  *   - 12: 2 fps !!!
  *
- *   Notes: mediump, lowp -> no difference
- *  cbxx TODO check shaders
+ *   Notes: highp, mediump, lowp -> no difference
+ *
+ *   cbxx FIXME bas performance -> why???
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *
