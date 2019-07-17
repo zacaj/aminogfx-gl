@@ -8,6 +8,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+#include <sstream>
+
 #define gettid() syscall(SYS_gettid)
 
 //debug
@@ -727,12 +729,12 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
 
     //DRM
 #ifdef EGL_GBM
-    drmVersionPtr version = drmGetVersion(device);
+    drmVersionPtr version = drmGetVersion(driDevice);
     std::ostringstream ss;
 
     ss << version->version_major << "." << version-> version_minor << " (" << version-> name << ", " << version->date << ", " << version->desc;
 
-    Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str()));
+    Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str().c_str()));
 
     drmFreeVersion(version);
 #endif
