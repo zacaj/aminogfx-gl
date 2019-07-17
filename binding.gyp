@@ -104,7 +104,7 @@
 		                    ],
                             # OS specific libraries
                             'conditions': [
-                                # Buster (10)
+                                # Buster (10.x)
                                 [ '<!@(lsb_release -c -s) == "buster"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
@@ -119,8 +119,8 @@
                                         "EGL_GBM"
                                     ]
                                 }],
-                                # Stretch (9)
-                                [ '<!@(lsb_release -c -s) == "stretch"', {
+                                # Stretch (9.x)
+                                [ '<!@(lsb_release -c -s) == stretch', {
                                     'libraries': [
                                         # OpenGL
                                         "-lbrcmGLESv2",
@@ -136,7 +136,7 @@
                                         "EGL_DISPMANX"
                                     ]
                                 }],
-                                # Jessie (8)
+                                # Jessie (8.x)
                                 [ '<!@(lsb_release -c -s) == "jessie"', {
                                     'libraries': [
                                         # OpenGL
