@@ -14,7 +14,7 @@ if (process.argv.length == 2) {
  *   - 12: 2 fps !!!
  *  cbxx TODO check shaders
  *
- *  2) Raspberry Pi 3B: 1080p (2016-09-22)
+ *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *
  *    - 5:  60 fps (10.3 MP)
  *    - 6:  52 fps (12.4 MP)
