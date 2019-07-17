@@ -778,6 +778,7 @@ void AminoGfxRPi::initRenderer() {
     initInput();
 }
 
+#ifdef EGL_DISPMANX
 /**
  * Get EGL surface from Dispmanx (RPi 3 and lower).
  */
@@ -842,7 +843,9 @@ EGLSurface AminoGfxRPi::createDispmanxSurface() {
 
     return surface;
 }
+#endif
 
+#ifdef EGL_GBM
 /**
  * Get EGL surface from GBM.
  */
@@ -858,6 +861,7 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 
     return surface;
 }
+#endif
 
 bool AminoGfxRPi::startsWith(const char *pre, const char *str) {
     size_t lenpre = strlen(pre);

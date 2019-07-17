@@ -105,7 +105,7 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10)
-                                [ '<!@(lsb_release -r -s) == 10', {
+                                [ '<!@(lsb_release -c -s) == "buster"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -120,7 +120,7 @@
                                     ]
                                 }],
                                 # Stretch (9)
-                                [ '<!@(lsb_release -r -s) == 9', {
+                                [ '<!@(lsb_release -c -s) == "stretch"', {
                                     'libraries': [
                                         # OpenGL
                                         "-lbrcmGLESv2",
@@ -137,7 +137,7 @@
                                     ]
                                 }],
                                 # Jessie (8)
-                                [ '<!@(lsb_release -r -s) == 8', {
+                                [ '<!@(lsb_release -c -s) == "jessie"', {
                                     'libraries': [
                                         # OpenGL
                                         "-lGLESv2",

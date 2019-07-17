@@ -5,8 +5,11 @@
 #include "renderer.h"
 #include "rpi_video.h"
 
+//Dispmanx
+#ifdef EGL_DISPMANX
 #include "bcm_host.h"
 #include "interface/vchiq_arm/vchiq_if.h"
+#endif
 
 //GBM
 #ifdef EGL_GBM
@@ -91,8 +94,13 @@ private:
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;
 
+#ifdef EGL_DISPMANX
     EGLSurface createDispmanxSurface();
+#endif
+
+#ifdef EGL_GBM
     EGLSurface createGbmSurface();
+#endif
 
     bool startsWith(const char *pre, const char *str);
     void initInput();
