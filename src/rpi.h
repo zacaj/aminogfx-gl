@@ -66,8 +66,10 @@ private:
 #endif
 
     //resolution
+#ifdef EGL_DISPMANX
     static sem_t resSem;
     static bool resSemValid;
+#endif
 
     //input
     std::vector<int> fds;
@@ -79,8 +81,10 @@ private:
     void setup() override;
     void initEGL();
 
+#ifdef EGL_DISPMANX
     static TV_DISPLAY_STATE_T* getDisplayState();
     static void tvservice_cb(void *callback_data, uint32_t reason, uint32_t param1, uint32_t param2);
+#endif
 
     void destroy() override;
     void destroyAminoGfxRPi();
@@ -88,8 +92,10 @@ private:
     bool getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscreen) override;
     void getStats(v8::Local<v8::Object> &obj) override;
 
+#ifdef EGL_DISPMANX
     void forceHdmiMode(uint32_t code);
     void switchHdmiOff();
+#endif
 
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;

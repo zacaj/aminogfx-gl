@@ -128,7 +128,13 @@ void AminoGfxRPi::setup() {
                     std::string prefRes = AminoJSObject::toString(resolutionValue);
 
                     //change resolution
+#ifdef EGL_GBM
+                    //cbxx TODO DRM/GBM
+                    //cbxx TODO 4k mode
+                    printf("unknown resolution: %s\n", prefRes.c_str());
+#endif
 
+#ifdef EGL_DISPMANX
                     if (prefRes == "720p@24") {
                         forceHdmiMode(HDMI_CEA_720p24);
                     } else if (prefRes == "720p@25") {
@@ -152,6 +158,7 @@ void AminoGfxRPi::setup() {
                     } else {
                         printf("unknown resolution: %s\n", prefRes.c_str());
                     }
+#endif
                 }
             }
         }
@@ -325,8 +332,6 @@ void AminoGfxRPi::initEGL() {
 #endif
 
 #ifdef EGL_GBM
-//cbxx drmVersionPtr drmGetVersion
-//cbxx drmFreeVersion.
     //get display resolutions
     drmModeRes *resources = drmModeGetResources(driDevice);
 
@@ -387,6 +392,7 @@ void AminoGfxRPi::initEGL() {
     }
 }
 
+#ifdef EGL_DISPMANX
 /**
  * Get the current display state (Dispmanx version).
  *
@@ -472,6 +478,7 @@ void AminoGfxRPi::tvservice_cb(void *callback_data, uint32_t reason, uint32_t pa
         sem_post(&resSem);
     }
 }
+#endif
 
 /**
  * Destroy GLFW instance.
@@ -570,10 +577,12 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
 
 #ifdef EGL_GBM
 		drmModeConnector *connector = drmModeGetConnector(driDevice, connector_id);
-//cbxx check res
-        refreshRate = connector->modes[0].vrefresh;
 
-		drmModeFreeConnector(connector);
+        if (connector) {
+            refreshRate = connector->modes[0].vrefresh;
+
+	    	drmModeFreeConnector(connector);
+        }
 #endif
 
 #ifdef EGL_DISPMANX
@@ -600,6 +609,11 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
 void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
     AminoGfx::getStats(obj);
 
+    //cbxx TODO GCM/DRM implementation
+    //cbxx drmVersionPtr drmGetVersion
+    //cbxx drmFreeVersion.
+
+#ifdef EGL_DISPMANX
     //HDMI (see https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h)
     TV_DISPLAY_STATE_T *tvState = getDisplayState();
 
@@ -656,16 +670,18 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
         Nan::Set(deviceObj, Nan::New("monitorName").ToLocalChecked(), Nan::New(id.monitor_name).ToLocalChecked());
         Nan::Set(deviceObj, Nan::New("serialNum").ToLocalChecked(), Nan::New(id.serial_num));
     }
+#endif
 }
 
+#ifdef EGL_DISPMANX
 /**
- * Switch to HDMI mode.
+ * Switch to HDMI mode (dispmanx version).
  */
 void AminoGfxRPi::forceHdmiMode(uint32_t code) {
     if (DEBUG_HDMI) {
         printf("Changing resolution to CEA code %i\n", (int)code);
     }
-//cbxx TODO RPi 4
+
     //Note: mode change takes some time (is asynchronous)
     //      see https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h
     sem_init(&resSem, 0, 0);
@@ -689,9 +705,10 @@ void AminoGfxRPi::switchHdmiOff() {
     if (DEBUG_HDMI) {
         printf("Switching HDMI off.\n");
     }
-//cbxx TODO RPi 4
+
     vc_tv_power_off();
 }
+#endif
 
 /**
  * Add VideoCore IV properties.
@@ -1332,8 +1349,11 @@ void AminoGfxRPi::destroyEGLImageHandler(AsyncValueUpdate *update, int state) {
 
 //static initializers
 bool AminoGfxRPi::glESInitialized = false;
+
+#ifdef EGL_DISPMANX
 sem_t AminoGfxRPi::resSem;
 bool AminoGfxRPi::resSemValid = false;
+#endif
 
 //
 // AminoGfxRPiFactory

@@ -105,7 +105,6 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10.x)
-                                # cbxx FIXME fails
                                 [ '"<!@(lsb_release -c -s)" == "buster"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
