@@ -734,7 +734,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
 
     ss << version->version_major << "." << version-> version_minor << " (" << version-> name << ", " << version->date << ", " << version->desc;
 
-    Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str().c_str()));
+    Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str()).ToLocalChecked());
 
     drmFreeVersion(version);
 #endif
