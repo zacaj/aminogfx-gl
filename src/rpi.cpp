@@ -725,12 +725,21 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     Nan::Set(obj, Nan::New("eglVendor").ToLocalChecked(), Nan::New(std::string(eglQueryString(display, EGL_VENDOR))).ToLocalChecked());
     Nan::Set(obj, Nan::New("eglVersion").ToLocalChecked(), Nan::New(std::string(eglQueryString(display, EGL_VERSION))).ToLocalChecked());
 
-    //cbxx drmVersionPtr drmGetVersion
-    //cbxx drmFreeVersion.
+    //DRM
+#ifdef EGL_GBM
+    drmVersionPtr version = drmGetVersion(device);
+    std::ostringstream ss;
+
+    ss << version->version_major << "." << version-> version_minor << " (" << version-> name << ", " << version->date << ", " << version->desc;
+
+    Nan::Set(obj, Nan::New("drm").ToLocalChecked(), Nan::New(ss.str()));
+
+    drmFreeVersion(version);
+#endif
 
     //cbxx TODO check VC support
     //VC
-#ifdef EGL_DISPMANX
+//#ifdef EGL_DISPMANX
     char resp[80] = "";
 
     if (vc_gencmd(resp, sizeof resp, "get_mem gpu") == 0) {
@@ -746,7 +755,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
-#endif
+//#endif
 }
 
 /**
@@ -933,11 +942,11 @@ void AminoGfxRPi::initInput() {
 
             ioctl(fd, EVIOCGNAME(sizeof name), name);
 
-            printf("Reading from: %s (%s)\n", str,name);
+            printf("Reading from: %s (%s)\n", str, name);
 
             ioctl(fd, EVIOCGPHYS(sizeof name), name);
 
-            printf("Location %s (%s)\n", str,name);
+            printf("Location %s (%s)\n", str, name);
 
             struct input_id device_info;
 
