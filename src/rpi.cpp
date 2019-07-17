@@ -552,11 +552,14 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
     }
 
     if (instanceCount == 0) {
+#ifdef EGL_DISPMANX
         //tvservice
         vc_tv_unregister_callback(tvservice_cb);
 
         //VideoCore IV
         bcm_host_deinit();
+#endif
+
         glESInitialized = false;
     }
 }
@@ -610,8 +613,6 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
     AminoGfx::getStats(obj);
 
     //cbxx TODO GCM/DRM implementation
-    //cbxx drmVersionPtr drmGetVersion
-    //cbxx drmFreeVersion.
 
 #ifdef EGL_DISPMANX
     //HDMI (see https://github.com/raspberrypi/userland/blob/master/interface/vmcs_host/vc_hdmi.h)
@@ -724,7 +725,12 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
     Nan::Set(obj, Nan::New("eglVendor").ToLocalChecked(), Nan::New(std::string(eglQueryString(display, EGL_VENDOR))).ToLocalChecked());
     Nan::Set(obj, Nan::New("eglVersion").ToLocalChecked(), Nan::New(std::string(eglQueryString(display, EGL_VERSION))).ToLocalChecked());
 
+    //cbxx drmVersionPtr drmGetVersion
+    //cbxx drmFreeVersion.
+
+    //cbxx TODO check VC support
     //VC
+#ifdef EGL_DISPMANX
     char resp[80] = "";
 
     if (vc_gencmd(resp, sizeof resp, "get_mem gpu") == 0) {
@@ -740,6 +746,7 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
+#endif
 }
 
 /**
