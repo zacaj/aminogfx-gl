@@ -586,7 +586,7 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         drmModeFreeCrtc(crtc);
 
         if (previous_bo) {
-            drmModeRmFB(driDevice, previous_fb);
+//cbxx            drmModeRmFB(driDevice, previous_fb);
             gbm_surface_release_buffer(gbmSurface, previous_bo);
         }
 #endif
@@ -1135,34 +1135,49 @@ void AminoGfxRPi::renderingDone() {
     assert(bo);
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
-    uint32_t pitch = gbm_bo_get_stride(bo);
 
     //debug cbxx
     printf("-> bo handle: %i\n", handle);
+
+    //cache framebuffers
+    //cbxx TOOD free on exit
+    std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
+    uint32_t fb;
+
+    if (it != fbCache.end()) {
+        //use cached fb
+        gb = it->second;
+    } else {
+        //create new fb
+        uint32_t pitch = gbm_bo_get_stride(bo);
+        //cbxx check drmModeAddFB2
+        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+
+        assert(res == 0);
+
+        fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
+    }
+
 //cbxx check performance optimizations
 //cbxx TODO reuse fb (previous_fb)
     //create framebuffer
-    uint32_t fb;
-    int res2 = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
-
-    assert(res2 == 0);
 
     //set CRTC configuration
-    res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+    int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
 
     //free previous
     if (previous_bo) {
 //cbxx TODO avoid
-        drmModeRmFB(driDevice, previous_fb);
+//        drmModeRmFB(driDevice, previous_fb);
         //release old bo
         gbm_surface_release_buffer(gbmSurface, previous_bo);
     }
 
     //prepare next
     previous_bo = bo;
-    previous_fb = fb;
+//cbxx    previous_fb = fb;
 #endif
 
     if (DEBUG_GLES) {
