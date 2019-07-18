@@ -358,7 +358,7 @@ void AminoGfxRPi::initEGL() {
 
     //select mode
     int prefH = 0;
-    int prefRefresh = 0;
+    uint32_t prefRefresh = 0;
 
     if (prefRes != "") {
         //supported aminogfx values
