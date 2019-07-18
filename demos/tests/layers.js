@@ -17,6 +17,7 @@ if (process.argv.length == 2) {
  *   Notes: highp, mediump, lowp -> no difference
  *
  *   cbxx FIXME bas performance -> why???
+ *   cbxx TODO where is the time lost? rendering time is fine but overall framerate is very bad
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *

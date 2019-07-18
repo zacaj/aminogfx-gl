@@ -876,7 +876,7 @@ void AminoGfxRPi::initRenderer() {
     EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
 
     assert(EGL_FALSE != res);
-
+swapInterval = 1; //cbxx
     //swap interval
     if (swapInterval != 0) {
         res = eglSwapInterval(display, swapInterval);
