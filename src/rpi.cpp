@@ -425,7 +425,7 @@ void AminoGfxRPi::initEGL() {
 
         //check
         if (!found) {
-            printf("No matching resolution found!\n";
+            printf("No matching resolution found!\n");
 
             prefH = 0;
             prefRefresh = 0;
