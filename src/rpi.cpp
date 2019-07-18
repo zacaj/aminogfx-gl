@@ -112,7 +112,8 @@ void AminoGfxRPi::setup() {
 
         //show info screen (Note: seems not to work!)
         //vc_tv_show_info(1);
-
+//cbxx try
+forceHdmiMode(HDMI_CEA_720p60);
         //handle preferred resolution
         if (!createParams.IsEmpty()) {
             v8::Local<v8::Object> obj = Nan::New(createParams);
@@ -667,7 +668,7 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
 }
 
 //cbxx use again
-#ifdef EGL_DISPMANX
+//#ifdef EGL_DISPMANX
 /**
  * Switch to HDMI mode (dispmanx version).
  */
@@ -702,7 +703,8 @@ void AminoGfxRPi::switchHdmiOff() {
 
     vc_tv_power_off();
 }
-#endif
+//cbxx
+//#endif
 
 /**
  * Add VideoCore IV properties.

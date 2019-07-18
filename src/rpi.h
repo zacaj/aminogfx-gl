@@ -90,10 +90,10 @@ private:
     void getStats(v8::Local<v8::Object> &obj) override;
 
 //cbxx use again
-#ifdef EGL_DISPMANX
+//#ifdef EGL_DISPMANX
     void forceHdmiMode(uint32_t code);
     void switchHdmiOff();
-#endif
+//#endif
 
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;
