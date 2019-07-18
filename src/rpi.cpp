@@ -416,7 +416,7 @@ void AminoGfxRPi::initEGL() {
         for (int i = 0; i < connector->count_modes; i++) {
             drmModeModeInfo mode = connector->modes[i];
 
-            if (mode.vdisplay == prefH && mode.vrefresh) {
+            if (mode.vdisplay == prefH && mode.vrefresh == prefRefresh) {
                 mode_info = mode;
                 found = true;
                 break;
