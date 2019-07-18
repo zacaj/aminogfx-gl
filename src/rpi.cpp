@@ -103,17 +103,18 @@ void AminoGfxRPi::setup() {
             printf("-> ready\n");
         }
 
+#ifdef EGL_DISPMANX
         /*
          * register callback
          *
          * Note: never called with "hdmi_force_hotplug=1".
          */
         vc_tv_register_callback(tvservice_cb, NULL);
+#endif
 
         //show info screen (Note: seems not to work!)
         //vc_tv_show_info(1);
-//cbxx try -> works but gets reset to 1080p afterwards!
-forceHdmiMode(HDMI_CEA_720p60);
+
         //handle preferred resolution
         if (!createParams.IsEmpty()) {
             v8::Local<v8::Object> obj = Nan::New(createParams);
@@ -125,16 +126,10 @@ forceHdmiMode(HDMI_CEA_720p60);
                 v8::Local<v8::Value> resolutionValue = resolutionMaybe.ToLocalChecked();
 
                 if (resolutionValue->IsString()) {
-                    std::string prefRes = AminoJSObject::toString(resolutionValue);
-
-                    //change resolution
-#ifdef EGL_GBM
-                    //cbxx TODO DRM/GBM
-                    //cbxx TODO 4k mode
-                    printf("unknown resolution: %s\n", prefRes.c_str());
-#endif
+                    prefRes = AminoJSObject::toString(resolutionValue);
 
 #ifdef EGL_DISPMANX
+                    //change resolution
                     if (prefRes == "720p@24") {
                         forceHdmiMode(HDMI_CEA_720p24);
                     } else if (prefRes == "720p@25") {
@@ -361,23 +356,75 @@ void AminoGfxRPi::initEGL() {
 
 	connector_id = connector->connector_id;
 
-    //select mode cbxx TODO
-    if (DEBUG_GLES || DEBUG_HDMI) {
-        printf("-> modes: %i\n", connector->count_modes);
-    }
+    //select mode
+    if (prefRes == "") {
+        //use first mode
+        mode_info = connector->modes[0];
+    } else {
+        //supported aminogfx value
+        int prefH;
+        int prefRefresh;
 
-    for (int i = 0; i < connector->count_modes; i++) {
-        drmModeModeInfo mode = connector->modes[i];
-
-        if (DEBUG_GLES || DEBUG_HDMI) {
-            printf(" -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
+        if (prefRes == "720p@24") {
+            prefH = 720;
+            prefRefresh = 24;
+        } else if (prefRes == "720p@25") {
+            prefH = 720;
+            prefRefresh = 25;
+        } else if (prefRes == "720p@30") {
+            prefH = 720;
+            prefRefresh = 30;
+        } else if (prefRes == "720p@50") {
+            prefH = 720;
+            prefRefresh = 50;
+        } else if (prefRes == "720p@60") {
+            prefH = 720;
+            prefRefresh = 60;
+        } else if (prefRes == "1080p@24") {
+            prefH = 1080;
+            prefRefresh = 24;
+        } else if (prefRes == "1080p@25") {
+            prefH = 1080;
+            prefRefresh = 25;
+        } else if (prefRes == "1080p@30") {
+            prefH = 1080;
+            prefRefresh = 30;
+        } else if (prefRes == "1080p@50") {
+            prefH = 1080;
+            prefRefresh = 50;
+        } else if (prefRes == "1080p@60") {
+            prefH = 1080;
+            prefRefresh = 60;
+        } else {
+            printf("unknown resolution: %s\n", prefRes.c_str());
         }
 
-        //cbxx TODO select resolution
+        if (DEBUG_GLES || DEBUG_HDMI) {
+            printf("-> modes: %i\n", connector->count_modes);
+
+            //show all
+            for (int i = 0; i < connector->count_modes; i++) {
+                drmModeModeInfo mode = connector->modes[i];
+
+                printf(" -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);            }
+            }
+        }
+
+        //find matching resolution
+        for (int i = 0; i < connector->count_modes; i++) {
+            drmModeModeInfo mode = connector->modes[i];
+
+            if (mode.vdisplay == prefH && mode.vrefresh) {
+                mode_info = mode;
+                break;
+            }
+        }
     }
 
 	//show mode
-	mode_info = connector->modes[0];
+    if (DEBUG_GLES || DEBUG_HDMI) {
+        printf(" -> using: %ix%i@%i (%s)\n", mode_info.hdisplay, mode_info.vdisplay, mode_info.vrefresh, mode_info.name);
+    }
 
     screenW = mode_info.hdisplay;
     screenH = mode_info.vdisplay;
@@ -468,6 +515,7 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
     return tvstate;
 }
 
+#ifdef EGL_DISPMANX
 /**
  * HDMI tvservice callback (Dispmanx implementation).
  */
@@ -492,6 +540,7 @@ void AminoGfxRPi::tvservice_cb(void *callback_data, uint32_t reason, uint32_t pa
         sem_post(&resSem);
     }
 }
+#endif
 
 /**
  * Destroy GLFW instance.
@@ -565,8 +614,10 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
     }
 
     if (instanceCount == 0) {
+#ifdef EGL_DISPMANX
         //tvservice
         vc_tv_unregister_callback(tvservice_cb);
+#endif
 
         //VideoCore IV
         bcm_host_deinit();
@@ -682,10 +733,11 @@ void AminoGfxRPi::getStats(v8::Local<v8::Object> &obj) {
     }
 }
 
-//cbxx use again
-//#ifdef EGL_DISPMANX
+#ifdef EGL_DISPMANX
 /**
- * Switch to HDMI mode (dispmanx version).
+ * Switch to HDMI mode.
+ *
+ * Note: works on RPi 4 too but conflicts with DRM mode selection.
  */
 void AminoGfxRPi::forceHdmiMode(uint32_t code) {
     if (DEBUG_HDMI) {
@@ -718,8 +770,7 @@ void AminoGfxRPi::switchHdmiOff() {
 
     vc_tv_power_off();
 }
-//cbxx
-//#endif
+#endif
 
 /**
  * Add VideoCore IV properties.
@@ -1374,9 +1425,11 @@ void AminoGfxRPi::destroyEGLImageHandler(AsyncValueUpdate *update, int state) {
 
 //static initializers
 bool AminoGfxRPi::glESInitialized = false;
+
+#ifdef EGL_DISPMANX
 sem_t AminoGfxRPi::resSem;
 bool AminoGfxRPi::resSemValid = false;
-
+#endif
 //
 // AminoGfxRPiFactory
 //

@@ -56,8 +56,8 @@ private:
     uint32_t screenW = 0;
     uint32_t screenH = 0;
 
-    //DRM/GBM
 #ifdef EGL_GBM
+    //DRM/GBM
     int driDevice = 0;
     uint32_t connector_id = 0;
     drmModeModeInfo mode_info;
@@ -66,9 +66,14 @@ private:
     gbm_bo *previous_bo = NULL;
     uint32_t previous_fb = 0;
 #endif
+
     //resolution
+    std::string prefRes = "";
+
+#ifdef EGL_DISPMANX
     static sem_t resSem;
     static bool resSemValid;
+#endif
 
     //input
     std::vector<int> fds;
@@ -81,7 +86,10 @@ private:
     void initEGL();
 
     static TV_DISPLAY_STATE_T* getDisplayState();
+
+#ifdef EGL_DISPMANX
     static void tvservice_cb(void *callback_data, uint32_t reason, uint32_t param1, uint32_t param2);
+#endif
 
     void destroy() override;
     void destroyAminoGfxRPi();
@@ -89,11 +97,10 @@ private:
     bool getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscreen) override;
     void getStats(v8::Local<v8::Object> &obj) override;
 
-//cbxx use again
-//#ifdef EGL_DISPMANX
+#ifdef EGL_DISPMANX
     void forceHdmiMode(uint32_t code);
     void switchHdmiOff();
-//#endif
+#endif
 
     void populateRuntimeProperties(v8::Local<v8::Object> &obj) override;
     void initRenderer() override;
