@@ -1157,16 +1157,24 @@ void AminoGfxRPi::renderingDone() {
         assert(res == 0);
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
+
+        //debug cbxx
+        printf("-> created fb\n");
     }
 
 //cbxx check performance optimizations
 //cbxx TODO reuse fb (previous_fb)
     //create framebuffer
 
+//cbxx needed?
     //set CRTC configuration
+    /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
+    */
+
+//cbxx TODO drmModePageFlip
 
     //free previous
     if (previous_bo) {
