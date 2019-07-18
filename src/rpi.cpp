@@ -339,22 +339,22 @@ void AminoGfxRPi::initEGL() {
         printf("DRM connectors: %i\n", resources->count_connectors);
     }
 
-	for (int i = 0; i < resources->count_connectors; i++) {
-		drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
+    for (int i = 0; i < resources->count_connectors; i++) {
+        drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
 
-		//pick the first connected connector
-		if (connector2->connection == DRM_MODE_CONNECTED) {
+        //pick the first connected connector
+        if (connector2->connection == DRM_MODE_CONNECTED) {
             //Note: have to free instance later
-			connector = connector2;
+            connector = connector2;
             break;
-		}
+        }
 
-		drmModeFreeConnector(connector2);
-	}
+        drmModeFreeConnector(connector2);
+    }
 
     assert(connector);
 
-	connector_id = connector->connector_id;
+    connector_id = connector->connector_id;
 
     //select mode
     int prefH = 0;
@@ -438,7 +438,7 @@ void AminoGfxRPi::initEGL() {
         mode_info = connector->modes[0];
     }
 
-	//show mode
+    //show mode
     if (DEBUG_GLES || DEBUG_HDMI) {
         printf(" -> using: %ix%i@%i (%s)\n", mode_info.hdisplay, mode_info.vdisplay, mode_info.vrefresh, mode_info.name);
     }
@@ -446,21 +446,21 @@ void AminoGfxRPi::initEGL() {
     screenW = mode_info.hdisplay;
     screenH = mode_info.vdisplay;
 
-	//find an encoder
+    //find an encoder
     assert(connector->encoder_id);
 
     drmModeEncoder *encoder = drmModeGetEncoder(driDevice, connector->encoder_id);
 
     assert(encoder);
 
-	//find a CRTC
-	if (encoder->crtc_id) {
-		crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
-	}
+    //find a CRTC
+    if (encoder->crtc_id) {
+        crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
+    }
 
-	drmModeFreeEncoder(encoder);
-	drmModeFreeConnector(connector);
-	drmModeFreeResources(resources);
+    drmModeFreeEncoder(encoder);
+    drmModeFreeConnector(connector);
+    drmModeFreeResources(resources);
 #endif
 
     assert(screenW > 0);
@@ -582,13 +582,13 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
     if (display != EGL_NO_DISPLAY) {
 #ifdef EGL_GBM
         //set the previous crtc
-	    drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
-	    drmModeFreeCrtc(crtc);
+        drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
+        drmModeFreeCrtc(crtc);
 
-	    if (previous_bo) {
-		    drmModeRmFB(driDevice, previous_fb);
-		    gbm_surface_release_buffer(gbmSurface, previous_bo);
-	    }
+        if (previous_bo) {
+            drmModeRmFB(driDevice, previous_fb);
+            gbm_surface_release_buffer(gbmSurface, previous_bo);
+        }
 #endif
 
         if (context != EGL_NO_CONTEXT) {
@@ -658,12 +658,12 @@ bool AminoGfxRPi::getScreenInfo(int &w, int &h, int &refreshRate, bool &fullscre
     fullscreen = true;
 
 #ifdef EGL_GBM
-	drmModeConnector *connector = drmModeGetConnector(driDevice, connector_id);
+    drmModeConnector *connector = drmModeGetConnector(driDevice, connector_id);
 
     if (connector) {
         refreshRate = connector->modes[0].vrefresh;
 
-	    drmModeFreeConnector(connector);
+        drmModeFreeConnector(connector);
     }
 #endif
 
@@ -965,7 +965,7 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 
     assert(gbmSurface);
 
-	EGLSurface surface = eglCreateWindowSurface(display, config, gbmSurface, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, gbmSurface, NULL);
 
     assert(surface != EGL_NO_SURFACE);
 
@@ -1129,21 +1129,40 @@ void AminoGfxRPi::renderingDone() {
     assert(res == EGL_TRUE);
 
 #ifdef EGL_GBM
+    //lock current front buffer and return a new bo
     struct gbm_bo *bo = gbm_surface_lock_front_buffer(gbmSurface);
-	uint32_t handle = gbm_bo_get_handle(bo).u32;
-	uint32_t pitch = gbm_bo_get_stride(bo);
-	uint32_t fb;
 
-	drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
-	drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+    assert(bo);
 
-	if (previous_bo) {
-		drmModeRmFB(driDevice, previous_fb);
-		gbm_surface_release_buffer(gbmSurface, previous_bo);
-	}
+    uint32_t handle = gbm_bo_get_handle(bo).u32;
+    uint32_t pitch = gbm_bo_get_stride(bo);
 
-	previous_bo = bo;
-	previous_fb = fb;
+    //debug cbxx
+    printf("-> bo handle: %i\n", handle);
+//cbxx check performance optimizations
+//cbxx TODO reuse fb (previous_fb)
+    //create framebuffer
+    uint32_t fb;
+    int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+
+    assert(res == 0);
+
+    //set CRTC configuration
+    res = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+    assert(res == 0);
+
+    //free previous
+    if (previous_bo) {
+//cbxx TODO avoid
+        drmModeRmFB(driDevice, previous_fb);
+        //release old bo
+        gbm_surface_release_buffer(gbmSurface, previous_bo);
+    }
+
+    //prepare next
+    previous_bo = bo;
+    previous_fb = fb;
 #endif
 
     if (DEBUG_GLES) {
