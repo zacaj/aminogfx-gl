@@ -1143,14 +1143,14 @@ void AminoGfxRPi::renderingDone() {
 //cbxx TODO reuse fb (previous_fb)
     //create framebuffer
     uint32_t fb;
-    int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+    int res2 = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
 
-    assert(res == 0);
+    assert(res2 == 0);
 
     //set CRTC configuration
-    res = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+    res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
-    assert(res == 0);
+    assert(res2 == 0);
 
     //free previous
     if (previous_bo) {
