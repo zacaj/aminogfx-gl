@@ -12,11 +12,11 @@
 
 #define gettid() syscall(SYS_gettid)
 
-//debug
+//debug cbxx
 #define DEBUG_GLES false
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
-#define DEBUG_HDMI false
+#define DEBUG_HDMI true
 
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
@@ -687,7 +687,7 @@ void AminoGfxRPi::forceHdmiMode(uint32_t code) {
         return;
     }
 
-    //wait for change to occur before DispmanX is initialized
+    //wait for change to occur before Dispmanx is initialized
     sem_wait(&resSem);
     sem_destroy(&resSem);
     resSemValid = false;
