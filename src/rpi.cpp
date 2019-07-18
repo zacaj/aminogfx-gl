@@ -1146,7 +1146,7 @@ void AminoGfxRPi::renderingDone() {
 
     if (it != fbCache.end()) {
         //use cached fb
-        gb = it->second;
+        fb = it->second;
     } else {
         //create new fb
         uint32_t pitch = gbm_bo_get_stride(bo);
