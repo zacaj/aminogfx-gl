@@ -112,7 +112,7 @@ void AminoGfxRPi::setup() {
 
         //show info screen (Note: seems not to work!)
         //vc_tv_show_info(1);
-//cbxx try
+//cbxx try -> works but gets reset to 1080p afterwards!
 forceHdmiMode(HDMI_CEA_720p60);
         //handle preferred resolution
         if (!createParams.IsEmpty()) {
@@ -360,6 +360,21 @@ void AminoGfxRPi::initEGL() {
     assert(connector);
 
 	connector_id = connector->connector_id;
+
+    //select mode cbxx TODO
+    if (DEBUG_GLES || DEBUG_HDMI) {
+        printf("-> modes: %i\n", connector->count_modes);
+    }
+
+    for (int i = 0; i < connector->count_modes; i++) {
+        drmModeModeInfo mode = connector->modes[i];
+
+        if (DEBUG_GLES || DEBUG_HDMI) {
+            printf(" -> %ix%i@%i\n", connector->count_modes, info.hdisplay, info.vdisplay, info.vrefresh);
+        }
+
+        //cbxx TODO select resolution
+    }
 
 	//show mode
 	mode_info = connector->modes[0];
