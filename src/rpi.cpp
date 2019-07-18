@@ -357,14 +357,11 @@ void AminoGfxRPi::initEGL() {
 	connector_id = connector->connector_id;
 
     //select mode
-    if (prefRes == "") {
-        //use first mode
-        mode_info = connector->modes[0];
-    } else {
-        //supported aminogfx value
-        int prefH;
-        int prefRefresh;
+    int prefH = 0;
+    int prefRefresh = 0;
 
+    if (prefRes != "") {
+        //supported aminogfx values
         if (prefRes == "720p@24") {
             prefH = 720;
             prefRefresh = 24;
@@ -398,7 +395,10 @@ void AminoGfxRPi::initEGL() {
         } else {
             printf("unknown resolution: %s\n", prefRes.c_str());
         }
+    }
 
+    if (prefH) {
+        //show all modes
         if (DEBUG_GLES || DEBUG_HDMI) {
             printf("-> modes: %i\n", connector->count_modes);
 
@@ -406,19 +406,35 @@ void AminoGfxRPi::initEGL() {
             for (int i = 0; i < connector->count_modes; i++) {
                 drmModeModeInfo mode = connector->modes[i];
 
-                printf(" -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);            }
+                printf(" -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
             }
         }
 
         //find matching resolution
+        bool found = false;
+
         for (int i = 0; i < connector->count_modes; i++) {
             drmModeModeInfo mode = connector->modes[i];
 
             if (mode.vdisplay == prefH && mode.vrefresh) {
                 mode_info = mode;
+                found = true;
                 break;
             }
         }
+
+        //check
+        if (!found) {
+            printf("No matching resolution found!\n";
+
+            prefH = 0;
+            prefRefresh = 0;
+        }
+    }
+
+    if (!prefH) {
+        //use first mode
+        mode_info = connector->modes[0];
     }
 
 	//show mode
