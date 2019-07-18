@@ -370,7 +370,7 @@ void AminoGfxRPi::initEGL() {
         drmModeModeInfo mode = connector->modes[i];
 
         if (DEBUG_GLES || DEBUG_HDMI) {
-            printf(" -> %ix%i@%i\n", mode.hdisplay, mode.vdisplay, mode.vrefresh);
+            printf(" -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
         }
 
         //cbxx TODO select resolution
