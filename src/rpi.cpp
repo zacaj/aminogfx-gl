@@ -1151,7 +1151,8 @@ void AminoGfxRPi::renderingDone() {
         //create new fb
         uint32_t pitch = gbm_bo_get_stride(bo);
         //cbxx check drmModeAddFB2
-        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+//        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 32, 32, pitch, handle, &fb);
 
         assert(res == 0);
 
