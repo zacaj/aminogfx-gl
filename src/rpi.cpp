@@ -398,6 +398,7 @@ void AminoGfxRPi::initEGL() {
     }
 
     if (prefH) {
+        //cbxx FIXME 720p not listed until screen is attached! try HDMI change first and check if list is different
         //show all modes
         if (DEBUG_GLES || DEBUG_HDMI) {
             printf("-> modes: %i\n", connector->count_modes);
