@@ -20,7 +20,7 @@ In order to build the native components a couple of libraries and tools are need
 
 ### macOS
 
-* GLFW 3.2
+* GLFW 3.3
 * FFMPEG
 
 MacPorts setup:

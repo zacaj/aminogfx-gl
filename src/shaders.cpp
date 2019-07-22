@@ -296,8 +296,9 @@ ColorShader::ColorShader() : AnyAminoShader() {
     //shaders
     //Note: no performance difference seen between highp, mediump and lowp!
     fragmentShader = R"(
+#ifdef EGL_GBM
         precision highp float;
-
+#endif
         uniform vec4 color;
 
         void main() {
@@ -355,8 +356,9 @@ ColorLightingShader::ColorLightingShader() : ColorShader() {
     )";
 
     fragmentShader = R"(
+#ifdef EGL_GBM
         precision highp float;
-
+#endif
         varying float lightFac;
         uniform vec4 color;
 
@@ -462,8 +464,9 @@ TextureShader::TextureShader() : AnyAminoShader() {
 
     //supports opacity and discarding of fully transparent pixels
     fragmentShader = R"(
+#ifdef EGL_GBM
         precision highp float;
-
+#endif
         varying vec2 uv;
 
         uniform float opacity;
@@ -561,8 +564,9 @@ void TextureShader::drawElements(GLushort *indices, GLsizei elements, GLenum mod
 TextureClampToBorderShader::TextureClampToBorderShader() : TextureShader() {
     //Note: supports clamp to border, using transparent texture
     fragmentShader = R"(
+#ifdef EGL_GBM
         precision highp float;
-
+#endif
         varying vec2 uv;
 
         uniform float opacity;

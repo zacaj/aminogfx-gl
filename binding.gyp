@@ -39,7 +39,6 @@
             "cxxflags": [
                 "-std=c++11"
             ],
-
             'conditions': [
                 # macOS
                 [ 'OS == "mac"', {
