@@ -59,7 +59,7 @@ gfx.start(function (err) {
     //yosemite animated
     const iv2 = this.createImageView();
 
-    iv2.src(path.join(__dirname, '/images/yose.jpg'));
+    iv2.src(path.join(__dirname, '/images/yose.png'));
     iv2.sx(4).sy(4);
     iv2.x(300);
     root.add(iv2);

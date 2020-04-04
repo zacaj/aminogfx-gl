@@ -216,7 +216,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
 
             //call
             int argc = 0;
-            v8::Local<v8::Value> argv[0];
+            v8::Local<v8::Value> argv[1];
 
             initFunc->Call(info.This(), argc, argv);
         }
@@ -236,7 +236,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
 
             //call
             int argc = 0;
-            v8::Local<v8::Value> argv[0];
+            v8::Local<v8::Value> argv[1];
 
             initDoneFunc->Call(info.This(), argc, argv);
         }
@@ -1959,21 +1959,21 @@ AminoJSEventObject::AminoJSEventObject(std::string name): AminoJSObject(name) {
     jsUpdates = new std::vector<AnyAsyncUpdate *>();
 
     //main thread
-    mainThread = uv_thread_self();
+    mainThread = std::this_thread::get_id();
 
-    //recursive mutex needed
-    pthread_mutexattr_t attr;
+    // //recursive mutex needed
+    // pthread_mutexattr_t attr;
 
-    int res = pthread_mutexattr_init(&attr);
+    // int res = pthread_mutexattr_init(&attr);
 
-    assert(res == 0);
+    // assert(res == 0);
 
-    res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    assert(res == 0);
+    // res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    // assert(res == 0);
 
-    // asyncLock
-    res = pthread_mutex_init(&asyncLock, &attr);
-    assert(res == 0);
+    // // asyncLock
+    // res = pthread_mutex_init(&asyncLock, &attr);
+    // assert(res == 0);
 }
 
 AminoJSEventObject::~AminoJSEventObject() {
@@ -1992,9 +1992,9 @@ AminoJSEventObject::~AminoJSEventObject() {
     delete asyncDeletes;
 
     //mutex
-    int res = pthread_mutex_destroy(&asyncLock);
+    // int res = pthread_mutex_destroy(&asyncLock);
 
-    assert(res == 0);
+    // assert(res == 0);
 }
 
 /**
@@ -2012,9 +2012,9 @@ AminoJSEventObject* AminoJSEventObject::getEventHandler() {
 void AminoJSEventObject::clearAsyncQueue() {
     assert(asyncUpdates);
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     std::size_t count = asyncUpdates->size();
 
@@ -2027,8 +2027,8 @@ void AminoJSEventObject::clearAsyncQueue() {
     //Note: not applied, can safely clear vector
     asyncUpdates->clear();
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -2043,9 +2043,9 @@ void AminoJSEventObject::handleAsyncDeletes() {
         assert(isMainThread());
     }
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     std::size_t count = asyncDeletes->size();
 
@@ -2065,8 +2065,8 @@ void AminoJSEventObject::handleAsyncDeletes() {
         asyncDeletes->clear();
     }
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -2081,9 +2081,9 @@ void AminoJSEventObject::handleJSUpdates() {
         assert(isMainThread());
     }
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     std::size_t count = jsUpdates->size();
 
@@ -2101,8 +2101,8 @@ void AminoJSEventObject::handleJSUpdates() {
         jsUpdates->clear();
     }
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -2150,9 +2150,7 @@ void AminoJSEventObject::getStats(v8::Local<v8::Object> &obj) {
  * Check if running on main thread.
  */
 bool AminoJSEventObject::isMainThread() {
-    uv_thread_t thread = uv_thread_self();
-
-    return uv_thread_equal(&mainThread, &thread);
+    return std::this_thread::get_id() == mainThread;
 }
 
 /**
@@ -2181,9 +2179,9 @@ void AminoJSEventObject::processAsyncQueue() {
     //iterate
     assert(asyncUpdates);
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     for (std::size_t i = 0; i < asyncUpdates->size(); i++) {
         AnyAsyncUpdate *item = (*asyncUpdates)[i];
@@ -2242,8 +2240,8 @@ void AminoJSEventObject::processAsyncQueue() {
     //clear
     asyncUpdates->clear();
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 
     if (DEBUG_BASE) {
         printf("--- processAsyncQueue() done --- \n");
@@ -2270,14 +2268,14 @@ bool AminoJSEventObject::enqueueValueUpdate(AsyncValueUpdate *update) {
 
     assert(asyncUpdates);
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     asyncUpdates->push_back(update);
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 
     return true;
 }
@@ -2316,14 +2314,14 @@ bool AminoJSEventObject::enqueuePropertyUpdate(AnyProperty *prop, v8::Local<v8::
     }
 
     //async handling
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     asyncUpdates->push_back(new AsyncPropertyUpdate(prop, data));
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 
     return true;
 }
@@ -2347,14 +2345,14 @@ bool AminoJSEventObject::enqueueJSUpdate(AnyAsyncUpdate *update) {
         return false;
     }
 
-    int res = pthread_mutex_lock(&asyncLock);
+    asyncLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     jsUpdates->push_back(update);
 
-    res = pthread_mutex_unlock(&asyncLock);
-    assert(res == 0);
+    asyncLock.unlock();
+    // assert(res == 0);
 
     return true;
 }

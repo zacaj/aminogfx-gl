@@ -40,6 +40,11 @@
 #include <GLFW/glfw3.h>
 #endif
 
+#ifdef WIN
+#include "../glad.h"
+#include "GLFW/glfw3.h"
+#endif
+
 #ifdef LINUX
 #include <GL/glfw.h>
 #include <GL/glext.h>

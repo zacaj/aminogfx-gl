@@ -308,6 +308,8 @@ private:
 
     //perspective
     bool orthographic = true;
+#undef near
+#undef far
     float near = 150;
     float far = -2048; //dynamic: -2048/-300
     float eye = 600;

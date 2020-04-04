@@ -4,16 +4,16 @@
 #include <uv.h>
 
 extern "C" {
-    #include "libavutil/imgutils.h"
-    #include "libswscale/swscale.h"
+    // #include "libavutil/imgutils.h"
+    // #include "libswscale/swscale.h"
 
-    #include <jpeglib.h>
+    // #include <jpeglib.h>
 
     #define PNG_SKIP_SETJMP_CHECK
     #include <png.h>
 }
 
-#define DEBUG_IMAGES false
+#define DEBUG_IMAGES true
 #define DEBUG_IMAGES_CONSOLE true
 
 //
@@ -22,38 +22,39 @@ extern "C" {
 // See https://github.com/ellzey/libjpeg/blob/master/example.c
 //
 
-struct myjpeg_error_mgr {
-    struct jpeg_error_mgr pub;	/* "public" fields */
+// struct myjpeg_error_mgr {
+//     struct jpeg_error_mgr pub;	/* "public" fields */
 
-    jmp_buf setjmp_buffer;	/* for return to caller */
-};
+//     jmp_buf setjmp_buffer;	/* for return to caller */
+// };
 
-typedef struct myjpeg_error_mgr *myjpeg_error_ptr;
+// typedef struct myjpeg_error_mgr *myjpeg_error_ptr;
 
-METHODDEF(void) myjpeg_error_exit(j_common_ptr cinfo) {
-    /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
-    myjpeg_error_ptr myerr = (myjpeg_error_ptr) cinfo->err;
+// METHODDEF(void) myjpeg_error_exit(j_common_ptr cinfo) {
+//     /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+//     myjpeg_error_ptr myerr = (myjpeg_error_ptr) cinfo->err;
 
-    /* Always display the message. */
-    /* We could postpone this until after returning, if we chose. */
-    (*cinfo->err->output_message)(cinfo);
+//     /* Always display the message. */
+//     /* We could postpone this until after returning, if we chose. */
+//     (*cinfo->err->output_message)(cinfo);
 
-    /* Return control to the setjmp point */
-    longjmp(myerr->setjmp_buffer, 1);
-}
+//     /* Return control to the setjmp point */
+//     longjmp(myerr->setjmp_buffer, 1);
+// }
 
 //
 // libpng handlers
 //
 
 typedef struct {
-    const png_byte *data;
-    const png_size_t size;
+    png_byte *data;
+    png_size_t size;
 } DataHandle;
 
 typedef struct {
-    const DataHandle data;
+    DataHandle data;
     png_size_t offset;
+    int extra;
 } ReadDataHandle;
 
 static void read_png_data_callback(png_structp png_ptr, png_byte *raw_data, png_size_t read_length) {
@@ -130,12 +131,20 @@ public:
 
         //decode image
         bool res;
-
         if (isPng) {
+            char sum = 0;
+            for (int i=0; i<bufferLen; i++)
+                sum+=buffer[i];
+                printf("sum: %i, sizs %i\n", sum, bufferLen);
             res = decodePng();
-        } else {
-            res = decodeJpeg();
         }
+        else {
+            printf("%i %i %i %i %i %i %i %i %i\n", bufferLen, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
+            assert(isPng);
+        }
+        // } else {
+        //     res = decodeJpeg();
+        // }
 
         //resize
         if (res) {
@@ -174,7 +183,11 @@ public:
         }
 
         //data handler
-        ReadDataHandle png_data_handle = (ReadDataHandle){{ (unsigned char *)buffer, bufferLen }, 0};
+        // ReadDataHandle png_data_handle = (ReadDataHandle){{ (unsigned char *)buffer, bufferLen }, 0};
+        ReadDataHandle png_data_handle;
+        png_data_handle.data.data = (unsigned char *)buffer;
+        png_data_handle.data.size = bufferLen;
+        png_data_handle.offset = 0;
 
         png_set_read_fn(png_ptr, &png_data_handle, read_png_data_callback);
 
@@ -294,7 +307,7 @@ public:
 
         assert(imgData != NULL);
 
-        png_byte *row_ptrs[height];
+        png_byte** row_ptrs = new png_byte*[height];
 
         for (png_uint_32 i = 0; i < height; i++) {
             row_ptrs[i] = (unsigned char *)imgData + i * rowSize;
@@ -310,6 +323,8 @@ public:
             printf("-> size=%ix%i, alpha=%i, bpp=%i\n", imgW, imgH, imgAlpha ? 1:0, imgBPP);
         }
 
+        delete[] row_ptrs;
+
         return true;
     }
 
@@ -319,6 +334,8 @@ public:
      * Note: NOT thread-safe! Has to be called in single queue.
      */
     bool decodeJpeg() {
+        assert(false);
+#if 0
         if (DEBUG_IMAGES) {
             printf("decodeJpeg()\n");
         }
@@ -405,6 +422,7 @@ public:
         }
 
         return true;
+#endif
     }
 
 #pragma GCC diagnostic push
@@ -423,6 +441,8 @@ public:
         }
 
         assert(imgData != NULL);
+        assert(false);
+#if 0
 
         //new size
         int newW = maxWH;
@@ -509,6 +529,7 @@ public:
         imgH = newH;
         imgData = data;
         imgDataLen = dataLen;
+#endif
     }
 
 #pragma GCC diagnostic pop

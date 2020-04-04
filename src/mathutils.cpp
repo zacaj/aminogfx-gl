@@ -1,4 +1,7 @@
 #include "mathutils.h"
+#ifdef WIN
+#define M_PI 3.14159
+#endif
 
 /**
  * Reset 4x4 matrix with zero values.

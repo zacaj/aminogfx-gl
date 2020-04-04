@@ -1,6 +1,6 @@
 'use strict';
 
-const DEBUG = false;
+const DEBUG = true;
 const DEBUG_ERRORS = true;
 
 if (DEBUG) {
@@ -1733,6 +1733,7 @@ Object.defineProperty(AminoImage.prototype, 'src', {
 
                     return;
                 }
+                fs.writeFileSync('temp.png', data);
 
                 //get image
                 this.loadImage(data, (err, img) => {

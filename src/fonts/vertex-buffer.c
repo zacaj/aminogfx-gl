@@ -44,6 +44,14 @@
 #include "platform.h"
 #include "vertex-buffer.h"
 
+// strndup() is not available on Windows
+char *strndup( const char *s1, size_t n)
+{
+    char *copy= (char*)malloc( n+1 );
+    memcpy( copy, s1, n );
+    copy[n] = 0;
+    return copy;
+};
 /**
  * Buffer status
  */

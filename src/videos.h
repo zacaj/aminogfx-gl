@@ -4,11 +4,11 @@
 #include "base_js.h"
 #include "gfx.h"
 
-extern "C" {
-    #include "libavcodec/avcodec.h"
-    #include "libavformat/avformat.h"
-    #include "libswscale/swscale.h"
-}
+// extern "C" {
+//     #include "libavcodec/avcodec.h"
+//     #include "libavformat/avformat.h"
+//     #include "libswscale/swscale.h"
+// }
 
 #define DEBUG_VIDEOS false
 
@@ -146,9 +146,9 @@ public:
 
     bool hasH264NaluStartCodes();
     bool getHeader(uint8_t **data, int *size);
-    READ_FRAME_RESULT readFrame(AVPacket *packet);
-    double getFramePts(AVPacket *packet);
-    void freeFrame(AVPacket *packet);
+    READ_FRAME_RESULT readFrame(int *packet);
+    double getFramePts(int *packet);
+    void freeFrame(int *packet);
 
     void pause();
     void resume();
@@ -165,15 +165,15 @@ private:
     std::string lastError;
 
     //context
-    AVFormatContext *context = NULL;
-    AVCodecContext *codecCtx = NULL;
+    int *context = NULL;
+    int *codecCtx = NULL;
     bool codecCtxAlloc = false;
 
     //stream info
     std::string filename;
     std::string options;
     int videoStream = -1;
-    AVStream *stream = NULL;
+    int *stream = NULL;
 
     //timeout
     double timeout = 0;
@@ -181,8 +181,8 @@ private:
     int timeoutRead = 1000; //1s
 
     //read
-    AVFrame *frame = NULL;
-    AVFrame *frameRGB = NULL;
+    int *frame = NULL;
+    int *frameRGB = NULL;
     int frameRGBCount = -1;
     double lastPts = 0;
     uint8_t *buffer = NULL;
@@ -271,7 +271,7 @@ private:
 
     //demuxer
     VideoDemuxer *demuxer = NULL;
-    AVPacket packet;
+    int packet;
     bool hasPacket = false;
     bool eof = false;
     bool failed = false;

@@ -7,7 +7,13 @@
 
 #include <map>
 #include <memory>
+#ifndef WIN
 #include <pthread.h>
+#else
+typedef unsigned short ushort;
+#include <mutex>
+#include <thread>
+#endif
 
 #define ASYNC_UPDATE_PROPERTY      0
 #define ASYNC_UPDATE_VALUE         1
@@ -464,8 +470,8 @@ private:
     std::vector<AnyAsyncUpdate *> *asyncDeletes = NULL;
     std::vector<AnyAsyncUpdate *> *jsUpdates = NULL;
 
-    uv_thread_t mainThread;
-    pthread_mutex_t asyncLock; //Note: can block for a while
+    std::thread::id mainThread;
+    std::recursive_mutex asyncLock; //Note: can block for a while
 };
 
 #endif

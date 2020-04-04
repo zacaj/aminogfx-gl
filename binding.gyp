@@ -178,6 +178,7 @@
                                 "-DUSE_VCHIQ_ARM",
                                 # get stack trace on ARM
                                 "-funwind-tables",
+                                "-g",
                                 "-rdynamic",
                                 # NAN warnings (remove later; see https://github.com/nodejs/nan/issues/807)
                                 "-Wno-cast-function-type",
@@ -189,6 +190,56 @@
                             ]
 		                }]
 		            ]
+                }],
+
+                [ 'OS == "win"', {
+                    "include_dirs": [
+                        "c:/root/include/",
+                    ],
+                    "libraries": [
+                        "-lc:/root/lib/glfw3",
+                        "-lc:/root/lib/libpng16",
+                        "-lc:/root/lib/zlib",
+                        "-lc:/root/lib/freetype",
+                    ],
+                    "defines": [
+                        "WIN",
+                        "WIN32_LEAN_AND_MEAN",
+                    ],
+                    "sources": [
+                        "src/win.cpp",
+                        "src/glad.c",
+                    ],
+                    "copies": [{
+                        'destination': './build/binding/',
+                        'files': [
+                            'freetype.dll',
+                        ],
+                    }],
+                    'configurations': {
+                        'Debug': {
+                            'msvs_settings': {
+                                'VCCLCompilerTool': {
+                                    # 0 - MultiThreaded (/MT)
+                                    # 1 - MultiThreadedDebug (/MTd)
+                                    # 2 - MultiThreadedDLL (/MD)
+                                    # 3 - MultiThreadedDebugDLL (/MDd)
+                                    'RuntimeLibrary': 1,
+                                }
+                            }
+                        },
+                        'Release': {
+                            'msvs_settings': {
+                                'VCCLCompilerTool': {
+                                    # 0 - MultiThreaded (/MT)
+                                    # 1 - MultiThreadedDebug (/MTd)
+                                    # 2 - MultiThreadedDLL (/MD)
+                                    # 3 - MultiThreadedDebugDLL (/MDd)
+                                    'RuntimeLibrary': 0,
+                                }
+                            }
+                        }
+                    }
                 }]
             ]
         },

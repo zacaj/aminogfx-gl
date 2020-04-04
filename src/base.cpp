@@ -19,19 +19,19 @@
 //
 
 AminoGfx::AminoGfx(std::string name): AminoJSEventObject(name) {
-    //recursive mutex needed
-    pthread_mutexattr_t attr;
+    // //recursive mutex needed
+    // pthread_mutexattr_t attr;
 
-    int res = pthread_mutexattr_init(&attr);
+    // int res = pthread_mutexattr_init(&attr);
 
-    assert(res == 0);
+    // assert(res == 0);
 
-    res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    assert(res == 0);
+    // res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    // assert(res == 0);
 
-    // animLock
-    res = pthread_mutex_init(&animLock, &attr);
-    assert(res == 0);
+    // // animLock
+    // res = pthread_mutex_init(&animLock, &attr);
+    // assert(res == 0);
 
     //debug
     /*
@@ -55,9 +55,9 @@ AminoGfx::~AminoGfx() {
     }
 
     //mutex
-    int res = pthread_mutex_destroy(&animLock);
+    // int res = pthread_mutex_destroy(&animLock);
 
-    assert(res == 0);
+    // assert(res == 0);
 
     //Note: properties are deleted by base class destructor
 }
@@ -662,9 +662,9 @@ void AminoGfx::processAnimations() {
         assert(!isMainThread());
     }
 
-    int res = pthread_mutex_lock(&animLock);
+    animLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     double currentTime = getTime();
     int count = animations.size();
@@ -676,8 +676,8 @@ void AminoGfx::processAnimations() {
         animations[i]->update(currentTime);
     }
 
-    res = pthread_mutex_unlock(&animLock);
-    assert(res == 0);
+    animLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -1005,9 +1005,9 @@ bool AminoGfx::addAnimation(AminoAnim *anim) {
     anim->retain();
 
     //add
-    int res = pthread_mutex_lock(&animLock);
+    animLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     animations.push_back(anim);
 
@@ -1016,8 +1016,8 @@ bool AminoGfx::addAnimation(AminoAnim *anim) {
         printf("warning: %i animations reached!\n", (int)animations.size());
     }
 
-    res = pthread_mutex_unlock(&animLock);
-    assert(res == 0);
+    animLock.unlock();
+    // assert(res == 0);
 
     return true;
 }
@@ -1035,9 +1035,9 @@ void AminoGfx::removeAnimation(AminoAnim *anim) {
     assert(anim);
 
     //remove
-    int res = pthread_mutex_lock(&animLock);
+    animLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     std::vector<AminoAnim *>::iterator pos = std::find(animations.begin(), animations.end(), anim);
 
@@ -1057,8 +1057,8 @@ void AminoGfx::removeAnimation(AminoAnim *anim) {
         printf("animations: %i\n", (int)animations.size());
     }
 
-    res = pthread_mutex_unlock(&animLock);
-    assert(res == 0);
+    animLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -1072,9 +1072,9 @@ void AminoGfx::clearAnimations() {
     }
 
     //release all instances
-    int res = pthread_mutex_lock(&animLock);
+    animLock.lock();
 
-    assert(res == 0);
+    // assert(res == 0);
 
     std::size_t count = animations.size();
 
@@ -1086,8 +1086,8 @@ void AminoGfx::clearAnimations() {
 
     animations.clear();
 
-    res = pthread_mutex_unlock(&animLock);
-    assert(res == 0);
+    animLock.unlock();
+    // assert(res == 0);
 }
 
 /**
@@ -1590,7 +1590,7 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
     //add glyphs (by iterating Unicode characters)
     char *textPos = (char *)text;
     char *lastTextPos = NULL;
-    uint32_t textUtf32[len];
+    uint32_t* textUtf32 = new uint32_t[len];
     bool done = false;
 
     for (size_t i = 0; i < len; ++i) {
@@ -1806,6 +1806,8 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
     }
 
     *lineW = std::max(*lineW, pen->x - penXStart);
+
+    delete[] textUtf32;
 }
 
 /**

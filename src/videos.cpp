@@ -459,17 +459,17 @@ bool VideoDemuxer::init() {
 #endif
 
     //support network calls
-    avformat_network_init();
+    // avformat_network_init();
 
     //log level
     if (DEBUG_VIDEOS) {
-        av_log_set_level(AV_LOG_INFO);
+        // av_log_set_level(// av_LOG_INFO);
     } else {
-        av_log_set_level(AV_LOG_QUIET);
+        // a_log_set_level(AV_LOG_QUIET);
     }
 
     if (DEBUG_VIDEOS) {
-        printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
+        //printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
     }
 
     return true;
@@ -499,7 +499,8 @@ static int interruptCallback(void *opaque) {
  * Load a video from a file.
  */
 bool VideoDemuxer::loadFile(std::string filename, std::string options) {
-    //close previous instances
+    return false;
+    /*//close previous instances
     close(false);
 
     this->filename = filename;
@@ -656,7 +657,7 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
     if (codecCtx->framerate.num > 0 && codecCtx->framerate.den > 0) {
         fps = codecCtx->framerate.num / (float)codecCtx->framerate.den;
     }
-    */
+    *//*
 
     if (codecCtx->time_base.num > 0 && codecCtx->time_base.den > 0) {
         fps = codecCtx->time_base.den / (float)codecCtx->time_base.num / codecCtx->ticks_per_frame;
@@ -679,13 +680,15 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
         }
     }
 
-    return true;
+    return true;*/
 }
 
 /**
  * Initialize decoder.
  */
 bool VideoDemuxer::initStream() {
+    return false;
+#if 0
     if (!codecCtx) {
         return false;
     }
@@ -737,24 +740,28 @@ bool VideoDemuxer::initStream() {
     }
 
     return true;
+#endif
 }
 
 /**
  * Check if NALU start codes are used (or format is annex b).
  */
 bool VideoDemuxer::hasH264NaluStartCodes() {
+    return false;
     if (!context || !codecCtx || !isH264) {
         return false;
     }
 
     //Note: avcC atom  starts with 0x1
-    return codecCtx->extradata_size < 7 || !codecCtx->extradata || *codecCtx->extradata != 0x1;
+    // return codecCtx->extradata_size < 7 || !codecCtx->extradata || *codecCtx->extradata != 0x1;
 }
 
 /**
  * Read the optional video header.
  */
 bool VideoDemuxer::getHeader(uint8_t **data, int *size) {
+    return false;
+#if 0
     if (!context || !codecCtx) {
         return false;
     }
@@ -767,6 +774,7 @@ bool VideoDemuxer::getHeader(uint8_t **data, int *size) {
     }
 
     return false;
+#endif
 }
 
 /**
@@ -774,7 +782,9 @@ bool VideoDemuxer::getHeader(uint8_t **data, int *size) {
  *
  * Note: freeFrame() has to be called after the packet is consumed.
  */
-READ_FRAME_RESULT VideoDemuxer::readFrame(AVPacket *packet) {
+READ_FRAME_RESULT VideoDemuxer::readFrame(int *packet) {
+    return READ_ERROR;
+#if 0
     if (!context || !codecCtx) {
         return READ_ERROR;
     }
@@ -819,12 +829,14 @@ READ_FRAME_RESULT VideoDemuxer::readFrame(AVPacket *packet) {
         //process next frame
         av_free_packet(packet);
     }
+#endif
 }
 
 /**
  * Get the presentation time (in seconds).
  */
-double VideoDemuxer::getFramePts(AVPacket *packet) {
+double VideoDemuxer::getFramePts(int *packet) {
+#if 0
     if (!stream || !packet) {
         return 0;
     }
@@ -832,25 +844,27 @@ double VideoDemuxer::getFramePts(AVPacket *packet) {
     if (packet->pts != (int64_t)AV_NOPTS_VALUE) {
         return packet->pts * av_q2d(stream->time_base);
     }
-
+#endif
     return 0;
 }
 
 /**
  * Free a video packet.
  */
-void VideoDemuxer::freeFrame(AVPacket *packet) {
+void VideoDemuxer::freeFrame(int *packet) {
     //free the packet that was allocated by av_read_frame
-    av_free_packet(packet);
+    //av_free_packet(packet);
 
-    packet->data = NULL;
-    packet->size = 0;
+    // packet->data = NULL;
+    // packet->size = 0;
 }
 
 /**
  * Read a video frame in RGB format.
  */
  READ_FRAME_RESULT VideoDemuxer::readRGBFrame(double &time) {
+    return READ_ERROR;
+#if 0
     if (!context || !codecCtx) {
         return READ_ERROR;
     }
@@ -899,7 +913,7 @@ void VideoDemuxer::freeFrame(AVPacket *packet) {
     }
 
     //read frame
-    AVPacket packet;
+    int packet;
     READ_FRAME_RESULT res;
 
     av_init_packet(&packet);
@@ -980,6 +994,7 @@ done:
     }
 
     return res;
+#endif
 }
 
 #pragma GCC diagnostic pop
@@ -1007,7 +1022,7 @@ void VideoDemuxer::pause() {
             printf("pausing stream\n");
         }
 
-        av_read_pause(context);
+        // av_read_pause(context);
     }
 }
 
@@ -1026,7 +1041,7 @@ void VideoDemuxer::resume() {
             printf("resuming stream\n");
         }
 
-        av_read_play(context);
+        // av_read_play(context);
     }
 }
 
@@ -1071,6 +1086,7 @@ uint8_t *VideoDemuxer::getFrameData(int &id) {
  * Close handlers.
  */
 void VideoDemuxer::close(bool destroy) {
+#if 0
     if (context) {
         avformat_close_input(&context);
         context = NULL;
@@ -1093,12 +1109,14 @@ void VideoDemuxer::close(bool destroy) {
 
     //close read
     closeReadFrame(destroy);
+#endif
 }
 
 /**
  * Free readFrame() resources.
  */
 void VideoDemuxer::closeReadFrame(bool destroy) {
+#    if 0
     if (frame) {
         av_frame_free(&frame);
         frame = NULL;
@@ -1127,6 +1145,7 @@ void VideoDemuxer::closeReadFrame(bool destroy) {
         sws_freeContext(sws_ctx);
         sws_ctx = NULL;
     }
+#endif
 }
 
 /**
@@ -1202,6 +1221,8 @@ VideoFileStream::~VideoFileStream() {
  * Open the file.
  */
 bool VideoFileStream::init() {
+    return false;
+#if 0
     if (DEBUG_VIDEOS) {
         printf("-> init video file stream\n");
     }
@@ -1248,6 +1269,7 @@ bool VideoFileStream::init() {
     }
 
     return true;
+#endif
 }
 
 /**
@@ -1283,6 +1305,8 @@ bool VideoFileStream::rewind() {
  * Read from the stream.
  */
 unsigned int VideoFileStream::read(unsigned char *dest, unsigned int length, omx_metadata_t &omxData) {
+    return 0;
+#if 0
     //reset OMX data
     omxData.flags = 0;
     omxData.timeStamp = 0;
@@ -1413,6 +1437,7 @@ unsigned int VideoFileStream::read(unsigned char *dest, unsigned int length, omx
     }
 
     return 0;
+#endif
 }
 
 /**

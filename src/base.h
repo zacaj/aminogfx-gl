@@ -24,7 +24,14 @@
 #include "texture-font.h"
 
 #define DEBUG_CRASH false
-
+#define GROUP AMINO_GROUP
+#define RECT AMINO_RECT
+#undef TEXT
+#define TEXT AMINO_TEXT
+#define POLY AMINO_POLY
+#define MODEL AMINO_MODEL
+#include <mutex>
+#include <thread>
 const int GROUP = 1;
 const int RECT  = 2;
 const int TEXT  = 3;
@@ -138,7 +145,7 @@ protected:
 
     //animations
     std::vector<AminoAnim *> animations;
-    pthread_mutex_t animLock; //Note: short cycles
+    std::recursive_mutex animLock; //Note: short cycles
 
     //creation
     static void Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE target, AminoJSObjectFactory* factory);
