@@ -370,9 +370,9 @@ AminoEvents.prototype.sendScrollEvent = function (e) {
 };
 
 AminoEvents.prototype.sendKeyboardPressEvent = function (event) {
-    if (this.focusObjects.keyboard.target === null) {
-        return;
-    }
+    // if (this.focusObjects.keyboard.target === null) {
+    //     return;
+    // }
 
     event.type = 'key.press';
     event.target = this.focusObjects.keyboard.target;
@@ -381,9 +381,9 @@ AminoEvents.prototype.sendKeyboardPressEvent = function (event) {
 };
 
 AminoEvents.prototype.sendKeyboardReleaseEvent = function (event) {
-    if (this.focusObjects.keyboard.target === null) {
-        return;
-    }
+    // if (this.focusObjects.keyboard.target === null) {
+    //     return;
+    // }
 
     event.type = 'key.release';
     event.target = this.focusObjects.keyboard.target;
@@ -404,7 +404,7 @@ AminoEvents.prototype.fireEventAtTarget = function (target, event) {
 
     if (funcs) {
         funcs.forEach(function (l) {
-            if (l.target == target) {
+            if (l.target == target || !l.target) {
                 l.func(event);
             }
         });
