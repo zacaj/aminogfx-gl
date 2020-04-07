@@ -42,5 +42,6 @@
   "homepage": "https://github.com/joshmarinacci/aminogfx-gl",
   "devDependencies": {
     "feedparser": "^2.2.9"
-  }
+  },
+  "types": "./main.d.ts"
 }

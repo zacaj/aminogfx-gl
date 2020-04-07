@@ -575,7 +575,7 @@ exports.AminoGfx = AminoGfx;
 //
 
 const Group = AminoGfx.Group;
-
+exports.Group = Group;
 /**
  * Initializer.
  */
@@ -899,6 +899,7 @@ function FindResults() {
 //
 
 const Rect = AminoGfx.Rect;
+exports.Rect = Rect;
 
 Rect.prototype.init = function () {
     if (DEBUG) {
@@ -986,6 +987,7 @@ function contains(pt) {
 //
 
 const ImageView = AminoGfx.ImageView;
+exports.ImageView = ImageView;
 
 ImageView.prototype.init = function () {
     makeProps(this, {
@@ -1441,6 +1443,7 @@ PixelView.prototype.setPixeli32 = function (x, y, int) {
 //
 
 const Polygon = AminoGfx.Polygon;
+exports.Polygon = Polygon;
 
 Polygon.prototype.init = function () {
     //bindings
@@ -1629,6 +1632,7 @@ class Circle extends Polygon {
 }
 
 AminoGfx.Circle = Circle;
+exports.Circle = Circle;
 
 Circle.prototype.init = function () {
     //get Polygon properties
@@ -1682,7 +1686,10 @@ const AminoImage = native.AminoImage;
 /**
  * src property.
  */
+// if (!'src' in AminoImage.prototype)
+delete AminoImage.prototype.src;
 Object.defineProperty(AminoImage.prototype, 'src', {
+    configurable: true,
     set: function (src) {
         this.abort();
 
@@ -2170,7 +2177,7 @@ Texture.prototype.fireEvent = function (event) {
 //
 
 const Text = AminoGfx.Text;
-
+exports.Text = Text;
 Text.prototype.init = function () {
     if (DEBUG) {
         console.log('Text.init()');
@@ -2325,7 +2332,7 @@ Text.prototype.updateFont = function (val, prop, obj) {
 //
 
 const Anim = AminoGfx.Anim;
-
+exports.Anim = Anim;
 /**
  * Initialize instance.
  */
