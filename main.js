@@ -1,6 +1,6 @@
 'use strict';
 
-const DEBUG = true;
+const DEBUG = false;
 const DEBUG_ERRORS = true;
 
 if (DEBUG) {
@@ -1174,6 +1174,7 @@ ImageView.prototype.init = function () {
 
 /**
  * Set texture.
+ * obj: ImageView, etc
  */
 function setImage(img, obj) {
     if (obj.image) {
@@ -1185,10 +1186,11 @@ function setImage(img, obj) {
 
 /**
  * Load and set texture.
+ * obj: ImageView, etc
  */
 function loadTexture(obj, img) {
     const amino = obj.amino;
-    const texture = amino.createTexture();
+    const texture = obj.image() instanceof AminoGfx.Texture? obj.image() : amino.createTexture();
 
     texture.loadTextureFromImage(img, (err, texture) => {
         if (err) {
@@ -1260,7 +1262,7 @@ function setSrc(src, prop, obj) {
 
         if (err) {
             if (DEBUG || DEBUG_ERRORS) {
-                console.log('could not load image: ' + err.message);
+                console.error('could not load image: ' + err.message);
             }
 
             //set texture to null
@@ -1737,11 +1739,10 @@ Object.defineProperty(AminoImage.prototype, 'src', {
                 if (err) {
                     if (this.onload) {
                         this.onload(err);
-                    }
+                    } else throw err;
 
                     return;
                 }
-                fs.writeFileSync('temp.png', data);
 
                 //get image
                 this.loadImage(data, (err, img) => {

@@ -13,8 +13,8 @@ extern "C" {
     #include <png.h>
 }
 
-#define DEBUG_IMAGES true
-#define DEBUG_IMAGES_CONSOLE true
+#define DEBUG_IMAGES false
+#define DEBUG_IMAGES_CONSOLE false
 
 //
 // libjpeg error handler
@@ -658,6 +658,7 @@ GLuint AminoImage::createTexture(GLuint textureId, char *bufferData, size_t buff
         //create new texture
         texture = INVALID_TEXTURE;
 	    glGenTextures(1, &texture);
+        printf("glGenTexture\n");
 
         assert(texture != INVALID_TEXTURE);
     }
@@ -987,14 +988,14 @@ NAN_METHOD(AminoTexture::LoadTextureFromImage) {
 
     assert(obj);
 
-    if (obj->callback || obj->textureCount > 0) {
-        //already set
-        int argc = 1;
-        v8::Local<v8::Value> argv[1] = { Nan::Error("already loading") };
+    // if (obj->callback || obj->textureCount > 0) {
+    //     //already set
+    //     int argc = 1;
+    //     v8::Local<v8::Value> argv[1] = { Nan::Error("already loading") };
 
-        callback->Call(info.This(), argc, argv);
-        return;
-    }
+    //     callback->Call(info.This(), argc, argv);
+    //     return;
+    // }
 
     //image
     AminoImage *img = Nan::ObjectWrap::Unwrap<AminoImage>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
