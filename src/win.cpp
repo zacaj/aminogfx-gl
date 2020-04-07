@@ -2,8 +2,8 @@
 
 //#include <unistd.h>
 
-#define DEBUG_GLFW true
-#define DEBUG_RENDER fatruelse
+#define DEBUG_GLFW false
+#define DEBUG_RENDER false
 #define DEBUG_VIDEO_TIMING true
 
 /**

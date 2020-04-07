@@ -104,7 +104,7 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10.x)
-                                [ '"<!@(lsb_release -c -s)" == "buster"', {
+                                [ '"<!@(lsb_release -c -s)" == "buster-pi4"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -116,6 +116,23 @@
                                     ],
                                     'defines': [
                                         "EGL_GBM"
+                                    ]
+                                }],
+                                # Buster (10.x) (Pi 3)
+                                [ '"<!@(lsb_release -c -s)" == "buster"', {
+                                    'libraries': [
+                                        # OpenGL
+                                        "-lbrcmGLESv2",
+		                                "-lbrcmEGL",
+                                        # VideoCore
+                                        "-L/opt/vc/lib/",
+                                        "-lbcm_host",
+                                        "-lopenmaxil",
+                                        "-lvcos",
+                                        "-lvchiq_arm"
+                                    ],
+                                    'defines': [
+                                        "EGL_DISPMANX"
                                     ]
                                 }],
                                 # Stretch (9.x)
