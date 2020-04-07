@@ -1270,13 +1270,47 @@ void AminoGfxRPi::handleEvent(input_event ev) {
     }
 
     if (ev.type == EV_KEY) {
-        if (DEBUG_GLES) {
+        if (DEBUG_GLES || DEBUG_INPUT) {
             printf("key or button pressed code = %d, state = %d\n", ev.code, ev.value);
         }
 
         if (ev.code == BTN_LEFT) {
             //TODO GLFW_MOUSE_BUTTON_CALLBACK_FUNCTION(ev.code, ev.value);
             return;
+        } else {
+            //create object
+            v8::Local<v8::Object> event_obj = Nan::New<v8::Object>();
+
+            if (!ev.value) {
+                //release
+                Nan::Set(event_obj, Nan::New("type").ToLocalChecked(), Nan::New("key.release").ToLocalChecked());
+            } else if (ev.value) {
+                //press or repeat
+                Nan::Set(event_obj, Nan::New("type").ToLocalChecked(), Nan::New("key.press").ToLocalChecked());
+            }
+
+            //key codes
+            int keycode = -1;
+            if (ev.code >= KEY_1 && ev.code <= KEY_9) keycode = ev.code - KEY_1 + 49;
+            switch (ev.code) {
+                case KEY_0: keycode = 48; break;
+                case KEY_Q: keycode = 81; break;
+                case KEY_W: keycode = 87; break;
+                case KEY_E: keycode = 69; break;
+                case KEY_R: keycode = 82; break;
+                case KEY_T: keycode = 84; break;
+                case KEY_Y: keycode = 89; break;
+                case KEY_U: keycode = 85; break;
+                case KEY_I: keycode = 73; break;
+                case KEY_O: keycode = 79; break;
+                case KEY_P: keycode = 80; break;
+            }
+            Nan::Set(event_obj, Nan::New("keycode").ToLocalChecked(), Nan::New(key));
+            // Nan::Set(event_obj, Nan::New("scancode").ToLocalChecked(), Nan::New(scancode));
+            if (keycode == -1)
+                printf("ERROR: unknown linux key code %i\n", ev.code);
+            else
+                this->fireEvent(event_obj);
         }
 
         //TODO GLFW_KEY_CALLBACK_FUNCTION(ev.code, ev.value);
