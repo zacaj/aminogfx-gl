@@ -1,18 +1,18 @@
 # This Fork
 Rough WIP fixes and modifications:
 - Windows and Linux support
- - Windows support is missing video, jpeg, etc support, since I didn't want to deal with all those libraries, etc when porting
- - Linux support is probably complete, but untested
+    - Windows support is missing video, jpeg, etc support, since I didn't want to deal with all those libraries, etc when porting
+    - Linux support is probably complete, but untested
 - RPI
- - only tested on RPi 3 + Zero W with fake KMS driver, not RPi 4
- - Builds using older DispManX code instead of newer GBM, to work with older RPi/driver
- - partial keyboard support (needs more keys mapped from linux to glfw codes)
+    - only tested on RPi 3 + Zero W with fake KMS driver, not RPi 4
+    - Builds using older DispManX code instead of newer GBM, to work with older RPi/driver
+    - partial keyboard support (needs more keys mapped from linux to glfw codes)
 - Functionality
- - Changed how origin works so it makes more sense
- - Added partial typescript bindings
- - Allow passing 'null' as the target of keyboard event listeners to always receive events
- - Fix texture leaking when changing source of ImageView- now updates GL texture with new data
- - Fix mouse click detection issue when using originX/Y (still ignores rotation)
+    - Changed how origin works so it makes more sense
+    - Added partial typescript bindings
+    - Allow passing 'null' as the target of keyboard event listeners to always receive events
+    - Fix texture leaking when changing source of ImageView- now updates GL texture with new data
+    - Fix mouse click detection issue when using originX/Y (still ignores rotation)
 
 
 
