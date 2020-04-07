@@ -412,7 +412,8 @@ function findNodesAtXY(root, pt, filter, tab) {
     //console.log(tab + '   xy', pt.x, pt.y, root.id());
 
     //convert to root coordinates
-    const tpt = pt.minus(root.x(), root.y()).divide(root.sx(), root.sy());
+    const tpt = pt.minus(root.x(), root.y()).divide(root.sx(), root.sy())
+        .minus(root.w? -root.w()*root.originX() : 0, root.h? -root.h()*root.originY() : 0);
 
     //handle children first, then the parent/root
     let res = [];
@@ -523,8 +524,8 @@ function convertGlobalToLocal(pt, node) {
     }
 
     return input.makePoint(
-        (pt.x - node.x()) / node.sx(),
-        (pt.y - node.y()) / node.sy()
+        (pt.x - node.x()) / node.sx() + (node.w? node.w()*node.originX() : 0),
+        (pt.y - node.y()) / node.sy() + (node.h? node.h()*node.originY() : 0)
     );
 }
 

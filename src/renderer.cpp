@@ -365,10 +365,10 @@ void AminoRenderer::render(AminoNode *root) {
     ctx->save();
 
     //transform
-    if (root->propW) {
-        //apply origin
-        ctx->translate(root->propW->value * root->propOriginX->value, root->propH->value * root->propOriginY->value);
-    }
+    // if (root->propW) {
+    //     //apply origin
+    //     ctx->translate(root->propW->value * root->propOriginX->value, root->propH->value * root->propOriginY->value);
+    // }
 
     ctx->translate(root->propX->value, root->propY->value, root->propZ->value);
     ctx->scale(root->propScaleX->value, root->propScaleY->value);
