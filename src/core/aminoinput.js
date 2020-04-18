@@ -109,7 +109,7 @@ const handlers = {
         }
     },
     'mouse.button': function (obj, evt) {
-        if (evt.button == 0) {
+        // if (evt.button == 0) {
             //left mouse button
             if (DEBUG) {
                 console.log('left mousebutton event');
@@ -140,7 +140,7 @@ const handlers = {
                 obj.stopPointerFocus();
                 return;
             }
-        }
+        // }
     },
     'mousewheel.v': function (obj, evt) {
         const pts = obj.statusObjects.pointer;
