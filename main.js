@@ -1025,7 +1025,7 @@ ImageView.prototype.init = function () {
 
         //image
         src: null,
-        image: null,
+        image: null, // Texture
         opacity: 1.0,
 
         position: 'center center',
@@ -1175,6 +1175,7 @@ ImageView.prototype.init = function () {
 /**
  * Set texture.
  * obj: ImageView, etc
+ * img: Texture , ?
  */
 function setImage(img, obj) {
     if (obj.image) {
