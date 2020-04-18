@@ -20,6 +20,7 @@ declare module "aminogfx-gl" {
         createImageView(): ImageView;
         createCircle(): Circle;
         createText(): Text;
+        createTexture(): Texture;
         on(type: 'press', node: Node|null, cb: (e: {
             point: { x: number, y: number },
             type: 'press',
@@ -66,6 +67,7 @@ declare module "aminogfx-gl" {
             autoreverse?: boolean;
             timefunc?: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut';
         }): Anim;
+        watch(prop: Property<any, T>): O;
     }
 
     export abstract class Node {
@@ -117,7 +119,7 @@ declare module "aminogfx-gl" {
         image: Property<this, Texture>;
     }
     export class Texture {
-
+        loadTextureFromImage(img: AminoImage, cb: (err?: Error) => void): void;
     }
 
     export class Polygon extends Node {
@@ -148,9 +150,9 @@ declare module "aminogfx-gl" {
         fill: Property<this, string>;
 
         //alignment
-        align:  Property<this, 'left'>;
-        vAlign: Property<this, 'baseline'>;
-        wrap:   Property<this, 'none'>;
+        align:  Property<this, 'left'|'center'|'right'>;
+        vAlign: Property<this, 'baseline'|'top'|'middle'|'bottom'>;
+        wrap:   Property<this, 'none'|'word'|'end'>;
 
         //lines
         maxLines: Property<this, number>;
