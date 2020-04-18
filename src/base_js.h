@@ -11,9 +11,9 @@
 #include <pthread.h>
 #else
 typedef unsigned short ushort;
+#endif
 #include <mutex>
 #include <thread>
-#endif
 
 #define ASYNC_UPDATE_PROPERTY      0
 #define ASYNC_UPDATE_VALUE         1
