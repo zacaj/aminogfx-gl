@@ -2562,7 +2562,7 @@ function makeProp(obj, name, val) {
 
         this.listeners.push(fun);
 
-        return this;
+        return obj;
     };
 
     /**
