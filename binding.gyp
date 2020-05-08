@@ -115,6 +115,7 @@
                                         '-lgbm'
                                     ],
                                     'defines': [
+                                        # RPi 4 support
                                         "EGL_GBM"
                                     ]
                                 }],
@@ -132,6 +133,7 @@
                                         "-lvchiq_arm"
                                     ],
                                     'defines': [
+                                        # RPi 3
                                         "EGL_DISPMANX"
                                     ]
                                 }],
@@ -149,6 +151,7 @@
                                         "-lvchiq_arm"
                                     ],
                                     'defines': [
+                                        # RPi 3
                                         "EGL_DISPMANX"
                                     ]
                                 }]
