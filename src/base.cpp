@@ -836,7 +836,7 @@ void AminoGfx::fireEvent(v8::Local<v8::Object> &evt) {
             int argc = 1;
             v8::Local<v8::Value> argv[1] = { evt };
 
-            func->Call(obj, argc, argv);
+            Nan::Call(func, obj, argc, argv);
         }
     }
 }

@@ -218,7 +218,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
             int argc = 0;
             v8::Local<v8::Value> argv[0];
 
-            initFunc->Call(info.This(), argc, argv);
+            Nan::Call(initFunc, info.This(), argc, argv);
         }
     }
 
@@ -238,7 +238,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
             int argc = 0;
             v8::Local<v8::Value> argv[0];
 
-            initDoneFunc->Call(info.This(), argc, argv);
+            Nan::Call(initDoneFunc, info.This(), argc, argv);
         }
     }
 
@@ -768,7 +768,7 @@ void AminoJSObject::updateProperty(std::string name, v8::Local<v8::Value> &value
     int argc = 2;
     v8::Local<v8::Value> argv[] = { value, Nan::True() };
 
-    updateFunc->Call(obj, argc, argv);
+    Nan::Call(updateFunc, obj, argc, argv);
 
     if (DEBUG_BASE) {
         std::string str = toString(value);
@@ -1046,7 +1046,7 @@ void* AminoJSObject::FloatArrayProperty::getAsyncData(v8::Local<v8::Value> &valu
 
     if (value->IsFloat32Array()) {
         //Float32Array
-        v8::Handle<v8::Float32Array> arr = v8::Handle<v8::Float32Array>::Cast(value);
+        v8::Local<v8::Float32Array> arr = v8::Local<v8::Float32Array>::Cast(value);
         v8::ArrayBuffer::Contents contents = arr->Buffer()->GetContents();
         float *data = (float *)contents.Data();
         std::size_t count = contents.ByteLength() / sizeof(float);
@@ -1061,13 +1061,13 @@ void* AminoJSObject::FloatArrayProperty::getAsyncData(v8::Local<v8::Value> &valu
 
         valid = true;
     } else if (value->IsArray()) {
-        v8::Handle<v8::Array> arr = v8::Handle<v8::Array>::Cast(value);
+        v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
         std::size_t count = arr->Length();
 
         vector = new std::vector<float>();
 
         for (std::size_t i = 0; i < count; i++) {
-            vector->push_back((float)(Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value()));
+            vector->push_back((float)(Nan::To<v8::Number>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value()));
         }
 
         valid = true;
@@ -1276,7 +1276,7 @@ void* AminoJSObject::UShortArrayProperty::getAsyncData(v8::Local<v8::Value> &val
 
     if (value->IsUint16Array()) {
         //Uint16Array
-        v8::Handle<v8::Uint16Array> arr = v8::Handle<v8::Uint16Array>::Cast(value);
+        v8::Local<v8::Uint16Array> arr = v8::Local<v8::Uint16Array>::Cast(value);
         v8::ArrayBuffer::Contents contents = arr->Buffer()->GetContents();
         ushort *data = (ushort *)contents.Data();
         std::size_t count = contents.ByteLength() / sizeof(ushort);
@@ -1291,13 +1291,13 @@ void* AminoJSObject::UShortArrayProperty::getAsyncData(v8::Local<v8::Value> &val
 
         valid = true;
     } else if (value->IsArray()) {
-        v8::Handle<v8::Array> arr = v8::Handle<v8::Array>::Cast(value);
+        v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
         std::size_t count = arr->Length();
 
         vector = new std::vector<ushort>();
 
         for (std::size_t i = 0; i < count; i++) {
-            vector->push_back((ushort)(Nan::To<v8::Uint32>(arr->Get(i)).ToLocalChecked()->Value()));
+            vector->push_back((ushort)(Nan::To<v8::Uint32>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value()));
         }
 
         valid = true;
@@ -1559,7 +1559,7 @@ v8::Local<v8::Value> AminoJSObject::BooleanProperty::toValue() {
  */
 void* AminoJSObject::BooleanProperty::getAsyncData(v8::Local<v8::Value> &value, bool &valid) {
     if (value->IsBoolean()) {
-        bool b = value->BooleanValue();
+        bool b = Nan::To<v8::Boolean>(value).ToLocalChecked()->Value();
         bool *res = new bool;
 
         *res = b;

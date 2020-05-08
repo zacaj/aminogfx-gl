@@ -114,7 +114,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> orthographicValue = orthographicMaybe.ToLocalChecked();
 
         if (orthographicValue->IsBoolean()) {
-            orthographic = orthographicValue->BooleanValue();
+            orthographic = Nan::To<v8::Boolean>(orthographicValue).ToLocalChecked()->Value();
         }
     }
 
@@ -166,13 +166,13 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> value = vpMaybe.ToLocalChecked();
 
         if (value->IsArray()) {
-            v8::Handle<v8::Array> arr = v8::Handle<v8::Array>::Cast(value);
+            v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
             assert(count == 2);
 
-            vanishingPoint[0] = (GLfloat)Nan::To<v8::Number>(arr->Get(0)).ToLocalChecked()->Value();
-            vanishingPoint[1] = (GLfloat)Nan::To<v8::Number>(arr->Get(1)).ToLocalChecked()->Value();
+            vanishingPoint[0] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, 0).ToLocalChecked()).ToLocalChecked()->Value();
+            vanishingPoint[1] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, 1).ToLocalChecked()).ToLocalChecked()->Value();
         }
     }
 
@@ -183,13 +183,13 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> value = srcMaybe.ToLocalChecked();
 
         if (value->IsArray()) {
-            v8::Handle<v8::Array> arr = v8::Handle<v8::Array>::Cast(value);
+            v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
             assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
-                corrSrc[i] = (GLfloat)Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value();
+                corrSrc[i] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value();
             }
 
             corrUsed = true;
@@ -202,13 +202,13 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
         v8::Local<v8::Value> value = dstMaybe.ToLocalChecked();
 
         if (value->IsArray()) {
-            v8::Handle<v8::Array> arr = v8::Handle<v8::Array>::Cast(value);
+            v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
             assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
-                corrDst[i] = (GLfloat)Nan::To<v8::Number>(arr->Get(i)).ToLocalChecked()->Value();
+                corrDst[i] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value();
             }
 
             corrUsed = true;

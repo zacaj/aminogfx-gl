@@ -38,7 +38,7 @@ bool AminoVideo::getPlaybackLoop(int32_t &loop) {
     v8::Local<v8::Value> loopLocal = loopValue.ToLocalChecked();
 
     if (loopLocal->IsBoolean()) {
-        if (loopLocal->BooleanValue()) {
+        if (Nan::To<v8::Boolean>(loopLocal).ToLocalChecked()->Value()) {
             loop = -1;
         } else {
             loop = 0;
