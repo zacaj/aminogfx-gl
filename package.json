@@ -41,6 +41,7 @@
   },
   "homepage": "https://github.com/joshmarinacci/aminogfx-gl",
   "devDependencies": {
+    "eslint": "^7.5.0",
     "feedparser": "^2.2.10"
   }
 }
