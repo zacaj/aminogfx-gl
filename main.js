@@ -2527,6 +2527,7 @@ function makeProp(obj, name, val) {
      * Getter and setter.
      */
     const prop = function AminoProperty(v, nativeCall) {
+        //filter null and undefined values (should be string)
         if (v != undefined) {
             return prop.set(v, obj, nativeCall);
         } else {
