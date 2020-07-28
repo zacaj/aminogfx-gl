@@ -117,6 +117,12 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
     source = "#version 100\n" + source;
 #endif
 
+#ifdef EGL_GBM
+    //add define
+    //cbxx TODO verify
+    source += "define EGL_GBM;\n";
+#endif
+
     GLchar *src = (GLchar *)source.c_str();
 
     glShaderSource(handle, 1, (const GLchar **)&src, NULL);
