@@ -60,14 +60,14 @@ declare module "aminogfx-gl" {
         anim(props?: {
             from?: number;
             to?: number;
-            dur?: number;
+            duration?: number;
             delay?: number;
             loop?: number;
             then?: () => void;
             autoreverse?: boolean;
-            timefunc?: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut';
+            timeFunc?: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut';
         }): Anim;
-        watch(prop: Property<any, T>): O;
+        watch(cb: (val: T, prop: Property<O, T>, obj: O) => void): O;
     }
 
     export abstract class Node {
@@ -96,6 +96,7 @@ declare module "aminogfx-gl" {
     export class Group extends Node {
         isGroup: true;
         children: Node[];
+        depth: Property<this, boolean>;
 
         add(...nodes: Node[]): this;
         remove(...nodes: Node[]): this;
@@ -156,6 +157,8 @@ declare module "aminogfx-gl" {
 
         //lines
         maxLines: Property<this, number>;
+        lineNr: Property<this, number>;
+        lineW: Property<this, number>;
     }
 
     export class Anim {
