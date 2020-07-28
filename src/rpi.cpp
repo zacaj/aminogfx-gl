@@ -1342,7 +1342,7 @@ void AminoGfxRPi::handleEvent(input_event ev) {
                     break;
             }
 
-            Nan::Set(event_obj, Nan::New("keycode").ToLocalChecked(), Nan::New(key));
+            Nan::Set(event_obj, Nan::New("keycode").ToLocalChecked(), Nan::New(keycode));
 
             if (keycode == -1) {
                 printf("ERROR: unknown linux key code %i\n", ev.code);
