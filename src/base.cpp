@@ -1877,6 +1877,9 @@ bool AminoText::layoutText() {
 
     uv_mutex_unlock(&freeTypeMutex);
 
+    propLineNr->setValue(lineNr);
+    propLineW->setValue(lineW);
+
     //debug
     //printf("glyphs changed: %i\n", glyphsChanged);
 

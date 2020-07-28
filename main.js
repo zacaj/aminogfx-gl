@@ -2234,7 +2234,9 @@ Text.prototype.init = function () {
         wrap:   'none',
 
         //lines
-        maxLines: 0
+        maxLines: 0,
+        lineNr: 1,
+        lineW: 0,
     });
 
     this.fill.watch(watchFill);

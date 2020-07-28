@@ -393,6 +393,8 @@ public:
     Int32Property *propMaxLines;
     int lineNr = 1;
     float lineW = 0;
+    FloatProperty *propLineNr;
+    FloatProperty *propLineW;
 
     //mutex
     static uv_mutex_t freeTypeMutex;
@@ -505,6 +507,8 @@ public:
         propFont = createObjectProperty("font");
 
         propMaxLines = createInt32Property("maxLines");
+        propLineNr = createFloatProperty("lineNr");
+        propLineW = createFloatProperty("lineW");
     }
 
     //creation
