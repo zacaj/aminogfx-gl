@@ -2530,9 +2530,9 @@ function makeProp(obj, name, val) {
         //filter null and undefined values (should be string)
         if (v != undefined) {
             return prop.set(v, obj, nativeCall);
-        } else {
-            return prop.get();
         }
+
+        return prop.get();
     };
 
     prop.value = val;
@@ -2553,7 +2553,7 @@ function makeProp(obj, name, val) {
 
         this.listeners.push(fun);
 
-        return this;
+        return obj;
     };
 
     /**
@@ -2567,6 +2567,8 @@ function makeProp(obj, name, val) {
         }
 
         this.listeners.splice(n, 1);
+
+        return obj;
     };
 
     /**
@@ -2574,6 +2576,8 @@ function makeProp(obj, name, val) {
      */
     prop.unwatchAll = function () {
         this.listeners = [];
+
+        return obj;
     };
 
     /**
@@ -2662,7 +2666,7 @@ function makeProp(obj, name, val) {
         //apply current value
         watcher(prop());
 
-        return this;
+        return obj;
     };
 
     //Note: no unbind method -> use prop.unwatchAll()
@@ -2693,7 +2697,7 @@ function makeProp(obj, name, val) {
             }
         }
 
-        return this;
+        return obj;
     };
 
     //attach
