@@ -112,15 +112,15 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
         return -1;
     }
 
-#ifdef RPI
-    //add GLSL version
-    source = "#version 100\n" + source;
-#endif
-
 #ifdef EGL_GBM
     //add define
     //cbxx TODO verify
-    source += "#define EGL_GBM;\n";
+    source = "#define EGL_GBM\n" + source;
+#endif
+
+#ifdef RPI
+    //add GLSL version
+    source = "#version 100\n" + source;
 #endif
 
     GLchar *src = (GLchar *)source.c_str();
