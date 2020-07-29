@@ -13,10 +13,10 @@
 #define gettid() syscall(SYS_gettid)
 
 //debug cbxx
-#define DEBUG_GLES true
+#define DEBUG_GLES false
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
-#define DEBUG_HDMI true
+#define DEBUG_HDMI false
 
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
@@ -1137,14 +1137,16 @@ void AminoGfxRPi::renderingDone() {
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
 
-    //debug cbxx
-    printf("-> bo handle: %i\n", handle);
+    //debug
+    if (DEBUG_GLES) {
+        printf("-> bo handle: %i\n", handle);
+    }
 
     //cache framebuffers
     //cbxx TOOD free on exit
     std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
     uint32_t fb;
-//cbxx FIXME bug in here -> no screen output
+
     if (it != fbCache.end()) {
         //use cached fb
         fb = it->second;
@@ -1159,16 +1161,14 @@ void AminoGfxRPi::renderingDone() {
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
-        //debug cbxx
-        printf("-> created fb\n");
+        //debug
+        if (DEBUG_GLES) {
+            printf("-> created fb\n");
+        }
     }
 
-//cbxx check performance optimizations
-//cbxx TODO reuse fb (previous_fb)
     //create framebuffer
 
-//cbxx needed?
-//cbxx TODO verify
     //set CRTC configuration
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
@@ -1186,7 +1186,6 @@ void AminoGfxRPi::renderingDone() {
 
     //prepare next
     previous_bo = bo;
-//cbxx    previous_fb = fb;
 #endif
 
     if (DEBUG_GLES) {

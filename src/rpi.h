@@ -64,7 +64,6 @@ private:
     gbm_surface *gbmSurface = NULL;
     drmModeCrtc *crtc = NULL;
     gbm_bo *previous_bo = NULL;
-//cbxx    uint32_t previous_fb = 0;
     std::map<uint32_t, uint32_t> fbCache;
 #endif
 
