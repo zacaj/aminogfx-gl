@@ -13,7 +13,7 @@
 #define gettid() syscall(SYS_gettid)
 
 //debug cbxx
-#define DEBUG_GLES false
+#define DEBUG_GLES true
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
 #define DEBUG_HDMI true
@@ -88,7 +88,8 @@ void AminoGfxRPi::setup() {
         }
 
         //access OpenGL driver (available if OpenGL driver is loaded)
-        driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
+        //cbxx check O_CLOEXEC flag
+        driDevice = open("/dev/dri/card1", O_RDWR);
 
         assert(driDevice > 0);
 
@@ -1143,7 +1144,7 @@ void AminoGfxRPi::renderingDone() {
     //cbxx TOOD free on exit
     std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
     uint32_t fb;
-
+//cbxx FIXME bug in here -> no screen output
     if (it != fbCache.end()) {
         //use cached fb
         fb = it->second;
@@ -1167,12 +1168,11 @@ void AminoGfxRPi::renderingDone() {
     //create framebuffer
 
 //cbxx needed?
+//cbxx TODO verify
     //set CRTC configuration
-    /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
-    */
 
 //cbxx TODO drmModePageFlip
 

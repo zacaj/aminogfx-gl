@@ -114,7 +114,6 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
 
 #ifdef EGL_GBM
     //add define
-    //cbxx TODO verify
     source = "#define EGL_GBM\n" + source;
 #endif
 
