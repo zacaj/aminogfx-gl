@@ -12,7 +12,10 @@ if (process.argv.length == 2) {
  *
  *   - 5:  60 fps
  *   - 7:  60 fps
+ *   - 8:  58 fps
+ *   - 9:  30 fps
  *   - 10: 30 fps
+ *   - 15: 30 fps
  *   - 20: 20 fps
  *   - 40: 15 fps
  *
@@ -22,8 +25,6 @@ if (process.argv.length == 2) {
  *   -> version: OpenGL ES 3.1 Mesa 20.2.0-devel (git-884718313c)
  *
  *   => limit at 7 fullscreen layers
- *
- *   cbxx TODO check without debug code
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *
