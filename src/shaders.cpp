@@ -662,6 +662,9 @@ TextureLightingShader::TextureLightingShader() : TextureShader() {
     )";
 
     fragmentShader = R"(
+#ifdef EGL_GBM
+        precision highp float;
+#endif
         varying vec2 uv;
         varying float lightFac;
 
