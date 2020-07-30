@@ -1150,11 +1150,23 @@ void AminoGfxRPi::renderingDone() {
         //use cached fb
         fb = it->second;
     } else {
-        //create new fb
+        //create new fb (see https://docs.nvidia.com/drive/nvvib_docs/NVIDIA%20DRIVE%20Linux%20SDK%20Development%20Guide/baggage/group__direct__rendering__manager.html)
         uint32_t pitch = gbm_bo_get_stride(bo);
+        uint8_t depth = 24;
+        uint8_t bpp = 32;
+
+        //int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
+
         //cbxx check drmModeAddFB2
-        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
-        //int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 32, 32, pitch, handle, &fb);
+        uint32_t format = DRM_FORMAT_XRGB8888;
+        uint32_t handles[4];
+        uint32_t pitches[4];
+        uint32_t offsets[4] = { 0 };
+        uint32_t plane_flags = 0;
+
+        kms_bo_get_prop(bo, KMS_HANDLE, &handles[0]);
+
+        int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
 
         assert(res == 0);
 
