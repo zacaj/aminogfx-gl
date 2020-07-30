@@ -1155,9 +1155,12 @@ void AminoGfxRPi::renderingDone() {
         uint8_t depth = 24;
         uint8_t bpp = 32;
 
-        //int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
+        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
 
         //cbxx check drmModeAddFB2
+        /*
+        //TODO #include "libkms.h"
+        //FIXME DRM_FORMAT_XRGB8888 not found
         uint32_t format = DRM_FORMAT_XRGB8888;
         uint32_t handles[4];
         uint32_t pitches[4];
@@ -1167,6 +1170,7 @@ void AminoGfxRPi::renderingDone() {
         kms_bo_get_prop(bo, KMS_HANDLE, &handles[0]);
 
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
+        */
 
         assert(res == 0);
 
