@@ -12,7 +12,7 @@
 
 #define gettid() syscall(SYS_gettid)
 
-//debug cbxx
+//debug
 #define DEBUG_GLES false
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
@@ -88,7 +88,6 @@ void AminoGfxRPi::setup() {
         }
 
         //access OpenGL driver (available if OpenGL driver is loaded)
-        //cbxx check O_CLOEXEC flag
         driDevice = open("/dev/dri/card1", O_RDWR);
 
         assert(driDevice > 0);
@@ -181,7 +180,7 @@ void AminoGfxRPi::initEGL() {
     }
 
 #ifdef EGL_GBM
-    //create GBM device
+    //create GBM device (Note: fails if not enough rights e.g. no root access)
     displayType = gbm_create_device(driDevice);
 
     assert(displayType);
@@ -1154,8 +1153,8 @@ void AminoGfxRPi::renderingDone() {
         //create new fb
         uint32_t pitch = gbm_bo_get_stride(bo);
         //cbxx check drmModeAddFB2
-//        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
-        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 32, 32, pitch, handle, &fb);
+        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
+        //int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 32, 32, pitch, handle, &fb);
 
         assert(res == 0);
 
