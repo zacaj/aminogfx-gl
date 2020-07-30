@@ -30,7 +30,9 @@
         "type_traits": "cpp",
         "iosfwd": "cpp",
         "__config": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "map": "cpp",
+        "unordered_map": "cpp"
     },
     "C_Cpp.intelliSenseEngine": "Default"
 }
