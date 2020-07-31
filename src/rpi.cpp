@@ -87,6 +87,8 @@ void AminoGfxRPi::setup() {
             printf("-> initializing OpenGL driver\n");
         }
 
+        //TODO how to use the dual display output?
+
         //access OpenGL driver (available if OpenGL driver is loaded)
         driDevice = open("/dev/dri/card1", O_RDWR);
 
@@ -398,7 +400,16 @@ void AminoGfxRPi::initEGL() {
     }
 
     if (prefH) {
-        //cbxx FIXME 720p not listed until screen is attached! try HDMI change first and check if list is different
+        /*
+         * Issues:
+         *
+         *   - without attached display only offers the default set display resolution
+         *     - i.e. 720p would fail if 1080p is the default
+         *     - Workarounds:
+         *       - modify default resolution in /boot/config.txt
+         *       - always attach a display
+         */
+
         //show all modes
         if (DEBUG_GLES || DEBUG_HDMI) {
             printf("-> modes: %i\n", connector->count_modes);
@@ -585,8 +596,15 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
         drmModeFreeCrtc(crtc);
 
+        //free all buffers
+        for (std::map<uint32_t, uint32_t *>::iterator iter = fbCache.begin(); iter != fbCache.end(); iter++) {
+            drmModeRmFB(driDevice, iter->second);
+        }
+
+        fbCache.clear();
+
         if (previous_bo) {
-//cbxx            drmModeRmFB(driDevice, previous_fb);
+            //release the locked front buffer
             gbm_surface_release_buffer(gbmSurface, previous_bo);
         }
 #endif
@@ -1142,7 +1160,6 @@ void AminoGfxRPi::renderingDone() {
     }
 
     //cache framebuffers
-    //cbxx TOOD free on exit
     std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
     uint32_t fb;
 
@@ -1193,8 +1210,6 @@ void AminoGfxRPi::renderingDone() {
 
     //free previous
     if (previous_bo) {
-//cbxx TODO avoid
-//        drmModeRmFB(driDevice, previous_fb);
         //release old bo
         gbm_surface_release_buffer(gbmSurface, previous_bo);
     }
