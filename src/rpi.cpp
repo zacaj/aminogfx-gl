@@ -1170,13 +1170,14 @@ void AminoGfxRPi::renderingDone() {
         //create new fb (see https://docs.nvidia.com/drive/nvvib_docs/NVIDIA%20DRIVE%20Linux%20SDK%20Development%20Guide/baggage/group__direct__rendering__manager.html)
         uint32_t pitch = gbm_bo_get_stride(bo);
 
-        //cbxx old version
+        //drmModeAddFB() version
         uint8_t depth = 24;
         uint8_t bpp = 32;
 
         int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
 
-        //cbxx check drmModeAddFB2 -> getting less FPS in layers text!
+        //drmModeAddFB2() version
+        //cbxx check drmModeAddFB2 on other screen (layers test)
         /*
         uint32_t format = gbm_bo_get_format(bo); //DRM_FORMAT_XRGB8888
         uint32_t handles[4] = { handle, 0, 0, 0 };
