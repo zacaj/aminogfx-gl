@@ -597,7 +597,7 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         drmModeFreeCrtc(crtc);
 
         //free all buffers
-        for (std::map<uint32_t, uint32_t *>::iterator iter = fbCache.begin(); iter != fbCache.end(); iter++) {
+        for (std::map<uint32_t, uint32_t>::iterator iter = fbCache.begin(); iter != fbCache.end(); iter++) {
             drmModeRmFB(driDevice, iter->second);
         }
 
