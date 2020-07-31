@@ -1185,9 +1185,9 @@ void AminoGfxRPi::renderingDone() {
         uint32_t plane_flags = 0;
 
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
+        */
 
         assert(res == 0);
-        */
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
