@@ -8,7 +8,7 @@ if (process.argv.length == 2) {
 /*
  * Results:
  *
- *  1) Raspberry Pi 4B: 1080p60 (2019-07-17)
+ *  1) Raspberry Pi 4B: 1080p60 (2020-07-31)
  *
  *   - 5:  60 fps
  *   - 7:  60 fps
@@ -25,6 +25,8 @@ if (process.argv.length == 2) {
  *   -> version: OpenGL ES 3.1 Mesa 20.2.0-devel (git-884718313c)
  *
  *   => limit at 7 fullscreen layers
+ *
+ *   cbxx FIXME getting lower values on different screen!!! -> TODO more testing needed
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *
