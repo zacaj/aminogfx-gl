@@ -1169,25 +1169,23 @@ void AminoGfxRPi::renderingDone() {
     } else {
         //create new fb (see https://docs.nvidia.com/drive/nvvib_docs/NVIDIA%20DRIVE%20Linux%20SDK%20Development%20Guide/baggage/group__direct__rendering__manager.html)
         uint32_t pitch = gbm_bo_get_stride(bo);
+
+        //cbxx old version
+        /*
         uint8_t depth = 24;
         uint8_t bpp = 32;
 
         int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
+        */
 
         //cbxx check drmModeAddFB2
-        /*
-        //TODO #include "libkms.h"
-        //FIXME DRM_FORMAT_XRGB8888 not found
-        uint32_t format = DRM_FORMAT_XRGB8888;
-        uint32_t handles[4];
-        uint32_t pitches[4];
-        uint32_t offsets[4] = { 0 };
+        uint32_t format = gbm_bo_get_format(bo); //DRM_FORMAT_XRGB8888
+        uint32_t handles[4] = { handle, 0, 0, 0 };
+        uint32_t pitches[4] = { pitch, 0, 0, 0 };
+        uint32_t offsets[4] = { 0, 0, 0, 0 };
         uint32_t plane_flags = 0;
 
-        kms_bo_get_prop(bo, KMS_HANDLE, &handles[0]);
-
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
-        */
 
         assert(res == 0);
 
@@ -1206,7 +1204,13 @@ void AminoGfxRPi::renderingDone() {
 
     assert(res2 == 0);
 
-//cbxx TODO drmModePageFlip
+    //TODO vsync or double buffering needed?
+    //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
+    /*
+    res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, NULL);
+
+    assert(res2 == 0);
+    */
 
     //free previous
     if (previous_bo) {
