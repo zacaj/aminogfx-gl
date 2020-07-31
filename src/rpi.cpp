@@ -1171,14 +1171,13 @@ void AminoGfxRPi::renderingDone() {
         uint32_t pitch = gbm_bo_get_stride(bo);
 
         //cbxx old version
-        /*
         uint8_t depth = 24;
         uint8_t bpp = 32;
 
         int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
-        */
 
-        //cbxx check drmModeAddFB2
+        //cbxx check drmModeAddFB2 -> getting less FPS in layers text!
+        /*
         uint32_t format = gbm_bo_get_format(bo); //DRM_FORMAT_XRGB8888
         uint32_t handles[4] = { handle, 0, 0, 0 };
         uint32_t pitches[4] = { pitch, 0, 0, 0 };
@@ -1188,6 +1187,7 @@ void AminoGfxRPi::renderingDone() {
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
 
         assert(res == 0);
+        */
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
