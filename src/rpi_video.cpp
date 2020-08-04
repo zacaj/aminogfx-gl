@@ -102,6 +102,10 @@ void AminoOmxVideoPlayer::init() {
     assert(stream);
 
     if (!stream->init()) {
+        if (DEBUG_OMX) {
+            printf("-> could not initialize stream\n");
+        }
+
         lastError = stream->getLastError();
         delete stream;
         stream = NULL;
@@ -114,6 +118,10 @@ void AminoOmxVideoPlayer::init() {
     //check format
     if (softwareDecoding || !stream->isH264()) {
         if (!stream->getDemuxer()) {
+            if (DEBUG_OMX) {
+                printf("-> no demuxer available\n");
+            }
+
             lastError = "unsupported format";
             delete stream;
             stream = NULL;

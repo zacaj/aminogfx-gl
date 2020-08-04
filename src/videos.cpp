@@ -1214,6 +1214,11 @@ bool VideoFileStream::init() {
         isLocalH264 = true;
     }
 
+    //cbxx FIXME using demuxer on Pi 4 for now
+#ifdef EGL_GBM
+    isLocalH264 = false;
+#endif
+
     if (isLocalH264) {
         //local file
         file = fopen(filename.c_str(), "rb");

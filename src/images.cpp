@@ -1346,7 +1346,6 @@ void AminoTexture::handleVideoPlayerInitDone(JSCallbackUpdate *update) {
         }
     } else {
         //failed
-        //cbxx FIXME verify
         std::string lastError = videoPlayer->getLastError();
         const char *error = lastError.c_str();
 
