@@ -1179,7 +1179,7 @@ NAN_METHOD(AminoTexture::LoadTextureFromVideo) {
 void AminoTexture::createVideoTexture(AsyncValueUpdate *update, int state) {
     if (state == AsyncValueUpdate::STATE_APPLY) {
         //create texture on OpenGL thread
-        if (DEBUG_IMAGES) {
+        if (DEBUG_IMAGES || DEBUG_VIDEOS) {
             printf("-> createVideoTexture()\n");
         }
 
@@ -1242,6 +1242,7 @@ void AminoTexture::createVideoTexture(AsyncValueUpdate *update, int state) {
 
         //initialize
         uv_mutex_lock(&videoLock);
+
         if (videoPlayer) {
             if (DEBUG_VIDEOS) {
                 printf("-> init video player\n");
@@ -1249,6 +1250,7 @@ void AminoTexture::createVideoTexture(AsyncValueUpdate *update, int state) {
 
             videoPlayer->init();
         }
+
         uv_mutex_unlock(&videoLock);
     } else if (state == AsyncValueUpdate::STATE_DELETE) {
         //on main thread
@@ -1344,7 +1346,9 @@ void AminoTexture::handleVideoPlayerInitDone(JSCallbackUpdate *update) {
         }
     } else {
         //failed
-        const char *error = videoPlayer->getLastError().c_str();
+        //cbxx FIXME verify
+        std::string lastError = videoPlayer->getLastError();
+        const char *error = lastError.c_str();
 
         if (DEBUG_VIDEOS) {
             printf("-> error: %s\n", error);
