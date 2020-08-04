@@ -12,7 +12,8 @@
 #include <sstream>
 
 //cbxx TODO separate OMX
-#define DEBUG_OMX false
+//cbxx FIXME
+#define DEBUG_OMX true
 #define DEBUG_OMX_READ false
 #define DEBUG_OMX_BUFFER false
 #define DEBUG_OMX_ERRORS true

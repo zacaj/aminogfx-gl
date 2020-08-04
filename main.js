@@ -1190,7 +1190,7 @@ function loadTexture(obj, img) {
     texture.loadTextureFromImage(img, (err, texture) => {
         if (err) {
             if (DEBUG || DEBUG_ERRORS) {
-                console.log('could not load texture: ' + err.message);
+                console.log('could not load image texture: ' + err.message);
             }
 
             return;
@@ -1211,7 +1211,7 @@ function loadVideoTexture(obj, video) {
     texture.loadTextureFromVideo(video, (err, texture) => {
         if (err) {
             if (DEBUG || DEBUG_ERRORS) {
-                console.log('could not load texture: ' + err.message);
+                console.log('could not load video texture: ' + err.message);
             }
 
             return;
