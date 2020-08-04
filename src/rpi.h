@@ -3,6 +3,8 @@
 
 #include "base.h"
 #include "renderer.h"
+
+//video
 #include "rpi_video.h"
 
 //VideoCore

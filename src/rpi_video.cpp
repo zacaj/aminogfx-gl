@@ -11,10 +11,12 @@
 
 #include <sstream>
 
+//cbxx TODO separate OMX
 #define DEBUG_OMX false
 #define DEBUG_OMX_READ false
 #define DEBUG_OMX_BUFFER false
 #define DEBUG_OMX_ERRORS true
+
 #define DEBUG_VIDEO_TIMING false
 
 /*
@@ -62,6 +64,11 @@ AminoOmxVideoPlayer::AminoOmxVideoPlayer(AminoTexture *texture, AminoVideo *vide
     //locks
     uv_mutex_init(&bufferLock);
     uv_mutex_init(&destroyLock);
+
+    //cbxx TODO Pi 4
+#ifdef EGL_GBM
+    softwareDecoding = true;
+#endif
 }
 
 AminoOmxVideoPlayer::~AminoOmxVideoPlayer() {
@@ -104,13 +111,15 @@ void AminoOmxVideoPlayer::init() {
     }
 
     //check format
-    if (!stream->isH264()) {
+    if (softwareDecoding || !stream->isH264()) {
         if (!stream->getDemuxer()) {
             lastError = "unsupported format";
             delete stream;
             stream = NULL;
 
             handleInitDone(false);
+
+            return;
         }
 
         softwareDecoding = true;
