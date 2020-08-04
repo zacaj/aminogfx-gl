@@ -1359,9 +1359,6 @@ bool AminoOmxVideoPlayer::initTexture() {
             assert(data);
         }
 
-        //cbxx check
-        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureW, textureH, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        //cbxx trying RGB instead of RGBA
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureW, textureH, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
         //Note: no performance hit seen
@@ -1433,7 +1430,6 @@ void AminoOmxVideoPlayer::updateVideoTexture(GLContext *ctx) {
         GLsizei textureW = videoW;
         GLsizei textureH = videoH;
 
-//cbxx FIXME fails on Mesa -> Mesa: User error: GL_INVALID_OPERATION in glTexSubImage2D(format = GL_RGB, type = GL_UNSIGNED_BYTE, internalformat = GL_RGBA)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, textureW, textureH, GL_RGB, GL_UNSIGNED_BYTE, data);
 
         uv_mutex_unlock(&destroyLock);

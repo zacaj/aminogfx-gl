@@ -869,7 +869,7 @@ void VideoDemuxer::freeFrame(AVPacket *packet) {
         }
 
         if (!buffer) {
-            //determine required buffer size and allocate buffer
+            //determine required buffer size and allocate buffer (using RGB 24 bits)
             //Note: deprecated warning on macOS
             int numBytes = avpicture_get_size(AV_PIX_FMT_RGB24, codecCtx->width, codecCtx->height);
             //int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, codecCtx->width, codecCtx->height, 1);
@@ -1225,6 +1225,7 @@ bool VideoFileStream::init() {
 
         if (!file) {
             lastError = "file not found";
+
             return false;
         }
 
@@ -1239,6 +1240,7 @@ bool VideoFileStream::init() {
 
         if (!demuxer->init() || !demuxer->loadFile(filename, options) || !demuxer->initStream()) {
             lastError = demuxer->getLastError();
+
             return false;
         }
 
