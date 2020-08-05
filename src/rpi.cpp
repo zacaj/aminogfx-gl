@@ -90,13 +90,13 @@ void AminoGfxRPi::setup() {
         //TODO how to use the dual display output?
 
         //access OpenGL driver (available if OpenGL driver is loaded)
-        driDevice = open("/dev/dri/card1", O_RDWR);
+        driDevice = open("/dev/dri/card0", O_RDWR);
 //cbxx        driDevice = open("/dev/dri/card1", O_RDWR);
 
         assert(driDevice > 0);
 
         if (DEBUG_GLES) {
-            printf("-> DRI device ready\n");
+            printf("-> DRI device ready: %s\n", );
         }
 #endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
