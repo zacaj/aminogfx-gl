@@ -91,6 +91,7 @@ void AminoGfxRPi::setup() {
 
         //access OpenGL driver (available if OpenGL driver is loaded)
         driDevice = open("/dev/dri/card1", O_RDWR);
+//cbxx        driDevice = open("/dev/dri/card1", O_RDWR);
 
         assert(driDevice > 0);
 
