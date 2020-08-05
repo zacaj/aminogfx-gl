@@ -133,6 +133,7 @@ public:
     float fps = -1;
     float durationSecs = -1.f;
     bool isH264 = false;
+    bool isHEVC = false;
     bool realtime = false;
 
     VideoDemuxer();
@@ -225,6 +226,7 @@ public:
 
     //metadata
     virtual bool isH264() = 0;
+    virtual bool isHEVC() = 0;
     virtual bool hasH264NaluStartCodes() = 0;
     virtual double getDuration() = 0;
     virtual double getFramerate() = 0;
@@ -257,6 +259,7 @@ public:
 
     //metadata
     bool isH264() override;
+    bool isHEVC() override;
     bool hasH264NaluStartCodes() override;
     double getDuration() override;
     double getFramerate() override;

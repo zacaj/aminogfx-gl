@@ -11,7 +11,7 @@
 
 #include <sstream>
 
-//cbxx TODO separate OMX
+//cbxx TODO separate OMX or rename
 //cbxx FIXME
 #define DEBUG_OMX true
 #define DEBUG_OMX_READ false
@@ -116,7 +116,10 @@ void AminoOmxVideoPlayer::init() {
     }
 
     //check format
+    //cbxx TODO native Pi 4 decoding
     if (softwareDecoding || !stream->isH264()) {
+        //use demuxer to decode video to RGB frames
+
         if (!stream->getDemuxer()) {
             if (DEBUG_OMX) {
                 printf("-> no demuxer available\n");
@@ -172,6 +175,7 @@ bool AminoOmxVideoPlayer::initStream() {
     assert(video);
     assert(!stream);
 
+    //create a video file stream (access raw video and decoded RGB data via demuxer)
     stream = new VideoFileStream(video->getPlaybackSource(), video->getPlaybackOptions());
 
     return stream != NULL;

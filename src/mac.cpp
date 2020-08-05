@@ -921,8 +921,10 @@ void AminoMacVideoPlayer::closeDemuxer() {
     //free demuxer
     if (demuxer) {
         uv_mutex_lock(&frameLock);
+
         delete demuxer;
         demuxer = NULL;
+
         uv_mutex_unlock(&frameLock);
     }
 }

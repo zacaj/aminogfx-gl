@@ -1145,7 +1145,8 @@ NAN_METHOD(AminoTexture::LoadTextureFromVideo) {
 
     if (!obj->videoPlayer->initStream()) {
         int argc = 1;
-        v8::Local<v8::Value> argv[1] = { Nan::Error(obj->videoPlayer->getLastError().c_str()) };
+        std::string lastError = obj->videoPlayer->getLastError();
+        v8::Local<v8::Value> argv[1] = { Nan::Error(lastError.c_str()) };
 
         Nan::Call(callback, info.This(), argc, argv);
 

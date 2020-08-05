@@ -87,8 +87,10 @@
 					"conditions" : [
 	                    [ "target_arch == 'arm'", {
 		                    "sources": [
+                                # OMX
                                 "src/ilclient/ilclient.c",
                                 "src/ilclient/ilcore.c",
+                                # base
 		                        "src/rpi.cpp",
                                 "src/rpi_video.cpp"
 		                    ],

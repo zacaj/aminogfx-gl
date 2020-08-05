@@ -223,7 +223,9 @@ texture_font_t *AminoFont::getFontWithSize(uint32_t size) {
         }
 
         if (DEBUG_FONTS) {
-            printf("-> new font size: %i (%s)\n", size, getFontInfo().c_str());
+            std::string info = getFontInfo();
+
+            printf("-> new font size: %i (%s)\n", size, info.c_str());
         }
     } else {
         fontSize = it->second;

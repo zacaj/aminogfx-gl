@@ -1492,7 +1492,9 @@ AminoJSObject* AminoTextFactory::create() {
  */
 void AminoText::updateTexture() {
     if (DEBUG_FONT_UPDATES) {
-        printf("-> update font texture: %s\n", fontSize->font->getFontInfo().c_str());
+        std::string info = fontSize->font->getFontInfo();
+
+        printf("-> update font texture: %s\n", info.c_str());
     }
 
     assert(texture.textureId != INVALID_TEXTURE);

@@ -2224,7 +2224,9 @@ void AminoJSEventObject::processAsyncQueue() {
                     }
 
                     if (!valueItem->obj->handleAsyncUpdate(valueItem)) {
-                        printf("unhandled async update by %s\n", valueItem->obj->getName().c_str());
+                        std::string name = valueItem->obj->getName();
+
+                        printf("unhandled async update by %s\n", name.c_str());
                     }
                 }
                 break;
@@ -2307,7 +2309,9 @@ bool AminoJSEventObject::enqueuePropertyUpdate(AnyProperty *prop, v8::Local<v8::
 
     if (prop->obj->handleSyncUpdate(prop, data)) {
         if (DEBUG_BASE) {
-            printf("-> sync update (value=%s)\n", toString(value).c_str());
+            std::string str = toString(value);
+
+            printf("-> sync update (value=%s)\n", str.c_str());
         }
 
         prop->freeAsyncData(data);

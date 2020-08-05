@@ -668,6 +668,7 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
     width = codecCtx->width;
     height = codecCtx->height;
     isH264 = codecCtx->codec_id == AV_CODEC_ID_H264;
+    isHEVC = codecCtx->codec_id == AV_CODEC_ID_HEVC;
 
     //debug
     if (DEBUG_VIDEOS) {
@@ -676,6 +677,10 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
         //Note: warning on macOS (codecpar not available on RPi)
         if (isH264) {
             printf(" -> H264\n");
+        }
+
+        if (isHEVC) {
+            printf(" -> HEVC\n");
         }
     }
 
@@ -1090,6 +1095,7 @@ void VideoDemuxer::close(bool destroy) {
     width = 0;
     height = 0;
     isH264 = false;
+    isHEVC = false;
 
     //close read
     closeReadFrame(destroy);
@@ -1206,6 +1212,8 @@ bool VideoFileStream::init() {
         printf("-> init video file stream\n");
     }
 
+    //Note: always using the demuxer on Pi 4
+#ifndef EGL_GBM
     //check local H264 (direct file access)
     std::string postfix = ".h264";
     bool isLocalH264 = false;
@@ -1213,11 +1221,6 @@ bool VideoFileStream::init() {
     if (filename.compare(filename.length() - postfix.length(), postfix.length(), postfix) == 0 && filename.find("://") == std::string::npos) {
         isLocalH264 = true;
     }
-
-    //cbxx FIXME using demuxer on Pi 4 for now
-#ifdef EGL_GBM
-    isLocalH264 = false;
-#endif
 
     if (isLocalH264) {
         //local file
@@ -1232,7 +1235,10 @@ bool VideoFileStream::init() {
         if (DEBUG_VIDEOS) {
             printf("-> local H264 file\n");
         }
-    } else {
+    }
+#endif
+
+    if (!file) {
         //any stream
 
         //init demuxer
@@ -1459,7 +1465,15 @@ bool VideoFileStream::endOfStream() {
  * Check if H264 video stream.
  */
 bool VideoFileStream::isH264() {
+    //Note: file is always raw H264
     return file || (demuxer && demuxer->isH264);
+}
+
+/**
+ * Check if HEVC video stream.
+ */
+bool VideoFileStream::isHEVC() {
+    return demuxer && demuxer->isHEVC;
 }
 
 /**
