@@ -12,8 +12,8 @@
 
 #define gettid() syscall(SYS_gettid)
 
-//debug
-#define DEBUG_GLES false
+//debug cbxx
+#define DEBUG_GLES true
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
 #define DEBUG_HDMI false
@@ -339,13 +339,45 @@ void AminoGfxRPi::initEGL() {
 
     if (DEBUG_GLES) {
         printf("DRM connectors: %i\n", resources->count_connectors);
+
+        //cbxx TODO verify
+        //list all connectors
+        for (int i = 0; i < resources->count_connectors; i++) {
+            drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
+
+            if (!connector2) {
+                continue;
+            }
+
+            //name and status
+            char name[MAX_CONNECTOR_NAME_LEN];
+            const char *connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
+
+            get_connector_name(connector2, name);
+
+            printf(" -> %s (%s)\n", name, connected);
+
+            //modes
+            for (int i = 0; i < connector2->count_modes; i++) {
+                drmModeModeInfo mode = connector->modes[i];
+
+                printf("  -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
+            }
+
+            //done
+            drmModeFreeConnector(connector2);
+        }
     }
 
     for (int i = 0; i < resources->count_connectors; i++) {
         drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
 
+        if (!connector2) {
+            continue;
+        }
+
         //pick the first connected connector
-        if (connector2->connection == DRM_MODE_CONNECTED) {
+        if (connector2->connection == DRM_MODE_CONNECTED && connector2->count_modes > 0) {
             //Note: have to free instance later
             connector = connector2;
             break;
