@@ -90,10 +90,9 @@ void AminoGfxRPi::setup() {
         //TODO how to use the dual display output?
 
         //access OpenGL driver (available if OpenGL driver is loaded)
-        char *devicePath = "/dev/dri/card0";
+        std::string devicePath = "/dev/dri/card1";
 
-        driDevice = open(devicePath, O_RDWR);
-//cbxx        driDevice = open("/dev/dri/card1", O_RDWR);
+        driDevice = open(devicePath.c_str(), O_RDWR);
 
         assert(driDevice > 0);
 
