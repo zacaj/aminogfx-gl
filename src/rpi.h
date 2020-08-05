@@ -113,6 +113,7 @@ private:
 
 #ifdef EGL_GBM
     EGLSurface createGbmSurface();
+    std::string getDrmConnectorType(drmModeConnector *connector);
 #endif
 
     bool startsWith(const char *pre, const char *str);

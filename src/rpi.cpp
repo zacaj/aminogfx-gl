@@ -350,12 +350,10 @@ void AminoGfxRPi::initEGL() {
             }
 
             //name and status
-            char name[20];
-            const char *connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
+            std::string type = getDrmConnectorType(connector2);
+            std::string connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
 
-            get_connector_name(connector2, name);
-
-            printf(" -> %s (%s)\n", name, connected);
+            printf(" -> %s-%d (%s)\n", type.c_str(), connector->connector_type_id, connected.c_str());
 
             //modes
             for (int i = 0; i < connector2->count_modes; i++) {
@@ -1021,6 +1019,69 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 
     return surface;
 }
+
+/**
+ * Get the DRM connector type.
+ */
+std::string AminoGfxRPi::getDrmConnectorType(drmModeConnector *connector) {
+    switch (connector->connector_type) {
+        case DRM_MODE_CONNECTOR_VGA:
+            return "VGA";
+
+        case DRM_MODE_CONNECTOR_DVII:
+            return "DVI-I";
+
+        case DRM_MODE_CONNECTOR_DVID:
+            return "DVI-D";
+
+        case DRM_MODE_CONNECTOR_DVIA:
+            return "DVI-A";
+
+        case DRM_MODE_CONNECTOR_Composite:
+            return "Composite";
+
+        case DRM_MODE_CONNECTOR_SVIDEO:
+            return "SVIDEO";
+
+        case DRM_MODE_CONNECTOR_LVDS:
+            return "LVDS";
+
+        case DRM_MODE_CONNECTOR_Component:
+            return "Component";
+
+        case DRM_MODE_CONNECTOR_9PinDIN:
+            return "DIN";
+
+        case DRM_MODE_CONNECTOR_DisplayPort:
+            return "DisplayPort";
+
+        case DRM_MODE_CONNECTOR_HDMIA:
+            return "HDMI-A";
+
+        case DRM_MODE_CONNECTOR_HDMIB:
+            return "HDMI-B";
+
+        case DRM_MODE_CONNECTOR_TV:
+            return "TV";
+
+        case DRM_MODE_CONNECTOR_eDP:
+            return "eDP";
+
+        case DRM_MODE_CONNECTOR_VIRTUAL:
+            return "Virtual";
+
+        case DRM_MODE_CONNECTOR_DSI:
+            return "DSI";
+
+        case DRM_MODE_CONNECTOR_DPI:
+            return "DPI";
+
+        case DRM_MODE_CONNECTOR_Unknown:
+        default:
+            return "unknown";
+    }
+}
+
 #endif
 
 bool AminoGfxRPi::startsWith(const char *pre, const char *str) {
