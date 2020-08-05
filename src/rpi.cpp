@@ -350,7 +350,7 @@ void AminoGfxRPi::initEGL() {
             }
 
             //name and status
-            char name[MAX_CONNECTOR_NAME_LEN];
+            char name[20];
             const char *connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
 
             get_connector_name(connector2, name);
