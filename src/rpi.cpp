@@ -353,11 +353,11 @@ void AminoGfxRPi::initEGL() {
             std::string type = getDrmConnectorType(connector2);
             std::string connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
 
-            printf(" -> %s-%d (%s)\n", type.c_str(), connector->connector_type_id, connected.c_str());
+            printf(" -> %s-%d (%s)\n", type.c_str(), connector2->connector_type_id, connected.c_str());
 
             //modes
             for (int i = 0; i < connector2->count_modes; i++) {
-                drmModeModeInfo mode = connector->modes[i];
+                drmModeModeInfo mode = connector2->modes[i];
 
                 printf("  -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
             }
