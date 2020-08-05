@@ -97,7 +97,7 @@ void AminoGfxRPi::setup() {
         assert(driDevice > 0);
 
         if (DEBUG_GLES) {
-            printf("-> DRI device ready: %s\n", devicePath);
+            printf("-> DRI device ready: %s\n", devicePath.c_str());
         }
 #endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
