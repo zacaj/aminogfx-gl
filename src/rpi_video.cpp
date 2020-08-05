@@ -523,6 +523,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (!client) {
         lastError = "could not initialize ilclient";
         status = -1;
+
         goto end;
     }
 
@@ -539,6 +540,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_Init() != OMX_ErrorNone) {
         lastError = "could not initialize OMX";
         status = -2;
+
         goto end;
     }
 
@@ -549,6 +551,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &video_decode, "video_decode", (ILCLIENT_CREATE_FLAGS_T)(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0) {
         lastError = "video_decode error";
         status = -10;
+
         goto end;
     }
 
@@ -558,6 +561,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &egl_render, "egl_render", (ILCLIENT_CREATE_FLAGS_T)(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_OUTPUT_BUFFERS)) != 0) {
         lastError = "egl_render error";
         status = -11;
+
         goto end;
     }
 
@@ -567,6 +571,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &clock, "clock", (ILCLIENT_CREATE_FLAGS_T)ILCLIENT_DISABLE_ALL_PORTS) != 0) {
         lastError = "clock error";
         status = -12;
+
         goto end;
     }
 
@@ -589,6 +594,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_SetParameter(ILC_GET_HANDLE(clock), OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone) {
         lastError = "could not set clock";
         status = -13;
+
         goto end;
     }
 
@@ -622,6 +628,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_SetConfig(ILC_GET_HANDLE(clock), OMX_IndexConfigLatencyTarget, &lt) != OMX_ErrorNone) {
         lastError = "could not set clock latency";
         status = -14;
+
         goto end;
     }
 
@@ -629,6 +636,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &video_scheduler, "video_scheduler", (ILCLIENT_CREATE_FLAGS_T)ILCLIENT_DISABLE_ALL_PORTS) != 0) {
         lastError = "video_scheduler error";
         status = -15;
+
         goto end;
     }
 
@@ -643,6 +651,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_setup_tunnel(tunnel + 2, 0, 0) != 0) {
         lastError = "tunnel setup error";
         status = -16;
+
         goto end;
     }
 
@@ -754,6 +763,7 @@ bool AminoOmxVideoPlayer::initOmx() {
         if (OMX_SetParameter(ILC_GET_HANDLE(video_decode), (OMX_INDEXTYPE)OMX_IndexParamNalStreamFormatSelect, &nsft) != OMX_ErrorNone) {
             lastError = "NAL selection error";
             status = -20;
+
             goto end;
         }
     }
@@ -1851,12 +1861,14 @@ void AminoOmxVideoPlayer::initDemuxer() {
     if (res == READ_END_OF_VIDEO) {
         lastError = "empty video";
         handleInitDone(false);
+
         return;
     }
 
     if (res == READ_ERROR) {
         lastError = "could not load video stream";
         handleInitDone(false);
+
         return;
     }
 
@@ -1869,6 +1881,7 @@ void AminoOmxVideoPlayer::initDemuxer() {
     if (!eglImagesReady || doStop) {
         //failed to create texture
         handleInitDone(false);
+
         return;
     }
 
