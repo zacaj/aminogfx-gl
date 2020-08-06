@@ -1364,7 +1364,7 @@ void AminoGfxRPi::renderingDone() {
 
     //cbxx FIXME getting 30 fps with page flip -> TODO check root cause (missing a vsync???)
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
-    res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
+    int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
     assert(res2 == 0);
 
