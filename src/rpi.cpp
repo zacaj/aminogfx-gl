@@ -542,6 +542,8 @@ void AminoGfxRPi::initEGL() {
     //find a CRTC
     if (encoder->crtc_id) {
         crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
+
+        assert(crtc->crtc_id);
     }
 
     drmModeFreeEncoder(encoder);
@@ -1342,6 +1344,7 @@ void AminoGfxRPi::renderingDone() {
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
 
         assert(res == 0);
+        assert(fb);
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
