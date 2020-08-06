@@ -1,6 +1,6 @@
 'use strict';
 
-if (process.argv.length == 2) {
+if (process.argv.length === 2) {
     console.log('Missing integer parameter!');
     return;
 }
