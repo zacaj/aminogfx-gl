@@ -402,7 +402,12 @@ void AminoGfxRPi::initEGL() {
                 match = name == prefDisp;
 
                 if (DEBUG_GLES) {
-                    printf("-> using display %s\n", prefDisp.c_str());
+                    //debug cbxx
+                    printf("-> checking display %s %s\n", name.c_str(), prefDisp.c_str());
+
+                    if (match) {
+                        printf("-> using display %s\n", prefDisp.c_str());
+                    }
                 }
             }
 
