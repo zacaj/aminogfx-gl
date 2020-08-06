@@ -1367,7 +1367,7 @@ void AminoGfxRPi::renderingDone() {
     int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
     //debug cbxx
-    printf("-> page flip res: %d EINVAL=%d EBUSY=\n", res2, EINVAL, EBUSY);
+    printf("-> page flip res: %d EINVAL=%d EBUSY=%d\n", res2, EINVAL, EBUSY);
 //cbxx FIXME crashes
     assert(res2 == 0 && res2 != EBUSY);
 
