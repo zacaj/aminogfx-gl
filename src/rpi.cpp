@@ -397,7 +397,7 @@ void AminoGfxRPi::initEGL() {
 
             //check display
             if (!prefDisp.empty()) {
-                std::string name(getDrmConnectorType(connector2) + std::to_string(connector2->connector_type_id));
+                std::string name(getDrmConnectorType(connector2) + "-" + std::to_string(connector2->connector_type_id));
 
                 match = name == prefDisp;
 
