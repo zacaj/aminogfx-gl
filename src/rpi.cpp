@@ -661,14 +661,13 @@ void AminoGfxRPi::destroy() {
 }
 
 /**
- * Destroy GLFW instance.
+ * Destroy EGL instance.
  */
 void AminoGfxRPi::destroyAminoGfxRPi() {
     //OpenGL ES
     if (display != EGL_NO_DISPLAY) {
 #ifdef EGL_GBM
         //set the previous crtc
-
         drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
         drmModeFreeCrtc(crtc);
 
@@ -1356,11 +1355,14 @@ void AminoGfxRPi::renderingDone() {
 
     //set CRTC configuration
     //FIXME crashes here if two outputs are used at the same time
+    //cbxx TODO verify
+    /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
+    */
 
-    //cbxx FIXME getting 30 fps with page flip (and dual screens enabled) -> TODO check root cause
+    //cbxx FIXME getting 30 fps with page flip -> TODO check root cause (missing a vsync???)
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
