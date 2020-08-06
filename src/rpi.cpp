@@ -1355,7 +1355,7 @@ void AminoGfxRPi::renderingDone() {
 
     //set CRTC configuration
     //FIXME crashes here if two outputs are used at the same time
-    //cbxx TODO verify
+    //cbxx TODO try without this call
     /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
@@ -1366,6 +1366,9 @@ void AminoGfxRPi::renderingDone() {
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
+    //debug cbxx
+    printf("-> page flip res: %d\n", res2);
+//cbxx FIXME crashes
     assert(res2 == 0);
 
     pageFlipPending = true;
