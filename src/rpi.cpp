@@ -1369,7 +1369,7 @@ void AminoGfxRPi::renderingDone() {
     //debug cbxx
     printf("-> page flip res: %d\n", res2);
 //cbxx FIXME crashes
-    assert(res2 == 0);
+    assert(res2 == 0 && res2 != EBUSY);
 
     pageFlipPending = true;
 
