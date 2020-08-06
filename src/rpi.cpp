@@ -543,6 +543,7 @@ void AminoGfxRPi::initEGL() {
     if (encoder->crtc_id) {
         crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
 
+        assert(crtc);
         assert(crtc->crtc_id);
     }
 
@@ -1352,6 +1353,11 @@ void AminoGfxRPi::renderingDone() {
         if (DEBUG_GLES) {
             printf("-> created fb\n");
         }
+
+        //cbxx set CRTC once
+        int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+        assert(res2 == 0);
     }
 
     //create framebuffer
@@ -1372,7 +1378,7 @@ void AminoGfxRPi::renderingDone() {
     //debug cbxx
     printf("-> page flip res: %d EINVAL=%d EBUSY=%d\n", res2, EINVAL, EBUSY);
 //cbxx FIXME crashes
-//    assert(res2 == 0 && res2 != EBUSY);
+    assert(res2 == 0 && res2 != -EBUSY);
 
     if (res2 == 0) {
         pageFlipPending = true;
