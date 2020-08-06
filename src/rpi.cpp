@@ -1360,13 +1360,27 @@ void AminoGfxRPi::renderingDone() {
 
     assert(res2 == 0);
 //cbxx see https://gitlab.freedesktop.org/mesa/kmscube/blob/master/drm-legacy.c#L72
-    //TODO vsync or double buffering needed?
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
-    /*
-    res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, NULL);
+    res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
     assert(res2 == 0);
-    */
+
+    pageFlipPending = true;
+
+    //wait for page flip
+    drmEventContext ev;
+
+    memset(&ev, 0, sizeof(ev));
+	ev.version = DRM_EVENT_CONTEXT_VERSION;
+	ev.page_flip_handler = handlePageFlipEvent;
+
+    while (pageFlipPending) {
+		int ret = drmHandleEvent(fd, &ev);
+
+        if (ret) {
+			break;
+		}
+    }
 
     //free previous
     if (previous_bo) {
@@ -1381,6 +1395,16 @@ void AminoGfxRPi::renderingDone() {
     if (DEBUG_GLES) {
         printf("-> EGL buffers swapped\n");
     }
+}
+
+/**
+ * Handle a page flip event.
+ */
+void AminoGfxRPi::handlePageFlipEvent(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data) {
+    //debug cbxx
+    printf("-> page flip occured\n");
+
+    static_cast<AminoGfxRPi *>(data)->pageFlipPending = false;
 }
 
 void AminoGfxRPi::handleSystemEvents() {

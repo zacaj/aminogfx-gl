@@ -67,6 +67,7 @@ private:
     drmModeCrtc *crtc = NULL;
     gbm_bo *previous_bo = NULL;
     std::map<uint32_t, uint32_t> fbCache;
+    bool pageFlipPending = false;
 #endif
 
     //resolution
@@ -117,6 +118,7 @@ private:
 #ifdef EGL_GBM
     EGLSurface createGbmSurface();
     std::string getDrmConnectorType(drmModeConnector *connector);
+    static void handlePageFlipEvent(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data);
 #endif
 
     bool startsWith(const char *pre, const char *str);
