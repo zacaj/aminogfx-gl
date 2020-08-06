@@ -93,7 +93,7 @@ void AminoGfxRPi::setup() {
         //Note: Pi0-3 use /dev/dri/card0
         std::string devicePath = "/dev/dri/card1";
 
-        driDevice = open(devicePath.c_str(), O_RDWR);
+        driDevice = open(devicePath.c_str(), O_RDWR | O_CLOEXEC);
 
         assert(driDevice > 0);
 
@@ -1359,7 +1359,8 @@ void AminoGfxRPi::renderingDone() {
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
-//cbxx see https://gitlab.freedesktop.org/mesa/kmscube/blob/master/drm-legacy.c#L72
+
+    //cbxx FIXME getting 30 fps with page flip (and dual screens enabled) -> TODO check root cause
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
@@ -1378,6 +1379,9 @@ void AminoGfxRPi::renderingDone() {
 		int ret = drmHandleEvent(driDevice, &ev);
 
         if (ret) {
+            //debug cbxx
+            printf("-> drmHandleEvent() failed %d\n", ret);
+
 			break;
 		}
     }

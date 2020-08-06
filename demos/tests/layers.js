@@ -27,6 +27,7 @@ if (process.argv.length === 2) {
  *   => limit at 7 fullscreen layers
  *
  *   cbxx FIXME getting lower values on different screen!!! -> TODO more testing needed
+ *   cbxx seeing either 60 or 30 fps -> automatic fps regulation in place???
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *
