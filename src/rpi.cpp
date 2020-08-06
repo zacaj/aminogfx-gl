@@ -402,8 +402,8 @@ void AminoGfxRPi::initEGL() {
                 match = name == prefDisp;
 
                 if (DEBUG_GLES) {
-                    //debug cbxx
-                    printf("-> checking display %s %s\n", name.c_str(), prefDisp.c_str());
+                    //debug
+                    //printf("-> checking display %s %s\n", name.c_str(), prefDisp.c_str());
 
                     if (match) {
                         printf("-> using display %s\n", prefDisp.c_str());
@@ -1331,6 +1331,7 @@ void AminoGfxRPi::renderingDone() {
     //create framebuffer
 
     //set CRTC configuration
+    //FIXME crashes here if two outputs are used at the same time
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);

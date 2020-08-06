@@ -10,7 +10,7 @@ const gfx = new amino.AminoGfx({
     //display: 'HDMI-A-1' //Pi 4: HDMI 1
     //display: 'HDMI-A-2' //Pi 4: HDMI 2
 });
-//cbxx extend
+
 gfx.start(function (err) {
     if (err) {
         console.log('Amino error: ' + err.message);

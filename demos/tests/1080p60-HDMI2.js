@@ -7,10 +7,9 @@ const gfx = new amino.AminoGfx({
     resolution: '1080p@60',
 
     //multi-display support
-    //cbxx TODO verify
     display: 'HDMI-A-2' //Pi 4: HDMI 2
 });
-//cbxx extend
+
 gfx.start(function (err) {
     if (err) {
         console.log('Amino error: ' + err.message);
