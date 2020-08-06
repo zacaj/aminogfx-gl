@@ -1312,7 +1312,7 @@ void AminoGfxRPi::renderingDone() {
 
         //cbxx TODO verify
         //drmModeAddFB2() version
-        uint32_t format = gbm_bo_get_format(bo); //DRM_FORMAT_XRGB8888
+        uint32_t format = gbm_bo_get_format(bo); //GBM_FORMAT_XRGB8888
         uint32_t handles[4] = { handle, 0, 0, 0 };
         uint32_t pitches[4] = { pitch, 0, 0, 0 };
         uint32_t offsets[4] = { 0, 0, 0, 0 };
@@ -1320,11 +1320,11 @@ void AminoGfxRPi::renderingDone() {
 
         if (DEBUG_GLES) {
             switch (format) {
-                case DRM_FORMAT_XRGB8888:
+                case GBM_FORMAT_XRGB8888:
                     printf("-> bo format: XRGB8888\n");
                     break;
 
-                case DRM_FORMAT_ARGB8888:
+                case GBM_FORMAT_ARGB8888:
                     printf("-> bo format: ARGB8888\n");
                     break;
 
