@@ -1375,7 +1375,7 @@ void AminoGfxRPi::renderingDone() {
 	ev.page_flip_handler = handlePageFlipEvent;
 
     while (pageFlipPending) {
-		int ret = drmHandleEvent(fd, &ev);
+		int ret = drmHandleEvent(driDevice, &ev);
 
         if (ret) {
 			break;
