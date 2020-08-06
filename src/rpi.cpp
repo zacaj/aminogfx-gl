@@ -1374,7 +1374,9 @@ void AminoGfxRPi::renderingDone() {
 //cbxx FIXME crashes
 //    assert(res2 == 0 && res2 != EBUSY);
 
-    pageFlipPending = true;
+    if (res2 == 0) {
+        pageFlipPending = true;
+    }
 
     //wait for page flip
     drmEventContext ev;
