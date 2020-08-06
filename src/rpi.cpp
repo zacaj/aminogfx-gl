@@ -288,6 +288,7 @@ void AminoGfxRPi::initEGL() {
 
     //find matching config
     int pos = -1;
+    EGLint wantedId = GBM_FORMAT_XRGB8888; //cbxx TODO check original GBM_FORMAT_ARGB8888
 
     for (int i = 0; i < count; i++) {
         if (DEBUG_GLES) {
@@ -312,7 +313,7 @@ void AminoGfxRPi::initEGL() {
             printf("-> format: %i %c%c%c%c\n", id, (char)(id & 0xFF), (char)((id >> 8) & 0xFF), (char)((id >> 16) & 0xFF), (char)((id >> 24) & 0xFF));
         }
 
-        if (id == GBM_FORMAT_ARGB8888) {
+        if (id == wantedId) {
             pos = i;
             break;
         }
@@ -660,6 +661,7 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
     if (display != EGL_NO_DISPLAY) {
 #ifdef EGL_GBM
         //set the previous crtc
+
         drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
         drmModeFreeCrtc(crtc);
 
@@ -1301,22 +1303,38 @@ void AminoGfxRPi::renderingDone() {
         uint32_t pitch = gbm_bo_get_stride(bo);
 
         //drmModeAddFB() version
+        /*
         uint8_t depth = 24;
         uint8_t bpp = 32;
 
         int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
+        */
 
+        //cbxx TODO verify
         //drmModeAddFB2() version
-        //cbxx check drmModeAddFB2 on other screen (layers test)
-        /*
         uint32_t format = gbm_bo_get_format(bo); //DRM_FORMAT_XRGB8888
         uint32_t handles[4] = { handle, 0, 0, 0 };
         uint32_t pitches[4] = { pitch, 0, 0, 0 };
         uint32_t offsets[4] = { 0, 0, 0, 0 };
         uint32_t plane_flags = 0;
 
+        if (DEBUG_GLES) {
+            switch (format) {
+                case DRM_FORMAT_XRGB8888:
+                    printf("-> bo format: XRGB8888\n");
+                    break;
+
+                case DRM_FORMAT_ARGB8888:
+                    printf("-> bo format: ARGB8888\n");
+                    break;
+
+                default:
+                    printf("-> bo format: unknown %d\n", format);
+                    break;
+            }
+        }
+
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
-        */
 
         assert(res == 0);
 
