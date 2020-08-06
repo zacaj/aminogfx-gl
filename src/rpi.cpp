@@ -234,7 +234,9 @@ void AminoGfxRPi::initEGL() {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
-        EGL_ALPHA_SIZE, 8,
+        //cbxx check
+        EGL_ALPHA_SIZE, 0,
+        //EGL_ALPHA_SIZE, 8,
 
         //OpenGL ES 2.0
         EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
@@ -289,7 +291,7 @@ void AminoGfxRPi::initEGL() {
     //find matching config
     int pos = -1;
     EGLint wantedId = GBM_FORMAT_XRGB8888; //cbxx TODO check original GBM_FORMAT_ARGB8888
-
+cbxx
     for (int i = 0; i < count; i++) {
         if (DEBUG_GLES) {
             EGLint value;
