@@ -234,9 +234,14 @@ void AminoGfxRPi::initEGL() {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
-        //cbxx check
+
+#ifdef EGL_GBM
+        //using GBM_FORMAT_XRGB8888
         EGL_ALPHA_SIZE, 0,
-        //EGL_ALPHA_SIZE, 8,
+#else
+        //use Dispmanx transparency effect (equal to GBM_FORMAT_ARGB8888)
+        EGL_ALPHA_SIZE, 8,
+#endif
 
         //OpenGL ES 2.0
         EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
@@ -290,7 +295,7 @@ void AminoGfxRPi::initEGL() {
 
     //find matching config
     int pos = -1;
-    EGLint wantedId = GBM_FORMAT_XRGB8888; //cbxx TODO check original GBM_FORMAT_ARGB8888
+    EGLint wantedId = GBM_FORMAT_XRGB8888;
 
     for (int i = 0; i < count; i++) {
         if (DEBUG_GLES) {
@@ -1312,7 +1317,6 @@ void AminoGfxRPi::renderingDone() {
         int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
         */
 
-        //cbxx TODO verify
         //drmModeAddFB2() version
         uint32_t format = gbm_bo_get_format(bo); //GBM_FORMAT_XRGB8888
         uint32_t handles[4] = { handle, 0, 0, 0 };
