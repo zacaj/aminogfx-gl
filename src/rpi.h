@@ -72,6 +72,9 @@ private:
     //resolution
     std::string prefRes = "";
 
+    //display
+    std::string prefDisp = "";
+
 #ifdef EGL_DISPMANX
     static sem_t resSem;
     static bool resSemValid;

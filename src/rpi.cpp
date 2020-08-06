@@ -90,6 +90,7 @@ void AminoGfxRPi::setup() {
         //TODO how to use the dual display output?
 
         //access OpenGL driver (available if OpenGL driver is loaded)
+        //Note: Pi0-3 use /dev/dri/card0
         std::string devicePath = "/dev/dri/card1";
 
         driDevice = open(devicePath.c_str(), O_RDWR);
@@ -160,6 +161,17 @@ void AminoGfxRPi::setup() {
 #endif
                 }
             }
+
+            //display
+            Nan::MaybeLocal<v8::Value> displayMaybe = Nan::Get(obj, Nan::New<v8::String>("display").ToLocalChecked());
+
+            if (!displayMaybe.IsEmpty()) {
+                v8::Local<v8::Value> displayValue = displayMaybe.ToLocalChecked();
+
+                if (displayValue->IsString()) {
+                    prefDisp = AminoJSObject::toString(displayValue);
+                }
+            }
         }
 
         glESInitialized = true;
@@ -186,6 +198,10 @@ void AminoGfxRPi::initEGL() {
 #ifdef EGL_GBM
     //create GBM device (Note: fails if not enough rights e.g. no root access)
     displayType = gbm_create_device(driDevice);
+
+    if (!displayType) {
+        printf("Could not create the GBM device! Please check your permissions (e.g. run with root privileges).\n");
+    }
 
     assert(displayType);
 
@@ -342,7 +358,6 @@ void AminoGfxRPi::initEGL() {
     if (DEBUG_GLES) {
         printf("DRM connectors: %i\n", resources->count_connectors);
 
-        //cbxx TODO verify
         //list all connectors
         for (int i = 0; i < resources->count_connectors; i++) {
             drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
@@ -378,9 +393,24 @@ void AminoGfxRPi::initEGL() {
 
         //pick the first connected connector
         if (connector2->connection == DRM_MODE_CONNECTED && connector2->count_modes > 0) {
-            //Note: have to free instance later
-            connector = connector2;
-            break;
+            bool match = true;
+
+            //check display
+            if (prefDisp) {
+                std::string name(getDrmConnectorType(connector2) + std::to_string(connector2->connector_type_id));
+
+                match = name == prefDisp;
+
+                if (DEBUG_GLES) {
+                    printf("-> using display %s\n", prefDisp.c_str());
+                }
+            }
+
+            if (match) {
+                //Note: have to free instance later
+                connector = connector2;
+                break;
+            }
         }
 
         drmModeFreeConnector(connector2);
@@ -1299,7 +1329,7 @@ void AminoGfxRPi::renderingDone() {
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
-
+//cbxx see https://gitlab.freedesktop.org/mesa/kmscube/blob/master/drm-legacy.c#L72
     //TODO vsync or double buffering needed?
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     /*
