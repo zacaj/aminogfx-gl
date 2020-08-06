@@ -291,7 +291,7 @@ void AminoGfxRPi::initEGL() {
     //find matching config
     int pos = -1;
     EGLint wantedId = GBM_FORMAT_XRGB8888; //cbxx TODO check original GBM_FORMAT_ARGB8888
-cbxx
+
     for (int i = 0; i < count; i++) {
         if (DEBUG_GLES) {
             EGLint value;
