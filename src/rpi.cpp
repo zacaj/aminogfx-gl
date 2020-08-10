@@ -1401,18 +1401,13 @@ void AminoGfxRPi::renderingDone() {
 
 		int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
 
+        //debug cbxx
         if (ret < 0) {
 			printf("select err: %s\n", strerror(errno));
-
-            return ret;
 		} else if (ret == 0) {
 			printf("select timeout!\n");
-
-            return -1;
 		} else if (FD_ISSET(0, &fds)) {
 			printf("user interrupted!\n");
-
-                return 0;
         }
 
 		ret = drmHandleEvent(driDevice, &ev);
