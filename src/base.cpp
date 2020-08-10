@@ -487,7 +487,9 @@ void AminoGfx::measureRenderingEnd() {
         //optional output on screen (color: blue)
         if (propShowFPS->value) {
             //cbxx TODO verify
-            printf("\033[0;31m%i FPS (max: %i ms, min: %i ms, avg: %i ms)\n", (int)lastFPS, (int)fpsCycleMax, (int)fpsCycleMin, (int)lastCycleAvg);
+            printf("\033[0;34m");
+            printf("%i FPS (max: %i ms, min: %i ms, avg: %i ms)\n", (int)lastFPS, (int)fpsCycleMax, (int)fpsCycleMin, (int)lastCycleAvg);
+            printf("\033[0m;");
         }
     }
 }
