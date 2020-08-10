@@ -1362,19 +1362,25 @@ void AminoGfxRPi::renderingDone() {
         assert(res2 == 0);
     }
 
-    //create framebuffer
+    //switch fb reference
+    uint32_t last_fb = current_fb;
+
+    current_fb = fb;
 
     //set CRTC configuration
     //FIXME crashes here if two outputs are used at the same time
     //cbxx TODO try without this call
     //cbxx FIXME tearing without this call but only 30 fps
+    /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
+    */
 
     //cbxx FIXME getting 30 fps with page flip -> TODO check root cause (missing a vsync???)
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
-    res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
+    //int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
+    int res2 = drmModePageFlip(driDevice, crtc->crtc_id, last_fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
     //debug cbxx
     printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
