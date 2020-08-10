@@ -1362,11 +1362,6 @@ void AminoGfxRPi::renderingDone() {
         assert(res2 == 0);
     }
 
-    //switch fb reference
-    uint32_t last_fb = current_fb;
-
-    current_fb = fb;
-
     //set CRTC configuration
     //FIXME crashes here if two outputs are used at the same time
     //cbxx TODO try without this call
@@ -1392,6 +1387,7 @@ void AminoGfxRPi::renderingDone() {
     }
 
     //wait for page flip
+    fd_set fds;
     drmEventContext ev;
 
     memset(&ev, 0, sizeof(ev));
@@ -1399,6 +1395,27 @@ void AminoGfxRPi::renderingDone() {
 	ev.page_flip_handler = handlePageFlipEvent;
 
     while (pageFlipPending) {
+        //cbxx TODO check
+        FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		FD_SET(driDevice, &fds);
+
+		ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
+
+        if (ret < 0) {
+			printf("select err: %s\n", strerror(errno));
+
+            return ret;
+		} else if (ret == 0) {
+			printf("select timeout!\n");
+
+            return -1;
+		} else if (FD_ISSET(0, &fds)) {
+			printf("user interrupted!\n");
+
+                return 0;
+        }
+
 		int ret = drmHandleEvent(driDevice, &ev);
 
         //debug cbxx
