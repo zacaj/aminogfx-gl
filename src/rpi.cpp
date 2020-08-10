@@ -13,7 +13,7 @@
 #define gettid() syscall(SYS_gettid)
 
 //debug cbxx
-#define DEBUG_GLES true
+#define DEBUG_GLES false
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
 #define DEBUG_HDMI false
@@ -1355,30 +1355,18 @@ void AminoGfxRPi::renderingDone() {
             printf("-> created fb\n");
         }
 
-        //cbxx set CRTC once
-        //cbxx FIXME seeing tearing but runs again at 60 fps (see opacity test case)
+        //set CRTC once
         int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
         assert(res2 == 0);
     }
 
-    //set CRTC configuration
-    //FIXME crashes here if two outputs are used at the same time
-    //cbxx TODO try without this call
-    //cbxx FIXME tearing without this call but only 30 fps
-    /*
-    int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
-
-    assert(res2 == 0);
-    */
-
-    //cbxx FIXME getting 30 fps with page flip -> TODO check root cause (missing a vsync???)
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
-    //debug cbxx
-    printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
-//cbxx FIXME crashes if no drmModeSetCrtc() call done before
+    //debug
+    //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
+
     assert(res2 == 0);
 
     if (res2 == 0) {
@@ -1401,7 +1389,10 @@ void AminoGfxRPi::renderingDone() {
 
 		int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
 
-        //debug cbxx
+        assert(ret);
+
+        //debug
+        /*
         if (ret < 0) {
 			printf("select err: %s\n", strerror(errno));
 		} else if (ret == 0) {
@@ -1409,18 +1400,20 @@ void AminoGfxRPi::renderingDone() {
 		} else if (FD_ISSET(0, &fds)) {
 			printf("user interrupted!\n");
         }
+        */
 
 		ret = drmHandleEvent(driDevice, &ev);
 
-        //debug cbxx
         assert(ret == 0);
 
+        //debug
+        /*
         if (ret) {
-            //debug cbxx
             printf("-> drmHandleEvent() failed %d\n", ret);
 
 			break;
 		}
+        */
     }
 
     //free previous
@@ -1444,8 +1437,8 @@ void AminoGfxRPi::renderingDone() {
  * Handle a page flip event.
  */
 void AminoGfxRPi::handlePageFlipEvent(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data) {
-    //debug cbxx
-    printf("-> page flip occured\n");
+    //debug
+    //printf("-> page flip occured\n");
 
     static_cast<AminoGfxRPi *>(data)->pageFlipPending = false;
 }
