@@ -1305,14 +1305,7 @@ void AminoGfxRPi::renderingDone() {
     std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
     uint32_t fb;
 
-    //cbxx TODO trying different code
-    fb = drm_fb_get_from_bo(bo);
-
-    assert(fb);
-
-    if (fb) {
-        //TODO cleanup
-    } else if (it != fbCache.end()) {
+    if (it != fbCache.end()) {
         //use cached fb
         fb = it->second;
     } else {
@@ -1375,7 +1368,6 @@ void AminoGfxRPi::renderingDone() {
     //FIXME crashes here if two outputs are used at the same time
     //cbxx TODO try without this call
     //cbxx FIXME tearing without this call but only 30 fps
-    //cbxx TODO only call once
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
     assert(res2 == 0);
