@@ -684,6 +684,7 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         if (previous_bo) {
             //release the locked front buffer
             gbm_surface_release_buffer(gbmSurface, previous_bo);
+            previous_bo = NULL;
         }
 #endif
 
@@ -1355,6 +1356,7 @@ void AminoGfxRPi::renderingDone() {
         }
 
         //cbxx set CRTC once
+        //cbxx FIXME seeing tearing but runs again at 60 fps (see opacity test case)
         int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
         assert(res2 == 0);
@@ -1365,6 +1367,7 @@ void AminoGfxRPi::renderingDone() {
     //set CRTC configuration
     //FIXME crashes here if two outputs are used at the same time
     //cbxx TODO try without this call
+    //cbxx FIXME tearing without this call but only 30 fps
     /*
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
@@ -1376,9 +1379,9 @@ void AminoGfxRPi::renderingDone() {
     int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
     //debug cbxx
-    printf("-> page flip res: %d EINVAL=%d EBUSY=%d\n", res2, EINVAL, EBUSY);
-//cbxx FIXME crashes
-    assert(res2 == 0 && res2 != -EBUSY);
+    printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
+//cbxx FIXME crashes if no drmModeSetCrtc() call done before
+    assert(res2 == 0);
 
     if (res2 == 0) {
         pageFlipPending = true;
@@ -1394,6 +1397,9 @@ void AminoGfxRPi::renderingDone() {
     while (pageFlipPending) {
 		int ret = drmHandleEvent(driDevice, &ev);
 
+        //debug cbxx
+        assert(ret == 0);
+
         if (ret) {
             //debug cbxx
             printf("-> drmHandleEvent() failed %d\n", ret);
@@ -1406,6 +1412,8 @@ void AminoGfxRPi::renderingDone() {
     if (previous_bo) {
         //release old bo
         gbm_surface_release_buffer(gbmSurface, previous_bo);
+
+        //Note: previous_bo value set below
     }
 
     //prepare next
