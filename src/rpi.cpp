@@ -1435,7 +1435,10 @@ void AminoGfxRPi::renderingDone() {
         */
     }
 #else
-    //double buffering case (two framebuffers)
+    //double buffering case without vsync (two framebuffers)
+
+    //debug cbxx
+    printf("-> switching buffers without vsync\n");
 
     int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
