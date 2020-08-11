@@ -18,7 +18,6 @@
 #define DEBUG_INPUT false
 #define DEBUG_HDMI false
 
-//cbxx TODO verify
 #define USE_DRM_PAGEFLIP false
 
 #define AMINO_EGL_SAMPLES 4
@@ -1376,7 +1375,13 @@ void AminoGfxRPi::renderingDone() {
      *   - video playback
      *     - seeing tearing
      *
-     * cbxx TODO non-page flip issues
+     *  Without page flipping:
+     *
+     *   - tearing looks equal
+     *   - getting more frames being rendered
+     *
+     *  => not using page flipping right now
+     *
      */
 
     if (USE_DRM_PAGEFLIP) {
@@ -1402,6 +1407,7 @@ void AminoGfxRPi::renderingDone() {
 
         while (pageFlipPending) {
             //cbxx TODO check
+            //TODO needed? Not handling any input here.
             FD_ZERO(&fds);
             FD_SET(0, &fds);
             FD_SET(driDevice, &fds);
@@ -1421,6 +1427,7 @@ void AminoGfxRPi::renderingDone() {
             }
             */
 
+            //handle events
             ret = drmHandleEvent(driDevice, &ev);
 
             assert(ret == 0);
