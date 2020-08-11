@@ -33,7 +33,8 @@
         "__nullptr": "cpp",
         "map": "cpp",
         "unordered_map": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "__tuple": "cpp"
     },
     "C_Cpp.intelliSenseEngine": "Default"
 }

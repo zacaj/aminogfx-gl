@@ -1358,12 +1358,12 @@ void AminoGfxRPi::renderingDone() {
             printf("-> created fb\n");
         }
 
-#ifdef USE_DRM_PAGEFLIP
-        //set CRTC once
-        int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+        if (USE_DRM_PAGEFLIP) {
+            //set CRTC once
+            int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
-        assert(res2 == 0);
-#endif
+            assert(res2 == 0);
+        }
     }
 
     /*
@@ -1379,71 +1379,68 @@ void AminoGfxRPi::renderingDone() {
      * cbxx TODO non-page flip issues
      */
 
-#ifdef USE_DRM_PAGEFLIP
-    //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
-    int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
-
-    //debug
-    //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
-
-    assert(res2 == 0);
-
-    if (res2 == 0) {
-        pageFlipPending = true;
-    }
-
-    //wait for page flip
-    fd_set fds;
-    drmEventContext ev;
-
-    memset(&ev, 0, sizeof(ev));
-	ev.version = DRM_EVENT_CONTEXT_VERSION;
-	ev.page_flip_handler = handlePageFlipEvent;
-
-    while (pageFlipPending) {
-        //cbxx TODO check
-        FD_ZERO(&fds);
-		FD_SET(0, &fds);
-		FD_SET(driDevice, &fds);
-
-		int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
-
-        assert(ret);
+    if (USE_DRM_PAGEFLIP) {
+        //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
+        int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
         //debug
-        /*
-        if (ret < 0) {
-			printf("select err: %s\n", strerror(errno));
-		} else if (ret == 0) {
-			printf("select timeout!\n");
-		} else if (FD_ISSET(0, &fds)) {
-			printf("user interrupted!\n");
+        //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
+
+        assert(res2 == 0);
+
+        if (res2 == 0) {
+            pageFlipPending = true;
         }
-        */
 
-		ret = drmHandleEvent(driDevice, &ev);
+        //wait for page flip
+        fd_set fds;
+        drmEventContext ev;
 
-        assert(ret == 0);
+        memset(&ev, 0, sizeof(ev));
+        ev.version = DRM_EVENT_CONTEXT_VERSION;
+        ev.page_flip_handler = handlePageFlipEvent;
 
-        //debug
-        /*
-        if (ret) {
-            printf("-> drmHandleEvent() failed %d\n", ret);
+        while (pageFlipPending) {
+            //cbxx TODO check
+            FD_ZERO(&fds);
+            FD_SET(0, &fds);
+            FD_SET(driDevice, &fds);
 
-			break;
-		}
-        */
+            int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
+
+            assert(ret);
+
+            //debug
+            /*
+            if (ret < 0) {
+                printf("select err: %s\n", strerror(errno));
+            } else if (ret == 0) {
+                printf("select timeout!\n");
+            } else if (FD_ISSET(0, &fds)) {
+                printf("user interrupted!\n");
+            }
+            */
+
+            ret = drmHandleEvent(driDevice, &ev);
+
+            assert(ret == 0);
+
+            //debug
+            /*
+            if (ret) {
+                printf("-> drmHandleEvent() failed %d\n", ret);
+
+                break;
+            }
+            */
+        }
+    } else {
+        //double buffering case without vsync (two framebuffers)
+
+        int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+        assert(res2 == 0);
     }
-#else
-    //double buffering case without vsync (two framebuffers)
-
-    //debug cbxx
-    printf("-> switching buffers without vsync\n");
-
-    int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
-
-    assert(res2 == 0);
-#endif
 
     //free previous
     if (previous_bo) {
