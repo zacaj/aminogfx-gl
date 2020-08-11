@@ -18,6 +18,9 @@
 #define DEBUG_INPUT false
 #define DEBUG_HDMI false
 
+//cbxx TODO verify
+#define USE_DRM_PAGEFLIP false
+
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
 
@@ -1355,12 +1358,28 @@ void AminoGfxRPi::renderingDone() {
             printf("-> created fb\n");
         }
 
+#ifdef USE_DRM_PAGEFLIP
         //set CRTC once
         int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
         assert(res2 == 0);
+#endif
     }
 
+    /*
+     * Page flip issues:
+     *
+     *   - layers.js
+     *     - reduces framerate to 30 fps with just a few layers
+     *   - opacity.js
+     *     - seeing tearing
+     *   - video playback
+     *     - seeing tearing
+     *
+     * cbxx TODO non-page flip issues
+     */
+
+#ifdef USE_DRM_PAGEFLIP
     //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
     int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
@@ -1415,6 +1434,13 @@ void AminoGfxRPi::renderingDone() {
 		}
         */
     }
+#else
+    //double buffering case (two framebuffers)
+
+    int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+    assert(res2 == 0);
+#endif
 
     //free previous
     if (previous_bo) {
