@@ -470,6 +470,20 @@ bool VideoDemuxer::init() {
 
     if (DEBUG_VIDEOS) {
         printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
+
+        //show hardware accelerated codecs
+        printf("\n Hardware decoders:\n\n");
+
+        //cbxx FIXME deprecated
+        AVHWAccel *item = av_hwaccel_next(NULL);
+
+        while (item) {
+            printf(" -> %s\n", item->name);
+
+            item = av_hwaccel_next(item);
+        }
+
+        printf("\n");
     }
 
     return true;
@@ -648,7 +662,7 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
         durationSecs = -1;
     }
 
-    //check H264
+    //get properties
     codecCtx = stream->codec;
 
     //Note: not available in libav!
@@ -667,6 +681,8 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
 
     width = codecCtx->width;
     height = codecCtx->height;
+
+    //check format
     isH264 = codecCtx->codec_id == AV_CODEC_ID_H264;
     isHEVC = codecCtx->codec_id == AV_CODEC_ID_HEVC;
 
@@ -695,8 +711,17 @@ bool VideoDemuxer::initStream() {
         return false;
     }
 
-    AVCodec *codec = NULL;
+    if (DEBUG_VIDEOS) {
+        //show codec name
+        char buf[1024];
 
+        avcodec_string(buf, sizeof(buf), codecCtx, 0);
+
+        printf(" -> codec: %s\n", buf);
+    }
+
+    AVCodec *codec = NULL;
+//cbxx check avcodec_find_decoder_by_name("h264_vaapi")
     //find the decoder for the video stream
     codec = avcodec_find_decoder(codecCtx->codec_id);
 
@@ -714,6 +739,7 @@ bool VideoDemuxer::initStream() {
     //Note: deprecated warning on macOS
     if (avcodec_copy_context(codecCtx, codecCtxOrig) != 0) {
         lastError = "could not copy codec context";
+
         return false;
     }
 
@@ -722,10 +748,14 @@ bool VideoDemuxer::initStream() {
 
     if (avcodec_open2(codecCtx, codec, &opts) < 0) {
         lastError = "could not open codec";
+
         return false;
     }
 
     if (DEBUG_VIDEOS) {
+        //show HW acceleration
+        printf(" -> hardware accelerated: %s\n", codecCtx->hwaccel ? "yes":"no");
+
         //show dictionary
         AVDictionaryEntry *t = NULL;
 
