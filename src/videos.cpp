@@ -472,9 +472,10 @@ bool VideoDemuxer::init() {
         printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
 
         //show hardware accelerated codecs
+        /*
         printf("\n Hardware decoders:\n\n");
 
-        //cbxx FIXME deprecated
+        //Note: deprecated (returns NULL)
         AVHWAccel *item = av_hwaccel_next(NULL);
 
         while (item) {
@@ -484,6 +485,7 @@ bool VideoDemuxer::init() {
         }
 
         printf("\n");
+        */
     }
 
     return true;
@@ -721,13 +723,62 @@ bool VideoDemuxer::initStream() {
     }
 
     AVCodec *codec = NULL;
-//cbxx check avcodec_find_decoder_by_name("h264_vaapi")
-    //find the decoder for the video stream
-    codec = avcodec_find_decoder(codecCtx->codec_id);
+
+#ifdef EGL_GBM
+    //cbxx TODO verify
+    //cbxx check h264_vaapi
+    if (codecCtx->codec_id == AV_CODEC_ID_H264) {
+        //supported: h264_v4l2m2m h264_mmal
+
+        //use V4L2
+        codec = avcodec_find_decoder_by_name("h264_v4l2m2m");
+    } else if (codecCtx->codec_id == AV_CODEC_ID_HEVC) {
+        //supported: hevc_rpi hevc_v4l2m2m
+        codec = avcodec_find_decoder_by_name("hevc_rpi");
+    }
+#endif
+
+    //find the default decoder for the video stream
+    if (!codec) {
+        codec = avcodec_find_decoder(codecCtx->codec_id);
+    }
 
     if (!codec) {
         lastError = "unsupported codec";
+
         return false;
+    }
+
+    if (DEBUG_VIDEOS) {
+        printf(" -> decoder: %s (%s)\n", codec->name, codec->long_name);
+
+        //show hardware configs
+        //cbxx TODO
+        /*
+        if (codec->hw_configs) {
+            int pos = 0;
+
+            while (true) {
+                AVCodecHWConfigInternal *item = (AVCodecHWConfigInternal *)codec->hw_configs[pos];
+
+                if (!item) {
+                    break;
+                }
+
+                printf("Hardware config:\n");
+
+                //TODO item->public
+
+                if (item->hwaccel) {
+                    printf(" -> hardware accelerated\n");
+                } else {
+                    printf(" -> not hardware accelerated\n");
+                }
+
+                pos++;
+            }
+        }
+        */
     }
 
     //copy context
