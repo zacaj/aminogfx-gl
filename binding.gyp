@@ -124,7 +124,7 @@
                                     ],
                                     'defines': [
                                         # RPi 4 support
-                                        "RPI_BUILD='RPI 4 (Mesa, DRM, GBM)'",
+                                        'RPI_BUILD="RPI 4 (Mesa, DRM, GBM)"',
                                         "EGL_GBM"
                                     ]
                                 }, {
@@ -145,7 +145,7 @@
                                             ],
                                             'defines': [
                                                 # RPi 3
-                                                "RPI_BUILD='RPI 3 (Jessie, Dispmanx, OMX)'",
+                                                'RPI_BUILD="RPI 3 (Jessie, Dispmanx, OMX)"',
                                                 "EGL_DISPMANX"
                                             ]
                                         }, {
@@ -163,7 +163,7 @@
                                             ],
                                             'defines': [
                                                 # RPi 3
-                                                "RPI_BUILD='RPI 3 (Dispmanx, OMX)'",
+                                                'RPI_BUILD="RPI 3 (Dispmanx, OMX)"',
                                                 "EGL_DISPMANX"
                                             ]
                                         }]

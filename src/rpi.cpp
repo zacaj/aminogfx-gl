@@ -1471,6 +1471,7 @@ void AminoGfxRPi::renderingDone() {
     }
 }
 
+#ifdef EGL_GBM
 /**
  * Handle a page flip event.
  */
@@ -1480,6 +1481,7 @@ void AminoGfxRPi::handlePageFlipEvent(int fd, unsigned int frame, unsigned int s
 
     static_cast<AminoGfxRPi *>(data)->pageFlipPending = false;
 }
+#endif
 
 void AminoGfxRPi::handleSystemEvents() {
     //handle events
