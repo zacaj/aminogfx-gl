@@ -114,7 +114,8 @@
                                 'action': [
                                     'echo',
                                     #'RPi model: <(rpi_model_name); <(rpi_model); Pi 4: <(is_rpi_4)'
-                                    'RPi model: <(rpi_model)'
+                                    #'RPi model: <(rpi_model)'
+                                    'RPi model: <(rpi_model_name)'
                                 ],
                                 'inputs': [],
                                 'outputs': [ "src/rpi.cpp" ]
