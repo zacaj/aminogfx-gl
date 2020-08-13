@@ -103,11 +103,14 @@
                                 '-lavutil',
                                 '-lswscale',
 		                    ],
+                            'variables': [
+                                'rpi_model': '<!@(awk \'/^Revision/ {sub("^1000", "", $3); print $3}\' /proc/cpuinfo)'
+                            ],
                             # OS specific libraries
                             'conditions': [
                                 # cbxx FIXME does not work
                                 # RPi 4
-                                [ '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)" == "c03111"', {
+                                [ 'rpi_model == "c03111"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -119,48 +122,51 @@
                                     ],
                                     'defines': [
                                         # RPi 4 support
-                                        "RPI_BUILD=RPI 4 (Mesa, DRM, GBM)"
+                                        "RPI_BUILD='RPI 4 (Mesa, DRM, GBM)'"
                                         "EGL_GBM"
                                     ]
-                                }],
-                                # RPi 3
-                                [ '"<!@(lsb_release -c -s)" == "jessie"', {
-                                    # RPi 3 (Jessie 8.x)
-                                    'libraries': [
-                                        # OpenGL
-                                        "-lGLESv2",
-		                                "-lEGL",
-                                        # VideoCore
-                                        "-L/opt/vc/lib/",
-                                        "-lbcm_host",
-                                        "-lopenmaxil",
-                                        "-lvcos",
-                                        "-lvchiq_arm"
-                                    ],
-                                    'defines': [
-                                        # RPi 3
-                                        "RPI_BUILD=RPI 3 (Jessie, Dispmanx, OMX)"
-                                        "EGL_DISPMANX"
-                                    ]
                                 }, {
-                                    # RPi 3 (Stretch and newer; >= 9.x)
-                                    'libraries': [
-                                        # OpenGL
-                                        "-lbrcmGLESv2",
-		                                "-lbrcmEGL",
-                                        # VideoCore
-                                        "-L/opt/vc/lib/",
-                                        "-lbcm_host",
-                                        "-lopenmaxil",
-                                        "-lvcos",
-                                        "-lvchiq_arm"
-                                    ],
-                                    'defines': [
-                                        # RPi 3
-                                        "RPI_BUILD=RPI 3 (Dispmanx, OMX)"
-                                        "EGL_DISPMANX"
+                                    # RPi 3
+                                    'conditions': [
+                                        [ '"<!@(lsb_release -c -s)" == "jessie"', {
+                                            # RPi 3 (Jessie 8.x)
+                                            'libraries': [
+                                                # OpenGL
+                                                "-lGLESv2",
+                                                "-lEGL",
+                                                # VideoCore
+                                                "-L/opt/vc/lib/",
+                                                "-lbcm_host",
+                                                "-lopenmaxil",
+                                                "-lvcos",
+                                                "-lvchiq_arm"
+                                            ],
+                                            'defines': [
+                                                # RPi 3
+                                                "RPI_BUILD='RPI 3 (Jessie, Dispmanx, OMX)'"
+                                                "EGL_DISPMANX"
+                                            ]
+                                        }, {
+                                            # RPi 3 (Stretch and newer; >= 9.x)
+                                            'libraries': [
+                                                # OpenGL
+                                                "-lbrcmGLESv2",
+                                                "-lbrcmEGL",
+                                                # VideoCore
+                                                "-L/opt/vc/lib/",
+                                                "-lbcm_host",
+                                                "-lopenmaxil",
+                                                "-lvcos",
+                                                "-lvchiq_arm"
+                                            ],
+                                            'defines': [
+                                                # RPi 3
+                                                "RPI_BUILD='RPI 3 (Dispmanx, OMX)'"
+                                                "EGL_DISPMANX"
+                                            ]
+                                        }]
                                     ]
-                                }]
+                                }],
                             ],
 		                    "defines": [
 		                        "RPI"
