@@ -105,10 +105,7 @@
 		                    ],
                             # OS specific libraries
                             'conditions': [
-                                # Buster (10.x)
-                                # cbxx TODO verify
                                 # RPi 4
-                                # [ '"<!@(lsb_release -c -s)" == "buster"', {
                                 [ '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)" == "c03111"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
@@ -124,12 +121,13 @@
                                         "EGL_GBM"
                                     ]
                                 }],
-                                # Stretch (9.x)
-                                [ '"<!@(lsb_release -c -s)" == "stretch"', {
+                                # RPi 3
+                                [ '"<!@(lsb_release -c -s)" == "jessie"', {
+                                    # RPi 3 (Jessie 8.x)
                                     'libraries': [
                                         # OpenGL
-                                        "-lbrcmGLESv2",
-		                                "-lbrcmEGL",
+                                        "-lGLESv2",
+		                                "-lEGL",
                                         # VideoCore
                                         "-L/opt/vc/lib/",
                                         "-lbcm_host",
@@ -141,13 +139,12 @@
                                         # RPi 3
                                         "EGL_DISPMANX"
                                     ]
-                                }],
-                                # Jessie (8.x)
-                                [ '"<!@(lsb_release -c -s)" == "jessie"', {
+                                }, {
+                                    # RPi 4 (Stretch and newer; >= 9.x)
                                     'libraries': [
                                         # OpenGL
-                                        "-lGLESv2",
-		                                "-lEGL",
+                                        "-lbrcmGLESv2",
+		                                "-lbrcmEGL",
                                         # VideoCore
                                         "-L/opt/vc/lib/",
                                         "-lbcm_host",
