@@ -111,7 +111,7 @@
                             'actions': [{
                                 # output RPi model
                                 'action_name': 'build_info',
-                                'action': [ 'echo', 'RPi model: <(rpi_model_name) (<(rpi_model))\nPi 4: <(rpi_4)' ],
+                                'action': [ 'echo', 'RPi model: <(rpi_model_name) (<(rpi_model))\nPi 4: <(is_rpi_4)' ],
                                 'inputs': [],
                                 'outputs': [ "src/rpi.cpp" ]
                             }],
