@@ -34,7 +34,7 @@
                 "src/images/"
             ],
             "cflags": [
-                "-Wall",
+                "-Wall"
             ],
             "cxxflags": [
                 "-std=c++11"
@@ -60,12 +60,12 @@
                         '-lswscale'
                     ],
                     "sources": [
-                        "src/mac.cpp",
+                        "src/mac.cpp"
                     ],
                     "defines": [
                         "MAC",
                         "GLFW_NO_GLU",
-                        "GLFW_INCLUDE_GL3",
+                        "GLFW_INCLUDE_GL3"
 
                         # VAO not working
                         #"FREETYPE_GL_USE_VAO"
@@ -101,13 +101,13 @@
                                 '-lavcodec',
                                 '-lavformat',
                                 '-lavutil',
-                                '-lswscale',
+                                '-lswscale'
 		                    ],
-                            'variables': [
+                            'variables': {
                                 # cbxx FIXME fails
                                 'test': 'abc',
                                 'rpi_model': '<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)'
-                            ],
+                            },
                             # OS specific libraries
                             'conditions': [
                                 # cbxx FIXME does not work
@@ -197,7 +197,7 @@
                                 "-funwind-tables",
                                 "-rdynamic",
                                 # NAN warnings (remove later; see https://github.com/nodejs/nan/issues/807)
-                                "-Wno-cast-function-type",
+                                "-Wno-cast-function-type"
 
                             ],
                             "cflags_cc": [
