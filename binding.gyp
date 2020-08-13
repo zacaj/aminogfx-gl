@@ -107,6 +107,7 @@
                                 'rpi_model': '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)"'
                             },
                             'actions': [{
+                                # output RPi model
                                 'action_name': 'build_info',
                                 'action': [ 'echo', 'RPi model: <(rpi_model)' ],
                                 'inputs': [],
@@ -116,7 +117,7 @@
                             'conditions': [
                                 # cbxx FIXME does not work
                                 # RPi 4
-                                [ 'rpi_model == "c03111"', {
+                                [ '<(rpi_model) == "c03111"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
