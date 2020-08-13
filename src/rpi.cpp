@@ -1384,6 +1384,8 @@ void AminoGfxRPi::renderingDone() {
      *
      *   - tearing looks equal
      *   - getting more frames being rendered
+     *     - not sure -> still seeing 30 or 60 fps
+     *     - depends on screen???
      *
      *  => not using page flipping right now
      *
@@ -1393,8 +1395,8 @@ void AminoGfxRPi::renderingDone() {
         //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
         int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
-        //debug cbxx
-        printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
+        //debug
+        //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
 
         assert(res2 == 0);
 

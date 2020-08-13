@@ -300,10 +300,9 @@ void AnyAminoShader::drawElements(GLushort *indices, GLsizei elements, GLenum mo
 ColorShader::ColorShader() : AnyAminoShader() {
     //shaders
     //Note: no performance difference seen between highp, mediump and lowp!
-    //cbxx trying lowp instead of highp
     fragmentShader = R"(
 #ifdef EGL_GBM
-        precision lowp float;
+        precision highp float;
 #endif
         uniform vec4 color;
 
