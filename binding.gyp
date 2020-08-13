@@ -104,10 +104,12 @@
                                 '-lswscale'
 		                    ],
                             'variables': {
-                                # cbxx FIXME fails
-                                'test': 'abc',
                                 'rpi_model': '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)"'
                             },
+                            'actions': [{
+                                'action_name': 'build_info',
+                                'action': [ 'echo', 'Model: <(rpi_model)' ]
+                            }],
                             # OS specific libraries
                             'conditions': [
                                 # cbxx FIXME does not work
