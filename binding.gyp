@@ -106,7 +106,10 @@
                             # OS specific libraries
                             'conditions': [
                                 # Buster (10.x)
-                                [ '"<!@(lsb_release -c -s)" == "buster"', {
+                                # cbxx TODO verify
+                                # RPi 4
+                                # [ '"<!@(lsb_release -c -s)" == "buster"', {
+                                [ '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)" == "c03111"', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
