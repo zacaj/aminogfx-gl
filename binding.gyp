@@ -106,7 +106,7 @@
                             'variables': {
                                 'rpi_model': '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)"',
                                 'rpi_model_name': '"<!@(cat /sys/firmware/devicetree/base/model)"',
-                                'is_rpi_4': '<!@(cat /sys/firmware/devicetree/base/model | grep -c \"Pi 4\")'
+                                'is_rpi_4': '<!(cat /sys/firmware/devicetree/base/model | grep -c \"Pi 4\")'
                             },
                             'actions': [{
                                 # output RPi model
