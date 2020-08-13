@@ -106,7 +106,7 @@
                             'variables': {
                                 # cbxx FIXME fails
                                 'test': 'abc',
-                                'rpi_model': '<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)'
+                                'rpi_model': '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)"'
                             },
                             # OS specific libraries
                             'conditions': [
