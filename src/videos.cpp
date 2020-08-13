@@ -732,9 +732,11 @@ bool VideoDemuxer::initStream() {
 
         //use V4L2
         codec = avcodec_find_decoder_by_name("h264_v4l2m2m");
+        //cbxx FIXME no screen output (uses V4L2 decoder but shows no hardware acceleration in our check below)
     } else if (codecCtx->codec_id == AV_CODEC_ID_HEVC) {
         //supported: hevc_rpi hevc_v4l2m2m
         codec = avcodec_find_decoder_by_name("hevc_rpi");
+        //cbxx FIXME could not initialize stream
     }
 #endif
 
