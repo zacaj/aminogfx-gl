@@ -111,14 +111,14 @@
                             'actions': [{
                                 # output RPi model
                                 'action_name': 'build_info',
-                                'action': [ 'echo', 'RPi model: <(rpi_model_name) (<(rpi_model))\nPi 4: <(is_rpi_4)' ],
+                                'action': [ 'echo', 'RPi model: <(rpi_model_name); <(rpi_model); Pi 4: <(is_rpi_4)' ],
                                 'inputs': [],
                                 'outputs': [ "src/rpi.cpp" ]
                             }],
                             # OS specific libraries
                             'conditions': [
                                 # RPi 4
-                                [ '<(rpi_model) == "c03111"', {
+                                [ '<(is_rpi_4) == 1', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
