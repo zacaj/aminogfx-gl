@@ -108,9 +108,9 @@
                             },
                             'actions': [{
                                 'action_name': 'build_info',
-                                'action': [ 'echo', 'Model: <(rpi_model)' ],
+                                'action': [ 'echo', 'RPi model: <(rpi_model)' ],
                                 'inputs': [],
-                                'outputs': []
+                                'outputs': [ "src/rpi.cpp" ]
                             }],
                             # OS specific libraries
                             'conditions': [
