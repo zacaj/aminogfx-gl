@@ -108,7 +108,9 @@
                             },
                             'actions': [{
                                 'action_name': 'build_info',
-                                'action': [ 'echo', 'Model: <(rpi_model)' ]
+                                'action': [ 'echo', 'Model: <(rpi_model)' ],
+                                'inputs': [],
+                                'outputs': []
                             }],
                             # OS specific libraries
                             'conditions': [
