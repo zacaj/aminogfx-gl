@@ -104,7 +104,8 @@
                                 '-lswscale',
 		                    ],
                             'variables': [
-                                'rpi_model': '<!@(awk \'/^Revision/ {sub("^1000", "", $3); print $3}\' /proc/cpuinfo)'
+                                # cbxx FIXME fails
+                                'rpi_model': '<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)'
                             ],
                             # OS specific libraries
                             'conditions': [
