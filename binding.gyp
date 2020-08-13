@@ -105,8 +105,10 @@
 		                    ],
                             # OS specific libraries
                             'conditions': [
+                                # cbxx FIXME does not work
                                 # RPi 4
                                 [ '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)" == "c03111"', {
+                                    'target_name': 'rpi_4',
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -124,6 +126,7 @@
                                 # RPi 3
                                 [ '"<!@(lsb_release -c -s)" == "jessie"', {
                                     # RPi 3 (Jessie 8.x)
+                                    'target_name': 'rpi_3_jessie',
                                     'libraries': [
                                         # OpenGL
                                         "-lGLESv2",
@@ -141,6 +144,7 @@
                                     ]
                                 }, {
                                     # RPi 4 (Stretch and newer; >= 9.x)
+                                    'target_name': 'rpi_3',
                                     'libraries': [
                                         # OpenGL
                                         "-lbrcmGLESv2",
