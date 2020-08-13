@@ -932,6 +932,11 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
+
+    //build info
+#ifdef RPI_BUILD
+    Nan::Set(obj, Nan::New("build").ToLocalChecked(), Nan::New(RPI_BUILD).ToLocalChecked());
+#endif
 }
 
 /**

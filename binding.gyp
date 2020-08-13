@@ -96,8 +96,8 @@
 		                    ],
 		                    "libraries": [
 		                        '<!@(pkg-config --libs freetype2)',
-                                "-ljpeg",
-                                "-lpng",
+                                '-ljpeg',
+                                '-lpng',
                                 '-lavcodec',
                                 '-lavformat',
                                 '-lavutil',
@@ -108,7 +108,6 @@
                                 # cbxx FIXME does not work
                                 # RPi 4
                                 [ '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)" == "c03111"', {
-                                    'target_name': 'rpi_4',
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -120,13 +119,13 @@
                                     ],
                                     'defines': [
                                         # RPi 4 support
+                                        "RPI_BUILD=RPI 4 (Mesa, DRM, GBM)"
                                         "EGL_GBM"
                                     ]
                                 }],
                                 # RPi 3
                                 [ '"<!@(lsb_release -c -s)" == "jessie"', {
                                     # RPi 3 (Jessie 8.x)
-                                    'target_name': 'rpi_3_jessie',
                                     'libraries': [
                                         # OpenGL
                                         "-lGLESv2",
@@ -140,11 +139,11 @@
                                     ],
                                     'defines': [
                                         # RPi 3
+                                        "RPI_BUILD=RPI 3 (Jessie, Dispmanx, OMX)"
                                         "EGL_DISPMANX"
                                     ]
                                 }, {
-                                    # RPi 4 (Stretch and newer; >= 9.x)
-                                    'target_name': 'rpi_3',
+                                    # RPi 3 (Stretch and newer; >= 9.x)
                                     'libraries': [
                                         # OpenGL
                                         "-lbrcmGLESv2",
@@ -158,6 +157,7 @@
                                     ],
                                     'defines': [
                                         # RPi 3
+                                        "RPI_BUILD=RPI 3 (Dispmanx, OMX)"
                                         "EGL_DISPMANX"
                                     ]
                                 }]
