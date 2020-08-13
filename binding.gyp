@@ -115,7 +115,6 @@
                             }],
                             # OS specific libraries
                             'conditions': [
-                                # cbxx FIXME does not work
                                 # RPi 4
                                 [ '<(rpi_model) == "c03111"', {
                                     "include_dirs": [
