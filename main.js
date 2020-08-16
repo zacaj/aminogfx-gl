@@ -2512,7 +2512,7 @@ Anim.prototype.start = function (refTime) {
         });
     }, this._delay);
 
-    return this;
+    return this.obj;
 };
 
 /**
@@ -2654,6 +2654,7 @@ function makeProp(obj, name, val) {
                 anim['_' + key] = attrs[key];
             }
         }
+        anim.obj = obj;
 
         return anim;
     };

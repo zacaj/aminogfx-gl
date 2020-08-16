@@ -53,20 +53,22 @@ declare module "aminogfx-gl" {
         }};
     };
 
+    export type AnimParams = {
+        from?: number;
+        to?: number;
+        duration?: number;
+        delay?: number;
+        loop?: number;
+        then?: () => void;
+        autoreverse?: boolean;
+        timeFunc?: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut';
+    }
+
     export type Property<O extends {}, T = number> =
         ((value: T) => O) & (() => T)
     & {
         readonly: boolean;
-        anim(props?: {
-            from?: number;
-            to?: number;
-            duration?: number;
-            delay?: number;
-            loop?: number;
-            then?: () => void;
-            autoreverse?: boolean;
-            timeFunc?: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut';
-        }): Anim;
+        anim(props?: AnimParams): Anim;
         watch(cb: (val: T, prop: Property<O, T>, obj: O) => void): O;
     }
 
@@ -170,6 +172,6 @@ declare module "aminogfx-gl" {
         then(cb: () => void): this;
         autoreverse(val: boolean): this;
         timefunc(func: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut'): this;
-        start(refTime?: number): this;
+        start<T = Node>(refTime?: number): T;
     }
 }
