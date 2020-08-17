@@ -921,8 +921,10 @@ void AminoMacVideoPlayer::closeDemuxer() {
     //free demuxer
     if (demuxer) {
         uv_mutex_lock(&frameLock);
+
         delete demuxer;
         demuxer = NULL;
+
         uv_mutex_unlock(&frameLock);
     }
 }
@@ -1103,6 +1105,12 @@ void exitHandler(void *arg) {
     }
 }
 
+void cleanupHook(void*) {
+    if (DEBUG_BASE) {
+        printf("cleanup hook called\n");
+    }
+}
+
 /**
  * Show crash details.
  */
@@ -1140,7 +1148,14 @@ NAN_MODULE_INIT(InitAll) {
     AminoGfx::InitClasses(target);
 
     //exit handler
-    node::AtExit(exitHandler);
+
+    //FIXME cannot get node::Environment* instance
+    //node::AtExit(exitHandler); //deprecated
+    //node::AtExit(info.Env(), exitHandler, nullptr);
+
+    v8::Isolate *isolate = v8::Isolate::GetCurrent();
+
+    node::AddEnvironmentCleanupHook(isolate, cleanupHook, nullptr);
 }
 
 //entry point

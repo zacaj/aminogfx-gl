@@ -3,6 +3,8 @@
 
 #include "base.h"
 #include "renderer.h"
+
+//video
 #include "rpi_video.h"
 
 //VideoCore
@@ -64,12 +66,15 @@ private:
     gbm_surface *gbmSurface = NULL;
     drmModeCrtc *crtc = NULL;
     gbm_bo *previous_bo = NULL;
-//cbxx    uint32_t previous_fb = 0;
     std::map<uint32_t, uint32_t> fbCache;
+    bool pageFlipPending = false;
 #endif
 
     //resolution
     std::string prefRes = "";
+
+    //display
+    std::string prefDisp = "";
 
 #ifdef EGL_DISPMANX
     static sem_t resSem;
@@ -112,6 +117,8 @@ private:
 
 #ifdef EGL_GBM
     EGLSurface createGbmSurface();
+    std::string getDrmConnectorType(drmModeConnector *connector);
+    static void handlePageFlipEvent(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data);
 #endif
 
     bool startsWith(const char *pre, const char *str);

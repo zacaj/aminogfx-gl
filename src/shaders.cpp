@@ -116,9 +116,9 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
         return -1;
     }
 
-#ifdef PRECISION
-    if (type == GL_FRAGMENT_SHADER)
-        source = "precision highp float;\n" + source;
+#ifdef EGL_GBM
+    //add define
+    source = "#define EGL_GBM\n" + source;
 #endif
 
 #ifdef RPI
@@ -655,6 +655,9 @@ TextureLightingShader::TextureLightingShader() : TextureShader() {
     )";
 
     fragmentShader = R"(
+#ifdef EGL_GBM
+        precision highp float;
+#endif
         varying vec2 uv;
         varying float lightFac;
 

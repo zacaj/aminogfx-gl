@@ -1,6 +1,6 @@
 'use strict';
 
-if (process.argv.length == 2) {
+if (process.argv.length === 2) {
     console.log('Missing integer parameter!');
     return;
 }
@@ -8,16 +8,26 @@ if (process.argv.length == 2) {
 /*
  * Results:
  *
- *  1) Raspberry Pi 4B: 1080p60 (2019-07-17)
+ *  1) Raspberry Pi 4B: 1080p60 (2020-07-31)
  *
- *   - 1: 20 fps !!!
- *   - 5:  5 fps !!!
- *   - 12: 2 fps !!!
+ *   - 5:  60 fps
+ *   - 7:  60 fps
+ *   - 8:  58 fps
+ *   - 9:  30 fps
+ *   - 10: 30 fps
+ *   - 15: 30 fps
+ *   - 20: 20 fps
+ *   - 40: 15 fps
  *
  *   Notes: highp, mediump, lowp -> no difference
  *
- *   cbxx FIXME bas performance -> why???
- *   cbxx TODO where is the time lost? rendering time is fine but overall framerate is very bad
+ *   -> renderer" V3D 4.2
+ *   -> version: OpenGL ES 3.1 Mesa 20.2.0-devel (git-884718313c)
+ *
+ *   => limit at 7 fullscreen layers
+ *
+ *   cbxx FIXME getting lower values on different screen!!! -> TODO more testing needed
+ *   cbxx seeing either 60 or 30 fps -> automatic fps regulation in place???
  *
  *  2) Raspberry Pi 3B: 1080p60 (2016-09-22)
  *

@@ -1196,7 +1196,7 @@ function loadTexture(obj, img) {
     texture.loadTextureFromImage(img, (err, texture) => {
         if (err) {
             if (DEBUG || DEBUG_ERRORS) {
-                console.log('could not load texture: ' + err.message);
+                console.log('could not load image texture: ' + err.message);
             }
 
             return;
@@ -1217,7 +1217,7 @@ function loadVideoTexture(obj, video) {
     texture.loadTextureFromVideo(video, (err, texture) => {
         if (err) {
             if (DEBUG || DEBUG_ERRORS) {
-                console.log('could not load texture: ' + err.message);
+                console.log('could not load video texture: ' + err.message);
             }
 
             return;
@@ -2540,11 +2540,12 @@ function makeProp(obj, name, val) {
      * Getter and setter.
      */
     const prop = function AminoProperty(v, nativeCall) {
+        //filter null and undefined values (should be string)
         if (v != undefined) {
             return prop.set(v, obj, nativeCall);
-        } else {
-            return prop.get();
         }
+
+        return prop.get();
     };
 
     prop.value = val;
@@ -2579,6 +2580,8 @@ function makeProp(obj, name, val) {
         }
 
         this.listeners.splice(n, 1);
+
+        return obj;
     };
 
     /**
@@ -2586,6 +2589,8 @@ function makeProp(obj, name, val) {
      */
     prop.unwatchAll = function () {
         this.listeners = [];
+
+        return obj;
     };
 
     /**
@@ -2674,7 +2679,7 @@ function makeProp(obj, name, val) {
         //apply current value
         watcher(prop());
 
-        return this;
+        return obj;
     };
 
     //Note: no unbind method -> use prop.unwatchAll()
@@ -2705,7 +2710,7 @@ function makeProp(obj, name, val) {
             }
         }
 
-        return this;
+        return obj;
     };
 
     //attach

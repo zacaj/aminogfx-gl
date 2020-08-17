@@ -16,7 +16,9 @@
 #define DEBUG_GLES false
 #define DEBUG_RENDER false
 #define DEBUG_INPUT false
-#define DEBUG_HDMI true
+#define DEBUG_HDMI false
+
+#define USE_DRM_PAGEFLIP false
 
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
@@ -87,13 +89,18 @@ void AminoGfxRPi::setup() {
             printf("-> initializing OpenGL driver\n");
         }
 
+        //TODO how to use the dual display output?
+
         //access OpenGL driver (available if OpenGL driver is loaded)
-        driDevice = open("/dev/dri/card1", O_RDWR | O_CLOEXEC);
+        //Note: Pi0-3 use /dev/dri/card0
+        std::string devicePath = "/dev/dri/card1";
+
+        driDevice = open(devicePath.c_str(), O_RDWR | O_CLOEXEC);
 
         assert(driDevice > 0);
 
         if (DEBUG_GLES) {
-            printf("-> DRI device ready\n");
+            printf("-> DRI device ready: %s\n", devicePath.c_str());
         }
 #endif
         //Note: tvservice and others are already initialized by bcm_host_init() call!
@@ -156,6 +163,17 @@ void AminoGfxRPi::setup() {
 #endif
                 }
             }
+
+            //display
+            Nan::MaybeLocal<v8::Value> displayMaybe = Nan::Get(obj, Nan::New<v8::String>("display").ToLocalChecked());
+
+            if (!displayMaybe.IsEmpty()) {
+                v8::Local<v8::Value> displayValue = displayMaybe.ToLocalChecked();
+
+                if (displayValue->IsString()) {
+                    prefDisp = AminoJSObject::toString(displayValue);
+                }
+            }
         }
 
         glESInitialized = true;
@@ -180,8 +198,12 @@ void AminoGfxRPi::initEGL() {
     }
 
 #ifdef EGL_GBM
-    //create GBM device
+    //create GBM device (Note: fails if not enough rights e.g. no root access)
     displayType = gbm_create_device(driDevice);
+
+    if (!displayType) {
+        printf("Could not create the GBM device! Please check your permissions (e.g. run with root privileges).\n");
+    }
 
     assert(displayType);
 
@@ -214,7 +236,14 @@ void AminoGfxRPi::initEGL() {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
+
+#ifdef EGL_GBM
+        //using GBM_FORMAT_XRGB8888
+        EGL_ALPHA_SIZE, 0,
+#else
+        //use Dispmanx transparency effect (equal to GBM_FORMAT_ARGB8888)
         EGL_ALPHA_SIZE, 8,
+#endif
 
         //OpenGL ES 2.0
         EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
@@ -268,6 +297,7 @@ void AminoGfxRPi::initEGL() {
 
     //find matching config
     int pos = -1;
+    EGLint wantedId = GBM_FORMAT_XRGB8888;
 
     for (int i = 0; i < count; i++) {
         if (DEBUG_GLES) {
@@ -292,7 +322,7 @@ void AminoGfxRPi::initEGL() {
             printf("-> format: %i %c%c%c%c\n", id, (char)(id & 0xFF), (char)((id >> 8) & 0xFF), (char)((id >> 16) & 0xFF), (char)((id >> 24) & 0xFF));
         }
 
-        if (id == GBM_FORMAT_ARGB8888) {
+        if (id == wantedId) {
             pos = i;
             break;
         }
@@ -337,16 +367,65 @@ void AminoGfxRPi::initEGL() {
 
     if (DEBUG_GLES) {
         printf("DRM connectors: %i\n", resources->count_connectors);
+
+        //list all connectors
+        for (int i = 0; i < resources->count_connectors; i++) {
+            drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
+
+            if (!connector2) {
+                continue;
+            }
+
+            //name and status
+            std::string type = getDrmConnectorType(connector2);
+            std::string connected = connector2->connection == DRM_MODE_CONNECTED ? "connected":"disconnected";
+
+            printf(" -> %s-%d (%s)\n", type.c_str(), connector2->connector_type_id, connected.c_str());
+
+            //modes
+            for (int i = 0; i < connector2->count_modes; i++) {
+                drmModeModeInfo mode = connector2->modes[i];
+
+                printf("  -> %ix%i@%i (%s)\n", mode.hdisplay, mode.vdisplay, mode.vrefresh, mode.name);
+            }
+
+            //done
+            drmModeFreeConnector(connector2);
+        }
     }
 
     for (int i = 0; i < resources->count_connectors; i++) {
         drmModeConnector *connector2 = drmModeGetConnector(driDevice, resources->connectors[i]);
 
+        if (!connector2) {
+            continue;
+        }
+
         //pick the first connected connector
-        if (connector2->connection == DRM_MODE_CONNECTED) {
-            //Note: have to free instance later
-            connector = connector2;
-            break;
+        if (connector2->connection == DRM_MODE_CONNECTED && connector2->count_modes > 0) {
+            bool match = true;
+
+            //check display
+            if (!prefDisp.empty()) {
+                std::string name(getDrmConnectorType(connector2) + "-" + std::to_string(connector2->connector_type_id));
+
+                match = name == prefDisp;
+
+                if (DEBUG_GLES) {
+                    //debug
+                    //printf("-> checking display %s %s\n", name.c_str(), prefDisp.c_str());
+
+                    if (match) {
+                        printf("-> using display %s\n", prefDisp.c_str());
+                    }
+                }
+            }
+
+            if (match) {
+                //Note: have to free instance later
+                connector = connector2;
+                break;
+            }
         }
 
         drmModeFreeConnector(connector2);
@@ -398,7 +477,16 @@ void AminoGfxRPi::initEGL() {
     }
 
     if (prefH) {
-        //cbxx FIXME 720p not listed until screen is attached! try HDMI change first and check if list is different
+        /*
+         * Issues:
+         *
+         *   - without attached display only offers the default set display resolution
+         *     - i.e. 720p would fail if 1080p is the default
+         *     - Workarounds:
+         *       - modify default resolution in /boot/config.txt
+         *       - always attach a display
+         */
+
         //show all modes
         if (DEBUG_GLES || DEBUG_HDMI) {
             printf("-> modes: %i\n", connector->count_modes);
@@ -456,6 +544,9 @@ void AminoGfxRPi::initEGL() {
     //find a CRTC
     if (encoder->crtc_id) {
         crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
+
+        assert(crtc);
+        assert(crtc->crtc_id);
     }
 
     drmModeFreeEncoder(encoder);
@@ -575,7 +666,7 @@ void AminoGfxRPi::destroy() {
 }
 
 /**
- * Destroy GLFW instance.
+ * Destroy EGL instance.
  */
 void AminoGfxRPi::destroyAminoGfxRPi() {
     //OpenGL ES
@@ -585,9 +676,17 @@ void AminoGfxRPi::destroyAminoGfxRPi() {
         drmModeSetCrtc(driDevice, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y, &connector_id, 1, &crtc->mode);
         drmModeFreeCrtc(crtc);
 
+        //free all buffers
+        for (std::map<uint32_t, uint32_t>::iterator iter = fbCache.begin(); iter != fbCache.end(); iter++) {
+            drmModeRmFB(driDevice, iter->second);
+        }
+
+        fbCache.clear();
+
         if (previous_bo) {
-//cbxx            drmModeRmFB(driDevice, previous_fb);
+            //release the locked front buffer
             gbm_surface_release_buffer(gbmSurface, previous_bo);
+            previous_bo = NULL;
         }
 #endif
 
@@ -833,6 +932,11 @@ void AminoGfxRPi::populateRuntimeProperties(v8::Local<v8::Object> &obj) {
             //printf("gpu_mem: %i\n", gpuMem);
         }
     }
+
+    //build info
+#ifdef RPI_BUILD
+    Nan::Set(obj, Nan::New("build").ToLocalChecked(), Nan::New(RPI_BUILD).ToLocalChecked());
+#endif
 }
 
 /**
@@ -876,7 +980,7 @@ void AminoGfxRPi::initRenderer() {
     EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
 
     assert(EGL_FALSE != res);
-swapInterval = 0; //cbxx
+
     //swap interval
     if (swapInterval != 0) {
         res = eglSwapInterval(display, swapInterval);
@@ -971,6 +1075,69 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
 
     return surface;
 }
+
+/**
+ * Get the DRM connector type.
+ */
+std::string AminoGfxRPi::getDrmConnectorType(drmModeConnector *connector) {
+    switch (connector->connector_type) {
+        case DRM_MODE_CONNECTOR_VGA:
+            return "VGA";
+
+        case DRM_MODE_CONNECTOR_DVII:
+            return "DVI-I";
+
+        case DRM_MODE_CONNECTOR_DVID:
+            return "DVI-D";
+
+        case DRM_MODE_CONNECTOR_DVIA:
+            return "DVI-A";
+
+        case DRM_MODE_CONNECTOR_Composite:
+            return "Composite";
+
+        case DRM_MODE_CONNECTOR_SVIDEO:
+            return "SVIDEO";
+
+        case DRM_MODE_CONNECTOR_LVDS:
+            return "LVDS";
+
+        case DRM_MODE_CONNECTOR_Component:
+            return "Component";
+
+        case DRM_MODE_CONNECTOR_9PinDIN:
+            return "DIN";
+
+        case DRM_MODE_CONNECTOR_DisplayPort:
+            return "DisplayPort";
+
+        case DRM_MODE_CONNECTOR_HDMIA:
+            return "HDMI-A";
+
+        case DRM_MODE_CONNECTOR_HDMIB:
+            return "HDMI-B";
+
+        case DRM_MODE_CONNECTOR_TV:
+            return "TV";
+
+        case DRM_MODE_CONNECTOR_eDP:
+            return "eDP";
+
+        case DRM_MODE_CONNECTOR_VIRTUAL:
+            return "Virtual";
+
+        case DRM_MODE_CONNECTOR_DSI:
+            return "DSI";
+
+        case DRM_MODE_CONNECTOR_DPI:
+            return "DPI";
+
+        case DRM_MODE_CONNECTOR_Unknown:
+        default:
+            return "unknown";
+    }
+}
+
 #endif
 
 bool AminoGfxRPi::startsWith(const char *pre, const char *str) {
@@ -1136,11 +1303,12 @@ void AminoGfxRPi::renderingDone() {
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
 
-    //debug cbxx
-    printf("-> bo handle: %i\n", handle);
+    //debug
+    if (DEBUG_GLES) {
+        printf("-> bo handle: %i\n", handle);
+    }
 
     //cache framebuffers
-    //cbxx TOOD free on exit
     std::map<uint32_t, uint32_t>::iterator it = fbCache.find(handle);
     uint32_t fb;
 
@@ -1148,51 +1316,174 @@ void AminoGfxRPi::renderingDone() {
         //use cached fb
         fb = it->second;
     } else {
-        //create new fb
+        //create new fb (see https://docs.nvidia.com/drive/nvvib_docs/NVIDIA%20DRIVE%20Linux%20SDK%20Development%20Guide/baggage/group__direct__rendering__manager.html)
         uint32_t pitch = gbm_bo_get_stride(bo);
-        //cbxx check drmModeAddFB2
-//        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 24, 32, pitch, handle, &fb);
-        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, 32, 32, pitch, handle, &fb);
+
+        //drmModeAddFB() version
+        /*
+        uint8_t depth = 24;
+        uint8_t bpp = 32;
+
+        int res = drmModeAddFB(driDevice, mode_info.hdisplay, mode_info.vdisplay, depth, bpp, pitch, handle, &fb);
+        */
+
+        //drmModeAddFB2() version
+        uint32_t format = gbm_bo_get_format(bo); //GBM_FORMAT_XRGB8888
+        uint32_t handles[4] = { handle, 0, 0, 0 };
+        uint32_t pitches[4] = { pitch, 0, 0, 0 };
+        uint32_t offsets[4] = { 0, 0, 0, 0 };
+        uint32_t plane_flags = 0;
+
+        if (DEBUG_GLES) {
+            switch (format) {
+                case GBM_FORMAT_XRGB8888:
+                    printf("-> bo format: XRGB8888\n");
+                    break;
+
+                case GBM_FORMAT_ARGB8888:
+                    printf("-> bo format: ARGB8888\n");
+                    break;
+
+                default:
+                    printf("-> bo format: unknown %d\n", format);
+                    break;
+            }
+        }
+
+        int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
 
         assert(res == 0);
+        assert(fb);
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
-        //debug cbxx
-        printf("-> created fb\n");
+        //debug
+        if (DEBUG_GLES) {
+            printf("-> created fb\n");
+        }
+
+        if (USE_DRM_PAGEFLIP) {
+            //set CRTC once
+            int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+            assert(res2 == 0);
+        }
     }
 
-//cbxx check performance optimizations
-//cbxx TODO reuse fb (previous_fb)
-    //create framebuffer
-
-//cbxx needed?
-    //set CRTC configuration
     /*
-    int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+     * Page flip issues:
+     *
+     *   - layers.js
+     *     - reduces framerate to 30 fps with just a few layers
+     *   - opacity.js
+     *     - seeing tearing
+     *   - video playback
+     *     - seeing tearing
+     *
+     *  Without page flipping:
+     *
+     *   - tearing looks equal
+     *   - getting more frames being rendered
+     *     - not sure -> still seeing 30 or 60 fps
+     *     - depends on screen???
+     *
+     *  => not using page flipping right now
+     *
+     */
 
-    assert(res2 == 0);
-    */
+    if (USE_DRM_PAGEFLIP) {
+        //signal page flip (see https://raw.githubusercontent.com/dvdhrm/docs/master/drm-howto/modeset-vsync.c)
+        int res2 = drmModePageFlip(driDevice, crtc->crtc_id, fb, DRM_MODE_PAGE_FLIP_EVENT, this);
 
-//cbxx TODO drmModePageFlip
+        //debug
+        //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
+
+        assert(res2 == 0);
+
+        if (res2 == 0) {
+            pageFlipPending = true;
+        }
+
+        //wait for page flip
+        fd_set fds;
+        drmEventContext ev;
+
+        memset(&ev, 0, sizeof(ev));
+        ev.version = DRM_EVENT_CONTEXT_VERSION;
+        ev.page_flip_handler = handlePageFlipEvent;
+
+        while (pageFlipPending) {
+            //cbxx TODO check
+            //TODO needed? Not handling any input here.
+            FD_ZERO(&fds);
+            FD_SET(0, &fds);
+            FD_SET(driDevice, &fds);
+
+            int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
+
+            assert(ret);
+
+            //debug
+            /*
+            if (ret < 0) {
+                printf("select err: %s\n", strerror(errno));
+            } else if (ret == 0) {
+                printf("select timeout!\n");
+            } else if (FD_ISSET(0, &fds)) {
+                printf("user interrupted!\n");
+            }
+            */
+
+            //handle events
+            ret = drmHandleEvent(driDevice, &ev);
+
+            assert(ret == 0);
+
+            //debug
+            /*
+            if (ret) {
+                printf("-> drmHandleEvent() failed %d\n", ret);
+
+                break;
+            }
+            */
+        }
+    } else {
+        //double buffering case without vsync (two framebuffers)
+
+        int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
+
+        assert(res2 == 0);
+    }
 
     //free previous
     if (previous_bo) {
-//cbxx TODO avoid
-//        drmModeRmFB(driDevice, previous_fb);
         //release old bo
         gbm_surface_release_buffer(gbmSurface, previous_bo);
+
+        //Note: previous_bo value set below
     }
 
     //prepare next
     previous_bo = bo;
-//cbxx    previous_fb = fb;
 #endif
 
     if (DEBUG_GLES) {
         printf("-> EGL buffers swapped\n");
     }
 }
+
+#ifdef EGL_GBM
+/**
+ * Handle a page flip event.
+ */
+void AminoGfxRPi::handlePageFlipEvent(int fd, unsigned int frame, unsigned int sec, unsigned int usec, void *data) {
+    //debug
+    //printf("-> page flip occured\n");
+
+    static_cast<AminoGfxRPi *>(data)->pageFlipPending = false;
+}
+#endif
 
 void AminoGfxRPi::handleSystemEvents() {
     //handle events
@@ -1291,26 +1582,130 @@ void AminoGfxRPi::handleEvent(input_event ev) {
 
             //key codes
             int keycode = -1;
-            if (ev.code >= KEY_1 && ev.code <= KEY_9) keycode = ev.code - KEY_1 + 49;
+
+            if (ev.code >= KEY_1 && ev.code <= KEY_9) {
+                keycode = ev.code - KEY_1 + 49;
+            }
+
             switch (ev.code) {
+                // from https://www.glfw.org/docs/latest/group__keys.html
+
                 case KEY_0: keycode = 48; break;
-                case KEY_Q: keycode = 81; break;
-                case KEY_W: keycode = 87; break;
+                case KEY_1: keycode = 49; break;
+                case KEY_2: keycode = 50; break;
+                case KEY_3: keycode = 51; break;
+                case KEY_4: keycode = 52; break;
+                case KEY_5: keycode = 53; break;
+                case KEY_6: keycode = 54; break;
+                case KEY_7: keycode = 55; break;
+                case KEY_8: keycode = 56; break;
+                case KEY_9: keycode = 57; break;
+                case KEY_SEMICOLON: keycode = 59 /* ; */; break;
+                case KEY_EQUAL: keycode = 61 /* = */; break;
+                case KEY_A: keycode = 65; break;
+                case KEY_B: keycode = 66; break;
+                case KEY_C: keycode = 67; break;
+                case KEY_D: keycode = 68; break;
                 case KEY_E: keycode = 69; break;
-                case KEY_R: keycode = 82; break;
-                case KEY_T: keycode = 84; break;
-                case KEY_Y: keycode = 89; break;
-                case KEY_U: keycode = 85; break;
+                case KEY_F: keycode = 70; break;
+                case KEY_G: keycode = 71; break;
+                case KEY_H: keycode = 72; break;
                 case KEY_I: keycode = 73; break;
+                case KEY_J: keycode = 74; break;
+                case KEY_K: keycode = 75; break;
+                case KEY_L: keycode = 76; break;
+                case KEY_M: keycode = 77; break;
+                case KEY_N: keycode = 78; break;
                 case KEY_O: keycode = 79; break;
                 case KEY_P: keycode = 80; break;
+                case KEY_Q: keycode = 81; break;
+                case KEY_R: keycode = 82; break;
+                case KEY_S: keycode = 83; break;
+                case KEY_T: keycode = 84; break;
+                case KEY_U: keycode = 85; break;
+                case KEY_V: keycode = 86; break;
+                case KEY_W: keycode = 87; break;
+                case KEY_X: keycode = 88; break;
+                case KEY_Y: keycode = 89; break;
+                case KEY_Z: keycode = 90; break;
+                case KEY_SPACE: keycode = 32; break;
+                case KEY_APOSTROPHE: keycode = 39 /* ' */; break;
+                case KEY_COMMA: keycode = 44 /* , */; break;
+                case KEY_MINUS: keycode = 45 /* - */; break;
+                case KEY_DOT: keycode = 46 /* . */; break;
+                case KEY_SLASH: keycode = 47 /* / */; break;
+                case KEY_LEFTBRACE: keycode = 91 /* [ */; break;
+                case KEY_BACKSLASH: keycode = 92 /* \ */; break;
+                case KEY_RIGHTBRACE: keycode = 93 /* ] */; break;
+                case KEY_GRAVE: keycode = 96 /* ` */; break;
+                case KEY_ESC: keycode = 256; break;
+                case KEY_ENTER: keycode = 257; break;
+                case KEY_TAB: keycode = 258; break;
+                case KEY_BACKSPACE: keycode = 259; break;
+                case KEY_INSERT: keycode = 260; break;
+                case KEY_DELETE: keycode = 261; break;
+                case KEY_RIGHT: keycode = 262; break;
+                case KEY_LEFT: keycode = 263; break;
+                case KEY_DOWN: keycode = 264; break;
+                case KEY_UP: keycode = 265; break;
+                case KEY_PAGEUP: keycode = 266; break;
+                case KEY_PAGEDOWN: keycode = 267; break;
+                case KEY_HOME: keycode = 268; break;
+                case KEY_END: keycode = 269; break;
+                case KEY_CAPSLOCK: keycode = 280; break;
+                case KEY_SCROLLLOCK: keycode = 281; break;
+                case KEY_NUMLOCK: keycode = 282; break;
+                case KEY_PAUSE: keycode = 284; break;
+                case KEY_F1: keycode = 290; break;
+                case KEY_F2: keycode = 291; break;
+                case KEY_F3: keycode = 292; break;
+                case KEY_F4: keycode = 293; break;
+                case KEY_F5: keycode = 294; break;
+                case KEY_F6: keycode = 295; break;
+                case KEY_F7: keycode = 296; break;
+                case KEY_F8: keycode = 297; break;
+                case KEY_F9: keycode = 298; break;
+                case KEY_F10: keycode = 299; break;
+                case KEY_F11: keycode = 300; break;
+                case KEY_F12: keycode = 301; break;
+                case KEY_F13: keycode = 302; break;
+                case KEY_F14: keycode = 303; break;
+                case KEY_F15: keycode = 304; break;
+                case KEY_F16: keycode = 305; break;
+                case KEY_F17: keycode = 306; break;
+                case KEY_F18: keycode = 307; break;
+                case KEY_F19: keycode = 308; break;
+                case KEY_F20: keycode = 309; break;
+                case KEY_F21: keycode = 310; break;
+                case KEY_F22: keycode = 311; break;
+                case KEY_F23: keycode = 312; break;
+                case KEY_F24: keycode = 313; break;
+                case KEY_KP0: keycode = 320; break;
+                case KEY_KP1: keycode = 321; break;
+                case KEY_KP2: keycode = 322; break;
+                case KEY_KP3: keycode = 323; break;
+                case KEY_KP4: keycode = 324; break;
+                case KEY_KP5: keycode = 325; break;
+                case KEY_KP6: keycode = 326; break;
+                case KEY_KP7: keycode = 327; break;
+                case KEY_KP8: keycode = 328; break;
+                case KEY_KP9: keycode = 329; break;
+                case KEY_KPDOT: keycode = 330; break;
+                case KEY_LEFTSHIFT: keycode = 340; break;
+                case KEY_LEFTCTRL: keycode = 341; break;
+                case KEY_LEFTALT: keycode = 342; break;
+                case KEY_RIGHTSHIFT: keycode = 344; break;
+                case KEY_RIGHTCTRL: keycode = 345; break;
+                case KEY_RIGHTALT: keycode = 346; break;
             }
+
             Nan::Set(event_obj, Nan::New("keycode").ToLocalChecked(), Nan::New(keycode));
-            // Nan::Set(event_obj, Nan::New("scancode").ToLocalChecked(), Nan::New(scancode));
-            if (keycode == -1)
+
+            if (keycode == -1) {
                 printf("ERROR: unknown linux key code %i\n", ev.code);
-            else
+            } else {
                 this->fireEvent(event_obj);
+            }
         }
 
         //TODO GLFW_KEY_CALLBACK_FUNCTION(ev.code, ev.value);

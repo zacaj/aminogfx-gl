@@ -1,6 +1,6 @@
 {
   "name": "aminogfx-gl",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "description": "AminoGfx implementation for OpenGL 2 / OpenGL ES 2",
   "main": "main.js",
   "scripts": {
@@ -16,11 +16,11 @@
     "url": "https://github.com/joshmarinacci/aminogfx-gl.git"
   },
   "dependencies": {
-    "async": "^3.1.0",
-    "nan": "^2.14.0",
-    "node-pre-gyp": "0.13.x",
+    "async": "^3.2.0",
+    "nan": "^2.14.1",
+    "node-pre-gyp": "0.15.x",
     "onecolor": "^3.1.0",
-    "request": "^2.88.0"
+    "request": "^2.88.2"
   },
   "maintainers": [
     {
@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/joshmarinacci/aminogfx-gl",
   "devDependencies": {
-    "feedparser": "^2.2.9"
-  },
-  "types": "./main.d.ts"
+    "eslint": "^7.6.0",
+    "feedparser": "^2.2.10"
+  }
 }

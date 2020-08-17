@@ -38,7 +38,7 @@ bool AminoVideo::getPlaybackLoop(int32_t &loop) {
     v8::Local<v8::Value> loopLocal = loopValue.ToLocalChecked();
 
     if (loopLocal->IsBoolean()) {
-        if (loopLocal->BooleanValue()) {
+        if (Nan::To<v8::Boolean>(loopLocal).ToLocalChecked()->Value()) {
             loop = -1;
         } else {
             loop = 0;
@@ -469,7 +469,23 @@ bool VideoDemuxer::init() {
     }
 
     if (DEBUG_VIDEOS) {
-        //printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
+        // printf("using libav %u.%u.%u\n", LIBAVFORMAT_VERSION_MAJOR, LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO);
+
+        //show hardware accelerated codecs
+        /*
+        printf("\n Hardware decoders:\n\n");
+
+        //Note: deprecated (returns NULL)
+        AVHWAccel *item = av_hwaccel_next(NULL);
+
+        while (item) {
+            printf(" -> %s\n", item->name);
+
+            item = av_hwaccel_next(item);
+        }
+
+        printf("\n");
+        */
     }
 
     return true;
@@ -649,7 +665,7 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
         durationSecs = -1;
     }
 
-    //check H264
+    //get properties
     codecCtx = stream->codec;
 
     //Note: not available in libav!
@@ -668,7 +684,10 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
 
     width = codecCtx->width;
     height = codecCtx->height;
+
+    //check format
     isH264 = codecCtx->codec_id == AV_CODEC_ID_H264;
+    isHEVC = codecCtx->codec_id == AV_CODEC_ID_HEVC;
 
     //debug
     if (DEBUG_VIDEOS) {
@@ -677,6 +696,10 @@ bool VideoDemuxer::loadFile(std::string filename, std::string options) {
         //Note: warning on macOS (codecpar not available on RPi)
         if (isH264) {
             printf(" -> H264\n");
+        }
+
+        if (isHEVC) {
+            printf(" -> HEVC\n");
         }
     }
 
@@ -693,14 +716,74 @@ bool VideoDemuxer::initStream() {
         return false;
     }
 
+    if (DEBUG_VIDEOS) {
+        //show codec name
+        char buf[1024];
+
+        avcodec_string(buf, sizeof(buf), codecCtx, 0);
+
+        printf(" -> codec: %s\n", buf);
+    }
+
     AVCodec *codec = NULL;
 
-    //find the decoder for the video stream
-    codec = avcodec_find_decoder(codecCtx->codec_id);
+#ifdef EGL_GBM
+    //cbxx TODO verify
+    //cbxx check h264_vaapi
+    if (codecCtx->codec_id == AV_CODEC_ID_H264) {
+        //supported: h264_v4l2m2m h264_mmal
+
+        //use V4L2
+        codec = avcodec_find_decoder_by_name("h264_v4l2m2m");
+        //cbxx FIXME no screen output (uses V4L2 decoder but shows no hardware acceleration in our check below)
+    } else if (codecCtx->codec_id == AV_CODEC_ID_HEVC) {
+        //supported: hevc_rpi hevc_v4l2m2m
+        codec = avcodec_find_decoder_by_name("hevc_rpi");
+        //cbxx FIXME could not initialize stream
+    }
+#endif
+
+    //find the default decoder for the video stream
+    if (!codec) {
+        codec = avcodec_find_decoder(codecCtx->codec_id);
+    }
 
     if (!codec) {
         lastError = "unsupported codec";
+
         return false;
+    }
+
+    if (DEBUG_VIDEOS) {
+        printf(" -> decoder: %s (%s)\n", codec->name, codec->long_name);
+
+        //show hardware configs
+        //cbxx TODO
+        /*
+        if (codec->hw_configs) {
+            int pos = 0;
+
+            while (true) {
+                AVCodecHWConfigInternal *item = (AVCodecHWConfigInternal *)codec->hw_configs[pos];
+
+                if (!item) {
+                    break;
+                }
+
+                printf("Hardware config:\n");
+
+                //TODO item->public
+
+                if (item->hwaccel) {
+                    printf(" -> hardware accelerated\n");
+                } else {
+                    printf(" -> not hardware accelerated\n");
+                }
+
+                pos++;
+            }
+        }
+        */
     }
 
     //copy context
@@ -712,6 +795,7 @@ bool VideoDemuxer::initStream() {
     //Note: deprecated warning on macOS
     if (avcodec_copy_context(codecCtx, codecCtxOrig) != 0) {
         lastError = "could not copy codec context";
+
         return false;
     }
 
@@ -720,10 +804,14 @@ bool VideoDemuxer::initStream() {
 
     if (avcodec_open2(codecCtx, codec, &opts) < 0) {
         lastError = "could not open codec";
+
         return false;
     }
 
     if (DEBUG_VIDEOS) {
+        //show HW acceleration
+        printf(" -> hardware accelerated: %s\n", codecCtx->hwaccel ? "yes":"no");
+
         //show dictionary
         AVDictionaryEntry *t = NULL;
 
@@ -883,7 +971,7 @@ void VideoDemuxer::freeFrame(int *packet) {
         }
 
         if (!buffer) {
-            //determine required buffer size and allocate buffer
+            //determine required buffer size and allocate buffer (using RGB 24 bits)
             //Note: deprecated warning on macOS
             int numBytes = avpicture_get_size(AV_PIX_FMT_RGB24, codecCtx->width, codecCtx->height);
             //int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, codecCtx->width, codecCtx->height, 1);
@@ -1106,6 +1194,7 @@ void VideoDemuxer::close(bool destroy) {
     width = 0;
     height = 0;
     isH264 = false;
+    isHEVC = false;
 
     //close read
     closeReadFrame(destroy);
@@ -1227,6 +1316,8 @@ bool VideoFileStream::init() {
         printf("-> init video file stream\n");
     }
 
+    //Note: always using the demuxer on Pi 4
+#ifndef EGL_GBM
     //check local H264 (direct file access)
     std::string postfix = ".h264";
     bool isLocalH264 = false;
@@ -1241,13 +1332,17 @@ bool VideoFileStream::init() {
 
         if (!file) {
             lastError = "file not found";
+
             return false;
         }
 
         if (DEBUG_VIDEOS) {
             printf("-> local H264 file\n");
         }
-    } else {
+    }
+#endif
+
+    if (!file) {
         //any stream
 
         //init demuxer
@@ -1255,6 +1350,7 @@ bool VideoFileStream::init() {
 
         if (!demuxer->init() || !demuxer->loadFile(filename, options) || !demuxer->initStream()) {
             lastError = demuxer->getLastError();
+
             return false;
         }
 
@@ -1477,7 +1573,15 @@ bool VideoFileStream::endOfStream() {
  * Check if H264 video stream.
  */
 bool VideoFileStream::isH264() {
+    //Note: file is always raw H264
     return file || (demuxer && demuxer->isH264);
+}
+
+/**
+ * Check if HEVC video stream.
+ */
+bool VideoFileStream::isHEVC() {
+    return demuxer && demuxer->isHEVC;
 }
 
 /**

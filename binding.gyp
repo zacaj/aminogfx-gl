@@ -34,7 +34,7 @@
                 "src/images/"
             ],
             "cflags": [
-                "-Wall",
+                "-Wall"
             ],
             "cxxflags": [
                 "-std=c++11"
@@ -60,12 +60,12 @@
                         '-lswscale'
                     ],
                     "sources": [
-                        "src/mac.cpp",
+                        "src/mac.cpp"
                     ],
                     "defines": [
                         "MAC",
                         "GLFW_NO_GLU",
-                        "GLFW_INCLUDE_GL3",
+                        "GLFW_INCLUDE_GL3"
 
                         # VAO not working
                         #"FREETYPE_GL_USE_VAO"
@@ -87,24 +87,40 @@
 					"conditions" : [
 	                    [ "target_arch == 'arm'", {
 		                    "sources": [
+                                # OMX
                                 "src/ilclient/ilclient.c",
                                 "src/ilclient/ilcore.c",
+                                # base
 		                        "src/rpi.cpp",
                                 "src/rpi_video.cpp"
 		                    ],
 		                    "libraries": [
 		                        '<!@(pkg-config --libs freetype2)',
-                                "-ljpeg",
-                                "-lpng",
+                                '-ljpeg',
+                                '-lpng',
                                 '-lavcodec',
                                 '-lavformat',
                                 '-lavutil',
-                                '-lswscale',
+                                '-lswscale'
 		                    ],
+                            'variables': {
+                                'rpi_model': '"<!@(awk \'/^Revision/ {sub(\"^1000\", \"\", $3); print $3}\' /proc/cpuinfo)"',
+                                'is_rpi_4': '<!(cat /sys/firmware/devicetree/base/model | grep -c "Pi 4")'
+                            },
+                            'actions': [{
+                                # output RPi model
+                                'action_name': 'build_info',
+                                'action': [
+                                    'echo',
+                                    'RPi model: <(rpi_model); Pi 4: <(is_rpi_4)'
+                                ],
+                                'inputs': [],
+                                'outputs': [ "src/rpi.cpp" ]
+                            }],
                             # OS specific libraries
                             'conditions': [
-                                # Buster (10.x)
-                                [ '"<!@(lsb_release -c -s)" == "buster-pi4"', {
+                                # RPi 4
+                                [ '<(is_rpi_4) == 1', {
                                     "include_dirs": [
                                         " <!@(pkg-config --cflags libdrm)"
                                     ],
@@ -115,60 +131,52 @@
                                         '-lgbm'
                                     ],
                                     'defines': [
+                                        # RPi 4 support
+                                        'RPI_BUILD="RPI 4 (Mesa, DRM, GBM)"',
                                         "EGL_GBM"
                                     ]
-                                }],
-                                # Buster (10.x) (Pi 3)
-                                [ '"<!@(lsb_release -c -s)" == "buster"', {
-                                    'libraries': [
-                                        # OpenGL
-                                        "-lbrcmGLESv2",
-		                                "-lbrcmEGL",
-                                        # VideoCore
-                                        "-L/opt/vc/lib/",
-                                        "-lbcm_host",
-                                        "-lopenmaxil",
-                                        "-lvcos",
-                                        "-lvchiq_arm"
-                                    ],
-                                    'defines': [
-                                        "EGL_DISPMANX"
+                                }, {
+                                    # RPi 3
+                                    'conditions': [
+                                        [ '"<!@(lsb_release -c -s)" == "jessie"', {
+                                            # RPi 3 (Jessie 8.x)
+                                            'libraries': [
+                                                # OpenGL
+                                                "-lGLESv2",
+                                                "-lEGL",
+                                                # VideoCore
+                                                "-L/opt/vc/lib/",
+                                                "-lbcm_host",
+                                                "-lopenmaxil",
+                                                "-lvcos",
+                                                "-lvchiq_arm"
+                                            ],
+                                            'defines': [
+                                                # RPi 3
+                                                'RPI_BUILD="RPI 3 (Jessie, Dispmanx, OMX)"',
+                                                "EGL_DISPMANX"
+                                            ]
+                                        }, {
+                                            # RPi 3 (Stretch and newer; >= 9.x)
+                                            'libraries': [
+                                                # OpenGL
+                                                "-lbrcmGLESv2",
+                                                "-lbrcmEGL",
+                                                # VideoCore
+                                                "-L/opt/vc/lib/",
+                                                "-lbcm_host",
+                                                "-lopenmaxil",
+                                                "-lvcos",
+                                                "-lvchiq_arm"
+                                            ],
+                                            'defines': [
+                                                # RPi 3
+                                                'RPI_BUILD="RPI 3 (Dispmanx, OMX)"',
+                                                "EGL_DISPMANX"
+                                            ]
+                                        }]
                                     ]
                                 }],
-                                # Stretch (9.x)
-                                [ '"<!@(lsb_release -c -s)" == "stretch"', {
-                                    'libraries': [
-                                        # OpenGL
-                                        "-lbrcmGLESv2",
-		                                "-lbrcmEGL",
-                                        # VideoCore
-                                        "-L/opt/vc/lib/",
-                                        "-lbcm_host",
-                                        "-lopenmaxil",
-                                        "-lvcos",
-                                        "-lvchiq_arm"
-                                    ],
-                                    'defines': [
-                                        "EGL_DISPMANX"
-                                    ]
-                                }],
-                                # Jessie (8.x)
-                                [ '"<!@(lsb_release -c -s)" == "jessie"', {
-                                    'libraries': [
-                                        # OpenGL
-                                        "-lGLESv2",
-		                                "-lEGL",
-                                        # VideoCore
-                                        "-L/opt/vc/lib/",
-                                        "-lbcm_host",
-                                        "-lopenmaxil",
-                                        "-lvcos",
-                                        "-lvchiq_arm"
-                                    ],
-                                    'defines': [
-                                        "EGL_DISPMANX"
-                                    ]
-                                }]
                             ],
 		                    "defines": [
 		                        "RPI"
@@ -198,7 +206,7 @@
                                 "-g",
                                 "-rdynamic",
                                 # NAN warnings (remove later; see https://github.com/nodejs/nan/issues/807)
-                                "-Wno-cast-function-type",
+                                "-Wno-cast-function-type"
 
                             ],
                             "cflags_cc": [

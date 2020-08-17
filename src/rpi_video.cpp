@@ -11,10 +11,13 @@
 
 #include <sstream>
 
-#define DEBUG_OMX false
+//cbxx TODO separate OMX or rename
+//cbxx FIXME
+#define DEBUG_OMX true
 #define DEBUG_OMX_READ false
 #define DEBUG_OMX_BUFFER false
 #define DEBUG_OMX_ERRORS true
+
 #define DEBUG_VIDEO_TIMING false
 
 /*
@@ -62,6 +65,11 @@ AminoOmxVideoPlayer::AminoOmxVideoPlayer(AminoTexture *texture, AminoVideo *vide
     //locks
     uv_mutex_init(&bufferLock);
     uv_mutex_init(&destroyLock);
+
+    //cbxx TODO Pi 4
+#ifdef EGL_GBM
+    softwareDecoding = true;
+#endif
 }
 
 AminoOmxVideoPlayer::~AminoOmxVideoPlayer() {
@@ -94,6 +102,10 @@ void AminoOmxVideoPlayer::init() {
     assert(stream);
 
     if (!stream->init()) {
+        if (DEBUG_OMX) {
+            printf("-> could not initialize stream\n");
+        }
+
         lastError = stream->getLastError();
         delete stream;
         stream = NULL;
@@ -104,13 +116,22 @@ void AminoOmxVideoPlayer::init() {
     }
 
     //check format
-    if (!stream->isH264()) {
+    //cbxx TODO native Pi 4 decoding
+    if (softwareDecoding || !stream->isH264()) {
+        //use demuxer to decode video to RGB frames
+
         if (!stream->getDemuxer()) {
+            if (DEBUG_OMX) {
+                printf("-> no demuxer available\n");
+            }
+
             lastError = "unsupported format";
             delete stream;
             stream = NULL;
 
             handleInitDone(false);
+
+            return;
         }
 
         softwareDecoding = true;
@@ -154,6 +175,7 @@ bool AminoOmxVideoPlayer::initStream() {
     assert(video);
     assert(!stream);
 
+    //create a video file stream (access raw video and decoded RGB data via demuxer)
     stream = new VideoFileStream(video->getPlaybackSource(), video->getPlaybackOptions());
 
     return stream != NULL;
@@ -501,6 +523,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (!client) {
         lastError = "could not initialize ilclient";
         status = -1;
+
         goto end;
     }
 
@@ -517,6 +540,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_Init() != OMX_ErrorNone) {
         lastError = "could not initialize OMX";
         status = -2;
+
         goto end;
     }
 
@@ -527,6 +551,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &video_decode, "video_decode", (ILCLIENT_CREATE_FLAGS_T)(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0) {
         lastError = "video_decode error";
         status = -10;
+
         goto end;
     }
 
@@ -536,6 +561,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &egl_render, "egl_render", (ILCLIENT_CREATE_FLAGS_T)(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_OUTPUT_BUFFERS)) != 0) {
         lastError = "egl_render error";
         status = -11;
+
         goto end;
     }
 
@@ -545,6 +571,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &clock, "clock", (ILCLIENT_CREATE_FLAGS_T)ILCLIENT_DISABLE_ALL_PORTS) != 0) {
         lastError = "clock error";
         status = -12;
+
         goto end;
     }
 
@@ -567,6 +594,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_SetParameter(ILC_GET_HANDLE(clock), OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone) {
         lastError = "could not set clock";
         status = -13;
+
         goto end;
     }
 
@@ -600,6 +628,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (OMX_SetConfig(ILC_GET_HANDLE(clock), OMX_IndexConfigLatencyTarget, &lt) != OMX_ErrorNone) {
         lastError = "could not set clock latency";
         status = -14;
+
         goto end;
     }
 
@@ -607,6 +636,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_create_component(client, &video_scheduler, "video_scheduler", (ILCLIENT_CREATE_FLAGS_T)ILCLIENT_DISABLE_ALL_PORTS) != 0) {
         lastError = "video_scheduler error";
         status = -15;
+
         goto end;
     }
 
@@ -621,6 +651,7 @@ bool AminoOmxVideoPlayer::initOmx() {
     if (ilclient_setup_tunnel(tunnel + 2, 0, 0) != 0) {
         lastError = "tunnel setup error";
         status = -16;
+
         goto end;
     }
 
@@ -732,6 +763,7 @@ bool AminoOmxVideoPlayer::initOmx() {
         if (OMX_SetParameter(ILC_GET_HANDLE(video_decode), (OMX_INDEXTYPE)OMX_IndexParamNalStreamFormatSelect, &nsft) != OMX_ErrorNone) {
             lastError = "NAL selection error";
             status = -20;
+
             goto end;
         }
     }
@@ -1341,7 +1373,7 @@ bool AminoOmxVideoPlayer::initTexture() {
             assert(data);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureW, textureH, 0,GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureW, textureH, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
         //Note: no performance hit seen
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1413,7 +1445,9 @@ void AminoOmxVideoPlayer::updateVideoTexture(GLContext *ctx) {
         GLsizei textureH = videoH;
 
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, textureW, textureH, GL_RGB, GL_UNSIGNED_BYTE, data);
+
         uv_mutex_unlock(&destroyLock);
+
         return;
     }
 
@@ -1827,12 +1861,14 @@ void AminoOmxVideoPlayer::initDemuxer() {
     if (res == READ_END_OF_VIDEO) {
         lastError = "empty video";
         handleInitDone(false);
+
         return;
     }
 
     if (res == READ_ERROR) {
         lastError = "could not load video stream";
         handleInitDone(false);
+
         return;
     }
 
@@ -1845,6 +1881,7 @@ void AminoOmxVideoPlayer::initDemuxer() {
     if (!eglImagesReady || doStop) {
         //failed to create texture
         handleInitDone(false);
+
         return;
     }
 
