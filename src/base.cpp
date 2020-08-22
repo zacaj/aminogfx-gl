@@ -1614,16 +1614,18 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
             //wrap
             bool skip = false;
 
-            if (wrap != AminoText::WRAP_NONE) {
-                bool newLine = false;
-                bool wordWrap = false;
+            bool newLine = false;
+            bool wordWrap = false;
 
-                //check new line
-                if (glyph->codepoint == '\n') {
-                    //next line
-                    newLine = true;
-                    skip = true;
-                } else if (pen->x + kerning + glyph->offset_x + glyph->width > width) {
+            //check new line
+            if (glyph->codepoint == '\n') {
+                //next line
+                newLine = true;
+                skip = true;
+            }
+
+            if (wrap != AminoText::WRAP_NONE) {
+                if (pen->x + kerning + glyph->offset_x + glyph->width > width) {
                     //have to wrap
 
                     //next line
@@ -1635,116 +1637,116 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
                         skip = true;
                     }
                 }
+            }
 
-                //check white space
-                if (!skip && (newLine || (lineStart == i && *lineNr > 1)) && std::iswspace(glyph->codepoint)) {
-                    skip = true;
-                }
+            //check white space
+            if (!skip && (newLine || (lineStart == i && *lineNr > 1)) && std::iswspace(glyph->codepoint)) {
+                skip = true;
+            }
 
-                //process
-                if (newLine) {
-                    //line break needed (check which one)
-                    linePos = 0;
+            //process
+            if (newLine) {
+                //line break needed (check which one)
+                linePos = 0;
 
-                    //check word wrapping
-                    bool wrapped = false;
-                    bool isLastLine = maxLines > 0 && *lineNr == maxLines;
+                //check word wrapping
+                bool wrapped = false;
+                bool isLastLine = maxLines > 0 && *lineNr == maxLines;
 
-                    if (wordWrap && !skip) {
-                        //find white space
-                        int wrapPos = -1;
+                if (wordWrap && !skip) {
+                    //find white space
+                    int wrapPos = -1;
 
-                        for (size_t j = i - 1; j > lineStart; j--) {
-                            if (std::iswspace((wchar_t)textUtf32[j])) {
-                                wrapPos = j;
-                                break;
+                    for (size_t j = i - 1; j > lineStart; j--) {
+                        if (std::iswspace((wchar_t)textUtf32[j])) {
+                            wrapPos = j;
+                            break;
+                        }
+                    }
+
+                    if (wrapPos != -1) {
+                        //calc vertex buffer offset
+                        size_t count = vertex_buffer_size(buffer);
+                        size_t start = count - (i - wrapPos);
+
+                        printf("remove %i of %i\n", (int)start, (int)count);
+                        printf("wrapping pos=%d start=%d count=%d wrapPos=%d\n", i, start, count, wrapPos);
+
+                        //remove white space
+                        vertex_buffer_erase(buffer, start);
+                        count--;
+
+                        //update existing glyphs
+                        float xOffset = pen->x; //case: space before
+
+                        for (size_t j = start; j < count; j++) {
+                            //glyph info
+                            ivec4 *item = (ivec4 *)vector_get(buffer->items, j);
+                            size_t vstart = item->x;
+                            size_t vcount = item->y;
+
+                            assert(vcount == 4);
+
+                            //values
+                            vertex_t *vertices = (vertex_t *)vector_get(buffer->vertices, vstart);
+
+                            if (j == start) {
+                                xOffset = vertices->x - penXStart;
+
+                                //Note: kerning ignored (after space)
                             }
+
+                            for (size_t k = 0; k < vcount; k++) {
+                                vertices->x -= xOffset;
+                                vertices->y -= font->height; //inverse coordinates
+
+                                vertices++;
+                            }
+
+                            linePos++;
                         }
 
-                        if (wrapPos != -1) {
-                            //calc vertex buffer offset
-                            size_t count = vertex_buffer_size(buffer);
-                            size_t start = count - (i - wrapPos);
+                        pen->x -= xOffset;
+                        *lineW = std::max(*lineW, xOffset);
+                        lineStart = i - linePos;
+                        skip = false;
 
-                            //printf("remove %i of %i\n", (int)start, (int)count);
-                            //printf("wrapping pos=%d char=%lc start=%d count=%d\n", i, ch, start, count);
+                        wrapped = true;
 
-                            //remove white space
-                            vertex_buffer_erase(buffer, start);
-                            count--;
-
-                            //update existing glyphs
-                            float xOffset = pen->x; //case: space before
-
+                        if (isLastLine) {
+                            //remove characters left
                             for (size_t j = start; j < count; j++) {
-                                //glyph info
-                                ivec4 *item = (ivec4 *)vector_get(buffer->items, j);
-                                size_t vstart = item->x;
-                                size_t vcount = item->y;
-
-                                assert(vcount == 4);
-
-                                //values
-                                vertex_t *vertices = (vertex_t *)vector_get(buffer->vertices, vstart);
-
-                                if (j == start) {
-                                    xOffset = vertices->x - penXStart;
-
-                                    //Note: kerning ignored (after space)
-                                }
-
-                                for (size_t k = 0; k < vcount; k++) {
-                                    vertices->x -= xOffset;
-                                    vertices->y -= font->height; //inverse coordinates
-
-                                    vertices++;
-                                }
-
-                                linePos++;
-                            }
-
-                            pen->x -= xOffset;
-                            *lineW = std::max(*lineW, xOffset);
-                            lineStart = i - linePos;
-                            skip = false;
-
-                            wrapped = true;
-
-                            if (isLastLine) {
-                                //remove characters left
-                                for (size_t j = start; j < count; j++) {
-                                    vertex_buffer_erase(buffer, start);
-                                }
+                                vertex_buffer_erase(buffer, start);
                             }
                         }
                     }
-
-                    //wrap new character
-                    if (!wrapped) {
-                        //wrap at current position
-                        *lineW = std::max(*lineW, pen->x - penXStart);
-                        pen->x = penXStart;
-                        kerning = 0;
-                        lineStart = i;
-                    }
-
-                    //debug
-                    //printf("pen.x=%f lineStart=%lc\n", pen->x, text[lineStart]);
-
-                    if (isLastLine) {
-                        //skip any character
-                        skip = true;
-                        done = true;
-                    } else {
-                        (*lineNr)++;
-                    }
-
-                    pen->y -= font->height; //inverse coordinates
                 }
 
-                if (skip) {
-                    lineStart++;
+                //wrap new character
+                if (!wrapped) {
+                    //wrap at current position
+                    *lineW = std::max(*lineW, pen->x - penXStart);
+                    pen->x = penXStart;
+                    kerning = 0;
+                    lineStart = i;
                 }
+
+                //debug
+                //printf("pen.x=%f lineStart=%lc\n", pen->x, text[lineStart]);
+
+                if (isLastLine) {
+                    //skip any character
+                    skip = true;
+                    done = true;
+                } else {
+                    (*lineNr)++;
+                }
+
+                pen->y -= font->height; //inverse coordinates
+            }
+
+            if (skip) {
+                lineStart++;
             }
 
             //add glyph
