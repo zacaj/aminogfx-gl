@@ -6,6 +6,7 @@
 #include <nan.h>
 
 #include <map>
+#include <set>
 #include <memory>
 #ifndef WIN
 #include <pthread.h>
@@ -422,6 +423,8 @@ private:
     virtual bool enqueueJSPropertyUpdate(AnyProperty *prop);
 
 public:
+
+    static std::set<AnyProperty*> deletedProps;
     std::string getName();
 
     void retain();

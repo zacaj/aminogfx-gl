@@ -839,6 +839,7 @@ std::string* AminoJSObject::toNewString(v8::Local<v8::Value> &value) {
 uint32_t AminoJSObject::activeInstances = 0;
 uint32_t AminoJSObject::totalInstances = 0;
 std::vector<AminoJSObject *> AminoJSObject::jsInstances;
+std::set<AminoJSObject::AnyProperty*> AminoJSObject::deletedProps;
 
 //
 // AminoJSObject::AnyProperty
@@ -854,7 +855,7 @@ AminoJSObject::AnyProperty::AnyProperty(int type, AminoJSObject *obj, std::strin
 }
 
 AminoJSObject::AnyProperty::~AnyProperty() {
-    //empty
+    deletedProps.insert(this);
     if (DEBUG_PROPERTIES) {
         printf("destroy property %i %s %i %x %x %s %x\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
     }
@@ -1944,6 +1945,10 @@ void AminoJSObject::JSPropertyUpdate::apply() {
         printf("prop update %i %s %i %x %x %s %x\n", property->type, property->name.c_str(), property->id, property, property->obj, property->obj->name.c_str(), (int*)((int*)property)[0]);
         base_js_assert(!property->obj->destroyed);
     }
+    if (deletedProps.find(property) != deletedProps.end()) {
+        return;
+    }
+
     v8::Local<v8::Value> value = property->toValue();
 
     property->obj->updateProperty(property->name, value);
@@ -2122,6 +2127,7 @@ void AminoJSEventObject::handleJSUpdates() {
 
         jsUpdates->clear();
     }
+    deletedProps.clear();
 
     asyncLock.unlock();
     // base_js_assert(res == 0);
