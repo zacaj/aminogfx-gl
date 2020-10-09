@@ -14,6 +14,13 @@
 #define MEASURE_FPS true
 #define SHOW_RENDERER_ERRORS true
 
+#define base_assert(x) _base_assert((void*)((x)), __LINE__)
+
+void _base_assert(void* x, int line) {
+    if (x) return;
+    printf("ERROR: base assertion failed on line %d\n", line);
+    assert(x);
+}
 //
 //  AminoGfx
 //
@@ -24,21 +31,21 @@ AminoGfx::AminoGfx(std::string name): AminoJSEventObject(name) {
 
     // int res = pthread_mutexattr_init(&attr);
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     // res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     // // animLock
     // res = pthread_mutex_init(&animLock, &attr);
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     //debug
     /*
-    assert(pthread_mutex_lock(&animLock) == 0);
-    assert(pthread_mutex_lock(&animLock) == 0);
-    assert(pthread_mutex_unlock(&animLock) == 0);
-    assert(pthread_mutex_unlock(&animLock) == 0);
+    base_assert(pthread_mutex_lock(&animLock) == 0);
+    base_assert(pthread_mutex_lock(&animLock) == 0);
+    base_assert(pthread_mutex_unlock(&animLock) == 0);
+    base_assert(pthread_mutex_unlock(&animLock) == 0);
     */
 }
 
@@ -57,7 +64,7 @@ AminoGfx::~AminoGfx() {
     //mutex
     // int res = pthread_mutex_destroy(&animLock);
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     //Note: properties are deleted by base class destructor
 }
@@ -216,11 +223,11 @@ void AminoGfx::setup() {
  * Initialize the renderer.
  */
 NAN_METHOD(AminoGfx::Start) {
-    assert(info.Length() == 1);
+    base_assert(info.Length() == 1);
 
     AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(obj);
+    base_assert(obj);
 
     //validate state
     if (obj->startCallback || obj->started) {
@@ -285,7 +292,7 @@ void AminoGfx::setupRenderer() {
         printf("-> setupRenderer()\n");
     }
 
-    assert(!renderer);
+    base_assert(!renderer);
 
     renderer = new AminoRenderer(this);
     renderer->setup();
@@ -394,7 +401,7 @@ void AminoGfx::ready() {
 void AminoGfx::renderingThread(void *arg) {
     AminoGfx *gfx = static_cast<AminoGfx *>(arg);
 
-    assert(gfx);
+    base_assert(gfx);
 
     //init
     gfx->initRendering();
@@ -510,7 +517,7 @@ void AminoGfx::startRenderingThread() {
     //create rendering thread
     int res = uv_thread_create(&thread, renderingThread, this);
 
-    assert(res == 0);
+    base_assert(res == 0);
 
     threadRunning = true;
 
@@ -532,10 +539,10 @@ void AminoGfx::handleRenderEvents(uv_async_t *handle) {
 
     AminoGfx *gfx = static_cast<AminoGfx *>(handle->data);
 
-    assert(gfx);
+    base_assert(gfx);
 
     if (DEBUG_BASE) {
-        assert(gfx->isMainThread());
+        base_assert(gfx->isMainThread());
     }
 
     //create scope
@@ -566,12 +573,12 @@ void AminoGfx::stopRenderingThread() {
 
     int res = uv_thread_join(&thread);
 
-    assert(res == 0);
+    base_assert(res == 0);
 
     //process remaining events
     res = uv_async_send(&asyncHandle);
 
-    assert(res == 0);
+    base_assert(res == 0);
 
     //destroy handle
     uv_close((uv_handle_t *)&asyncHandle, NULL);
@@ -620,7 +627,7 @@ void AminoGfx::render() {
     //send signal to main thread to handle queues
     int res = uv_async_send(&asyncHandle);
 
-    assert(res == 0);
+    base_assert(res == 0);
 
     //update texts
     updateTextNodes();
@@ -661,12 +668,12 @@ void AminoGfx::endRendering() {
  */
 void AminoGfx::processAnimations() {
     if (DEBUG_BASE) {
-        assert(!isMainThread());
+        base_assert(!isMainThread());
     }
 
     animLock.lock();
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     double currentTime = getTime();
     int count = animations.size();
@@ -679,7 +686,8 @@ void AminoGfx::processAnimations() {
     }
 
     animLock.unlock();
-    // assert(res == 0);
+
+    // base_assert(res == 0);
 }
 
 /**
@@ -690,7 +698,7 @@ void AminoGfx::processAnimations() {
 NAN_METHOD(AminoGfx::ClearAnimations) {
     AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(obj);
+    base_assert(obj);
 
     obj->clearAnimations();
 }
@@ -733,7 +741,7 @@ void AminoGfx::renderScene() {
 NAN_METHOD(AminoGfx::Destroy) {
     AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(obj);
+    base_assert(obj);
 
     if (!obj->destroyed) {
         obj->destroy();
@@ -772,7 +780,7 @@ void AminoGfx::destroyAminoGfx() {
 
         bool res = bindContext();
 
-        assert(res);
+        base_assert(res);
 
         //renderer
         if (renderer) {
@@ -893,12 +901,12 @@ NAN_METHOD(AminoGfx::SetRoot) {
     } else {
         group = Nan::ObjectWrap::Unwrap<AminoGroup>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
 
-        assert(group);
+        base_assert(group);
     }
 
     AminoGfx *obj = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(obj);
+    base_assert(obj);
 
     obj->setRoot(group);
 }
@@ -931,7 +939,7 @@ void AminoGfx::setRoot(AminoGroup *group) {
 NAN_METHOD(AminoGfx::UpdatePerspective) {
     AminoGfx *gfx = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(gfx);
+    base_assert(gfx);
 
     //data
     v8::Local<v8::Object> perspective = Nan::To<v8::Object>(info[0]).ToLocalChecked();
@@ -948,7 +956,7 @@ NAN_METHOD(AminoGfx::UpdatePerspective) {
 NAN_METHOD(AminoGfx::GetStats) {
     AminoGfx *gfx = Nan::ObjectWrap::Unwrap<AminoGfx>(info.This());
 
-    assert(gfx);
+    base_assert(gfx);
 
     v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 
@@ -1009,7 +1017,7 @@ bool AminoGfx::addAnimation(AminoAnim *anim) {
     //add
     animLock.lock();
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     animations.push_back(anim);
 
@@ -1019,7 +1027,7 @@ bool AminoGfx::addAnimation(AminoAnim *anim) {
     }
 
     animLock.unlock();
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     return true;
 }
@@ -1034,12 +1042,12 @@ void AminoGfx::removeAnimation(AminoAnim *anim) {
         return;
     }
 
-    assert(anim);
+    base_assert(anim);
 
     //remove
     animLock.lock();
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     std::vector<AminoAnim *>::iterator pos = std::find(animations.begin(), animations.end(), anim);
 
@@ -1060,7 +1068,7 @@ void AminoGfx::removeAnimation(AminoAnim *anim) {
     }
 
     animLock.unlock();
-    // assert(res == 0);
+    // base_assert(res == 0);
 }
 
 /**
@@ -1076,7 +1084,7 @@ void AminoGfx::clearAnimations() {
     //release all instances
     animLock.lock();
 
-    // assert(res == 0);
+    // base_assert(res == 0);
 
     std::size_t count = animations.size();
 
@@ -1089,7 +1097,7 @@ void AminoGfx::clearAnimations() {
     animations.clear();
 
     animLock.unlock();
-    // assert(res == 0);
+    // base_assert(res == 0);
 }
 
 /**
@@ -1106,7 +1114,7 @@ bool AminoGfx::deleteTextureAsync(GLuint textureId) {
         printf("enqueue: delete texture\n");
     }
 
-    assert(textureId != INVALID_TEXTURE);
+    base_assert(textureId != INVALID_TEXTURE);
 
     //enqueue
     AminoJSObject::enqueueValueUpdate(textureId, NULL, static_cast<asyncValueCallback>(&AminoGfx::deleteTexture));
@@ -1128,7 +1136,7 @@ void AminoGfx::deleteTexture(AsyncValueUpdate *update, int state) {
         printf("-> deleting texture %i\n", textureId);
     }
 
-    assert(textureId != INVALID_TEXTURE);
+    base_assert(textureId != INVALID_TEXTURE);
 
     glDeleteTextures(1, &textureId);
     textureCount--;
@@ -1201,7 +1209,7 @@ void AminoGfx::deleteVertexBuffer(AsyncValueUpdate *update, int state) {
 
     vertex_buffer_t *buffer = (vertex_buffer_t *)update->data;
 
-    assert(buffer);
+    base_assert(buffer);
 
     if (DEBUG_RESOURCES) {
         printf("-> deleting vertex buffer\n");
@@ -1227,6 +1235,9 @@ void AminoGfx::updateTextNodes() {
 
     if (count == 0) {
         return;
+    }
+    if (DEBUG_BASE) {
+        base_assert(!isMainThread());
     }
 
 #if (DEBUG_FONT_PERFORMANCE == 1)
@@ -1283,7 +1294,7 @@ void AminoGfx::updateTextNodes() {
         AminoText *item = textureUpdates[i];
 
         item->updateTexture();
-
+        base_assert(instanceCount <= 1);
         //inform other amino instances to update shared texture
         texture_atlas_t *atlas = item->fontSize->fontTexture->atlas;
 
@@ -1350,7 +1361,7 @@ void AminoGfx::updateAtlasTextureHandler(AsyncValueUpdate *update, int state) {
  * Note: has to be called on OpenGL thread (if createIfMissing is true).
  */
 amino_atlas_t AminoGfx::getAtlasTexture(texture_atlas_t *atlas, bool createIfMissing, bool &newTexture) {
-    assert(renderer);
+    base_assert(renderer);
 
     return renderer->getAtlasTexture(atlas, createIfMissing, newTexture);
 }
@@ -1499,13 +1510,13 @@ void AminoText::updateTexture() {
         printf("-> update font texture: %s\n", info.c_str());
     }
 
-    assert(texture.textureId != INVALID_TEXTURE);
-    assert(fontSize);
-    assert(fontSize->fontTexture);
+    base_assert(texture.textureId != INVALID_TEXTURE);
+    base_assert(fontSize);
+    base_assert(fontSize->fontTexture);
 
     texture_atlas_t *atlas = fontSize->fontTexture->atlas;
 
-    assert(atlas);
+    base_assert(atlas);
 
     updateTextureFromAtlas(texture.textureId, atlas);
 }
@@ -1685,7 +1696,7 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
                             size_t vstart = item->x;
                             size_t vcount = item->y;
 
-                            assert(vcount == 4);
+                            base_assert(vcount == 4);
 
                             //values
                             vertex_t *vertices = (vertex_t *)vector_get(buffer->vertices, vstart);
@@ -1838,19 +1849,19 @@ bool AminoText::layoutText() {
     uv_mutex_lock(&freeTypeMutex);
 
     //create texture (needed in next calls)
-    assert(fontSize->fontTexture);
+    base_assert(fontSize->fontTexture);
 
     texture_atlas_t *atlas = fontSize->fontTexture->atlas;
     bool newTexture;
 
-    assert(atlas);
-    assert(atlas->depth == 1);
+    base_assert(atlas);
+    base_assert(atlas->depth == 1);
 
     if (texture.textureId == INVALID_TEXTURE) {
         //create or use existing texture (for atlas)
         texture = getAminoGfx()->getAtlasTexture(atlas, true, newTexture);
 
-        assert(texture.textureId != INVALID_TEXTURE);
+        base_assert(texture.textureId != INVALID_TEXTURE);
     }
 
     //render text
@@ -1864,7 +1875,7 @@ bool AminoText::layoutText() {
     texture_font_t *fontTexture = fontSize->fontTexture;
     size_t lastGlyphCount = fontTexture->glyphs->size;
 
-    assert(fontTexture);
+    base_assert(fontTexture);
 
     vec2 pen;
 

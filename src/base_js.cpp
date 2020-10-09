@@ -1,10 +1,17 @@
 #include "base_js.h"
 
 #include <sstream>
-
 #define DEBUG_ASYNC false
 #define DEBUG_JS_INSTANCES false
+#define DEBUG_PROPERTIES false
 
+#define base_js_assert(x) _base_js_assert((void*)((x)), __LINE__)
+
+void _base_js_assert(void* x, int line) {
+    if (x) return;
+    printf("ERROR base js assertion failed on line %d\n", line);
+    assert(x);
+}
 //
 //  AminoJSObjectFactory
 //
@@ -20,7 +27,7 @@ AminoJSObjectFactory::AminoJSObjectFactory(std::string name, Nan::FunctionCallba
  * Create new object instance.
  */
 AminoJSObject* AminoJSObjectFactory::create() {
-    assert(false);
+    base_js_assert(false);
 
     return NULL;
 }
@@ -52,7 +59,7 @@ AminoJSObject::AminoJSObject(std::string name): name(name) {
  */
 AminoJSObject::~AminoJSObject() {
     if (DEBUG_BASE) {
-        printf("%s destructor\n", name.c_str());
+        printf("%s destructor %x\n", name.c_str(), this);
     }
 
     if (!destroyed) {
@@ -75,7 +82,7 @@ AminoJSObject::~AminoJSObject() {
     if (DEBUG_JS_INSTANCES) {
         std::vector<AminoJSObject *>::iterator pos = std::find(jsInstances.begin(), jsInstances.end(), this);
 
-        assert(pos != jsInstances.end());
+        base_js_assert(pos != jsInstances.end());
 
         jsInstances.erase(pos);
     }
@@ -197,7 +204,7 @@ void AminoJSObject::createInstance(Nan::NAN_METHOD_ARGS_TYPE info, AminoJSObject
     //create new instance
     AminoJSObject *obj = factory->create();
 
-    assert(obj);
+    base_js_assert(obj);
 
     //bind to C++ instance
     obj->Wrap(info.This());
@@ -444,10 +451,10 @@ AminoJSObject::ObjectProperty* AminoJSObject::createObjectProperty(std::string n
  * Note: has to be called in JS scope of setup()!
  */
 void AminoJSObject::addProperty(AnyProperty *prop) {
-    assert(prop);
+    base_js_assert(prop);
 
     if (DEBUG_BASE) {
-        assert(getPropertyWithName(prop->name) == NULL);
+        base_js_assert(getPropertyWithName(prop->name) == NULL);
     }
 
     int id = prop->id;
@@ -474,7 +481,7 @@ void AminoJSObject::addProperty(AnyProperty *prop) {
  * Callback from property watcher to update native value.
  */
 NAN_METHOD(AminoJSObject::PropertyUpdated) {
-    assert(info.Length() == 3);
+    base_js_assert(info.Length() == 3);
 
     //params: value, propId, object
     uint32_t id = Nan::To<v8::Uint32>(info[1]).ToLocalChecked()->Value();
@@ -484,7 +491,7 @@ NAN_METHOD(AminoJSObject::PropertyUpdated) {
     v8::Local<v8::Object> jsObj = info[2].As<v8::Object>();
     AminoJSObject *obj = Nan::ObjectWrap::Unwrap<AminoJSObject>(jsObj);
 
-    assert(obj);
+    base_js_assert(obj);
 
     obj->enqueuePropertyUpdate(id, value);
 }
@@ -504,7 +511,7 @@ void AminoJSObject::setEventHandler(AminoJSEventObject *handler) {
 
         //retain handler instance (in addition to 'amino' JS property)
         if (handler) {
-            assert(!destroyed);
+            base_js_assert(!destroyed);
 
             handler->retain();
         }
@@ -591,7 +598,7 @@ void AminoJSObject::handleAsyncUpdate(AsyncPropertyUpdate *update) {
         printf("-> updating %s in %s\n", property->name.c_str(), property->obj->name.c_str());
     }
 
-    assert(update);
+    base_js_assert(update);
 
     //default: update value
     update->apply();
@@ -613,7 +620,7 @@ bool AminoJSObject::handleAsyncUpdate(AsyncValueUpdate *update) {
     }
     //overwrite
 
-    assert(update);
+    base_js_assert(update);
 
     if (update->callback) {
         if (DEBUG_BASE) {
@@ -648,12 +655,12 @@ bool AminoJSObject::enqueuePropertyUpdate(uint32_t id, v8::Local<v8::Value> &val
     //check queue exists
     AminoJSEventObject *eventHandler = getEventHandler();
 
-    assert(eventHandler);
+    base_js_assert(eventHandler);
 
     //find property
     AnyProperty *prop = getPropertyWithId(id);
 
-    assert(prop);
+    base_js_assert(prop);
 
     //enqueue (in event handler)
     if (DEBUG_BASE) {
@@ -786,11 +793,11 @@ void AminoJSObject::updateProperty(AnyProperty *property) {
     //debug
     //printf("updateProperty() %s of %s\n", property->name.c_str(), name.c_str());
 
-    assert(property);
+    base_js_assert(property);
 
     AminoJSEventObject *eventHandler = getEventHandler();
 
-    assert(eventHandler);
+    base_js_assert(eventHandler);
 
     if (eventHandler->isMainThread()) {
         //create scope
@@ -841,13 +848,16 @@ std::vector<AminoJSObject *> AminoJSObject::jsInstances;
  * AnyProperty constructor.
  */
 AminoJSObject::AnyProperty::AnyProperty(int type, AminoJSObject *obj, std::string name, uint32_t id): type(type), obj(obj), name(name), id(id) {
-    //empty
-
-    assert(obj);
+    if (DEBUG_PROPERTIES) {
+        printf("create property %i %s %i %x %x %s %x\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
+    }
 }
 
 AminoJSObject::AnyProperty::~AnyProperty() {
     //empty
+    if (DEBUG_PROPERTIES) {
+        printf("destroy property %i %s %i %x %x %s %x\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
+    }
 }
 
 /**
@@ -912,6 +922,10 @@ std::string AminoJSObject::FloatProperty::toString() {
  * Get JS value.
  */
 v8::Local<v8::Value> AminoJSObject::FloatProperty::toValue() {
+    if (DEBUG_PROPERTIES) {
+        printf("prop to value %i %s %i %x %s\n", this->type, this->name.c_str(), this->id, this, this->obj->name.c_str());
+        base_js_assert(deletedProps.find(this) == deletedProps.end());
+    }
     return Nan::New<v8::Number>(value);
 }
 
@@ -1759,7 +1773,7 @@ void* AminoJSObject::ObjectProperty::getAsyncData(v8::Local<v8::Value> &value, b
         v8::Local<v8::Object> jsObj = Nan::To<v8::Object>(value).ToLocalChecked();
         AminoJSObject *obj = Nan::ObjectWrap::Unwrap<AminoJSObject>(jsObj);
 
-        assert(obj);
+        base_js_assert(obj);
 
         //retain reference on main thread
         obj->retain();
@@ -1830,7 +1844,7 @@ AminoJSObject::AnyAsyncUpdate::~AnyAsyncUpdate() {
 //
 
 AminoJSObject::AsyncValueUpdate::AsyncValueUpdate(AminoJSObject *obj, AminoJSObject *value, asyncValueCallback callback): AnyAsyncUpdate(ASYNC_UPDATE_VALUE), obj(obj), valueObj(value), callback(callback) {
-    assert(obj);
+    base_js_assert(obj);
 
     //retain objects on main thread
     obj->retain();
@@ -1846,7 +1860,7 @@ AminoJSObject::AsyncValueUpdate::AsyncValueUpdate(AminoJSObject *obj, AminoJSObj
 }
 
 AminoJSObject::AsyncValueUpdate::AsyncValueUpdate(AminoJSObject *obj, unsigned int value, void *data, asyncValueCallback callback): AnyAsyncUpdate(ASYNC_UPDATE_VALUE), obj(obj), data(data), valueUint32(value), callback(callback) {
-    assert(obj);
+    base_js_assert(obj);
 
     //retain objects on main thread
     obj->retain();
@@ -1858,7 +1872,7 @@ AminoJSObject::AsyncValueUpdate::AsyncValueUpdate(AminoJSObject *obj, unsigned i
 }
 
 AminoJSObject::AsyncValueUpdate::AsyncValueUpdate(AminoJSObject *obj, v8::Local<v8::Value> &value, void *data, asyncValueCallback callback): AnyAsyncUpdate(ASYNC_UPDATE_VALUE), obj(obj), data(data), callback(callback) {
-    assert(obj);
+    base_js_assert(obj);
 
     //retain objects on main thread
     obj->retain();
@@ -1920,10 +1934,16 @@ AminoJSObject::JSPropertyUpdate::~JSPropertyUpdate() {
     //empty
 }
 
+
 /**
  * Update JS property on main thread.
  */
 void AminoJSObject::JSPropertyUpdate::apply() {
+    if (DEBUG_PROPERTIES) {
+        base_js_assert(property);
+        printf("prop update %i %s %i %x %x %s %x\n", property->type, property->name.c_str(), property->id, property, property->obj, property->obj->name.c_str(), (int*)((int*)property)[0]);
+        base_js_assert(!property->obj->destroyed);
+    }
     v8::Local<v8::Value> value = property->toValue();
 
     property->obj->updateProperty(property->name, value);
@@ -1966,19 +1986,21 @@ AminoJSEventObject::AminoJSEventObject(std::string name): AminoJSObject(name) {
 
     // int res = pthread_mutexattr_init(&attr);
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     // res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     // // asyncLock
     // res = pthread_mutex_init(&asyncLock, &attr);
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 }
 
 AminoJSEventObject::~AminoJSEventObject() {
     //Note: all called methods are not virtual
-
+    if (DEBUG_PROPERTIES) {
+        base_js_assert(isMainThread());
+    }
     //JS updates
     handleJSUpdates();
     delete jsUpdates;
@@ -1994,7 +2016,7 @@ AminoJSEventObject::~AminoJSEventObject() {
     //mutex
     // int res = pthread_mutex_destroy(&asyncLock);
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 }
 
 /**
@@ -2010,11 +2032,11 @@ AminoJSEventObject* AminoJSEventObject::getEventHandler() {
  * Note: items are never applied.
  */
 void AminoJSEventObject::clearAsyncQueue() {
-    assert(asyncUpdates);
+    base_js_assert(asyncUpdates);
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     std::size_t count = asyncUpdates->size();
 
@@ -2028,7 +2050,7 @@ void AminoJSEventObject::clearAsyncQueue() {
     asyncUpdates->clear();
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 }
 
 /**
@@ -2037,15 +2059,15 @@ void AminoJSEventObject::clearAsyncQueue() {
  * Note: has to run on main thread!
  */
 void AminoJSEventObject::handleAsyncDeletes() {
-    assert(asyncDeletes);
+    base_js_assert(asyncDeletes);
 
     if (DEBUG_BASE) {
-        assert(isMainThread());
+        base_js_assert(isMainThread());
     }
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     std::size_t count = asyncDeletes->size();
 
@@ -2060,13 +2082,13 @@ void AminoJSEventObject::handleAsyncDeletes() {
             delete item;
         }
 
-        assert(count == asyncDeletes->size());
+        base_js_assert(count == asyncDeletes->size());
 
         asyncDeletes->clear();
     }
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 }
 
 /**
@@ -2075,15 +2097,15 @@ void AminoJSEventObject::handleAsyncDeletes() {
  * Note: has to run on main thread!
  */
 void AminoJSEventObject::handleJSUpdates() {
-    assert(jsUpdates);
+    base_js_assert(jsUpdates);
 
     if (DEBUG_BASE) {
-        assert(isMainThread());
+        base_js_assert(isMainThread());
     }
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     std::size_t count = jsUpdates->size();
 
@@ -2102,7 +2124,7 @@ void AminoJSEventObject::handleJSUpdates() {
     }
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 }
 
 /**
@@ -2171,22 +2193,22 @@ void AminoJSEventObject::processAsyncQueue() {
     }
 
     if (DEBUG_BASE) {
-        assert(!isMainThread());
+        base_js_assert(!isMainThread());
 
         printf("--- processAsyncQueue() --- \n");
     }
 
     //iterate
-    assert(asyncUpdates);
+    base_js_assert(asyncUpdates);
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     for (std::size_t i = 0; i < asyncUpdates->size(); i++) {
         AnyAsyncUpdate *item = (*asyncUpdates)[i];
 
-        assert(item);
+        base_js_assert(item);
 
         //debug
         //printf("%i of %i (type: %i)\n", (int)i, (int)asyncUpdates->size(), (int)item->type);
@@ -2198,8 +2220,8 @@ void AminoJSEventObject::processAsyncQueue() {
                     AsyncPropertyUpdate *propItem = static_cast<AsyncPropertyUpdate *>(item);
 
                     //call local handler
-                    assert(propItem->property);
-                    assert(propItem->property->obj);
+                    base_js_assert(propItem->property);
+                    base_js_assert(propItem->property->obj);
 
                     if (DEBUG_ASYNC) {
                         printf("%i of %i (property: %s of %s)\n", (int)i, (int)asyncUpdates->size(), propItem->property->name.c_str(), propItem->property->obj->getName().c_str());
@@ -2215,7 +2237,7 @@ void AminoJSEventObject::processAsyncQueue() {
                     AsyncValueUpdate *valueItem = static_cast<AsyncValueUpdate *>(item);
 
                     //call local handler
-                    assert(valueItem->obj);
+                    base_js_assert(valueItem->obj);
 
                     if (DEBUG_ASYNC) {
                         printf("%i of %i (type: value update)\n", (int)i, (int)asyncUpdates->size());
@@ -2231,7 +2253,7 @@ void AminoJSEventObject::processAsyncQueue() {
 
             default:
                 printf("unknown async type: %i\n", item->type);
-                assert(false);
+                base_js_assert(false);
                 break;
         }
 
@@ -2243,7 +2265,7 @@ void AminoJSEventObject::processAsyncQueue() {
     asyncUpdates->clear();
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     if (DEBUG_BASE) {
         printf("--- processAsyncQueue() done --- \n");
@@ -2254,7 +2276,7 @@ void AminoJSEventObject::processAsyncQueue() {
  * Enqueue a value update.
  */
 bool AminoJSEventObject::enqueueValueUpdate(AsyncValueUpdate *update) {
-    assert(update);
+    base_js_assert(update);
 
     if (destroyed) {
         //free
@@ -2268,16 +2290,16 @@ bool AminoJSEventObject::enqueueValueUpdate(AsyncValueUpdate *update) {
         printf("enqueueValueUpdate\n");
     }
 
-    assert(asyncUpdates);
+    base_js_assert(asyncUpdates);
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     asyncUpdates->push_back(update);
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     return true;
 }
@@ -2292,7 +2314,7 @@ bool AminoJSEventObject::enqueuePropertyUpdate(AnyProperty *prop, v8::Local<v8::
         return false;
     }
 
-    assert(prop);
+    base_js_assert(prop);
 
     //create
     bool valid = false;
@@ -2303,7 +2325,7 @@ bool AminoJSEventObject::enqueuePropertyUpdate(AnyProperty *prop, v8::Local<v8::
     }
 
     //call sync handler
-    assert(prop->obj);
+    base_js_assert(prop->obj);
 
     if (prop->obj->handleSyncUpdate(prop, data)) {
         if (DEBUG_BASE) {
@@ -2320,12 +2342,12 @@ bool AminoJSEventObject::enqueuePropertyUpdate(AnyProperty *prop, v8::Local<v8::
     //async handling
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     asyncUpdates->push_back(new AsyncPropertyUpdate(prop, data));
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     return true;
 }
@@ -2341,7 +2363,7 @@ bool AminoJSEventObject::enqueueJSPropertyUpdate(AnyProperty *prop) {
  * Add JS update to run on main thread.
  */
 bool AminoJSEventObject::enqueueJSUpdate(AnyAsyncUpdate *update) {
-    assert(update);
+    base_js_assert(update);
 
     if (destroyed) {
         delete update;
@@ -2351,12 +2373,12 @@ bool AminoJSEventObject::enqueueJSUpdate(AnyAsyncUpdate *update) {
 
     asyncLock.lock();
 
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     jsUpdates->push_back(update);
 
     asyncLock.unlock();
-    // assert(res == 0);
+    // base_js_assert(res == 0);
 
     return true;
 }
@@ -2369,7 +2391,7 @@ bool AminoJSEventObject::enqueueJSUpdate(AnyAsyncUpdate *update) {
  * Constructor.
  */
 AminoJSEventObject::AsyncPropertyUpdate::AsyncPropertyUpdate(AnyProperty *property, void *data): AnyAsyncUpdate(ASYNC_UPDATE_PROPERTY), property(property), data(data) {
-    assert(property);
+    base_js_assert(property);
 
     //retain instance to target object
     property->retain();

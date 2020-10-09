@@ -4,6 +4,18 @@
 #define DEBUG_RENDERER_ERRORS false
 #define DEBUG_FONT_PERFORMANCE 0
 
+#define r_assert(x) _r_assert((void*)((x)), __LINE__)
+
+void _r_assert(void* x, int line) {
+    if (x) return;
+    printf("ERROR: renderer assertion failed on line %d\n", line);
+    int glError = glGetError();
+    if (glError != GL_NO_ERROR)  {
+        printf("ERROR: gl code: %x", glError);
+    }
+    assert(x);
+}
+
 /**
  * OpenGL ES 2.0 renderer.
  */
@@ -83,19 +95,19 @@ void AminoRenderer::setup() {
 
     bool res = colorShader->create();
 
-    assert(res);
+    r_assert(res);
 
     //texture shader
 	textureShader = new TextureShader();
     res = textureShader->create();
 
-    assert(res);
+    r_assert(res);
 
     //font shader
     fontShader = new AminoFontShader();
     res = fontShader->create();
 
-    assert(res);
+    r_assert(res);
 
     //context
     ctx = new GLContext();
@@ -169,7 +181,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
             v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
-            assert(count == 2);
+            r_assert(count == 2);
 
             vanishingPoint[0] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, 0).ToLocalChecked()).ToLocalChecked()->Value();
             vanishingPoint[1] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, 1).ToLocalChecked()).ToLocalChecked()->Value();
@@ -186,7 +198,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
             v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
-            assert(count == 8);
+            r_assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
                 corrSrc[i] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value();
@@ -205,7 +217,7 @@ void AminoRenderer::setupPerspective(v8::Local<v8::Object> &perspective) {
             v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(value);
             std::size_t count = arr->Length();
 
-            assert(count == 8);
+            r_assert(count == 8);
 
             for (std::size_t i = 0; i < count; i++) {
                 corrDst[i] = (GLfloat)Nan::To<v8::Number>(Nan::Get(arr, i).ToLocalChecked()).ToLocalChecked()->Value();
@@ -465,7 +477,7 @@ void AminoRenderer::applyTextureShader(GLfloat *verts, GLsizei dim, GLsizei coun
 
             bool res = textureClampToBorderShader->create();
 
-            assert(res);
+            r_assert(res);
         }
 
         shader = textureClampToBorderShader;
@@ -606,7 +618,7 @@ void AminoRenderer::drawPoly(AminoPolygon *poly) {
     int dim = poly->propDimension->value;
     GLfloat *verts = geometry->data();
 
-    assert(dim == 2 || dim == 3);
+    r_assert(dim == 2 || dim == 3);
 
     //draw
     GLenum mode;
@@ -679,7 +691,7 @@ void AminoRenderer::drawModel(AminoModel *model) {
         //use lighting shader
 
         if (!useElements) {
-            assert(vecNormals->size() == vecVertices->size());
+            r_assert(vecNormals->size() == vecVertices->size());
         }
 
         //get normals
@@ -703,7 +715,7 @@ void AminoRenderer::drawModel(AminoModel *model) {
 
                 bool res = textureLightingShader->create();
 
-                assert(res);
+                r_assert(res);
             }
 
             textureShader = textureLightingShader;
@@ -720,7 +732,7 @@ void AminoRenderer::drawModel(AminoModel *model) {
 
                 bool res = colorLightingShader->create();
 
-                assert(res);
+                r_assert(res);
             }
 
             colorShader = colorLightingShader;
@@ -1023,7 +1035,7 @@ void AminoRenderer::drawText(AminoText *text) {
  * Note: has to be called on OpenGL thread (if createIfMissing is true).
  */
 amino_atlas_t AminoRenderer::getAtlasTexture(texture_atlas_t *atlas, bool createIfMissing, bool &newTexture) {
-    assert(fontShader);
+    r_assert(fontShader);
 
     amino_atlas_t res = fontShader->getAtlasTexture(atlas, createIfMissing, newTexture);
 
@@ -1075,7 +1087,7 @@ void AminoRenderer::checkTexturePerformance() {
 
     glGenTextures(1, &textureId);
 
-    assert(textureId != INVALID_TEXTURE);
+    r_assert(textureId != INVALID_TEXTURE);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
 

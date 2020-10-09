@@ -23,6 +23,23 @@
 #define AMINO_EGL_SAMPLES 4
 #define test_bit(bit, array) (array[bit / 8] & (1 << (bit % 8)))
 
+#define rpi_assert(x) _rpi_assert((void*)((x)), __LINE__)
+
+void _rpi_assert(void* x, int line) {
+    if (x) return;
+    printf("ERROR: assertion failed on line %d\n", line);
+    int glError = glGetError();
+    if (glError != GL_NO_ERROR)  {
+        printf("ERROR: gl code: %x\n", glError);
+    }
+    EGLint err = eglGetError();
+    if (err != EGL_SUCCESS) {
+        printf("ERROR: egl code: %x\n", err);
+    }
+    assert(x);
+}
+
+
 //
 // AminoGfxRPi
 //
@@ -98,7 +115,7 @@ void AminoGfxRPi::setup() {
 
             driDevice = open(devicePath.c_str(), O_RDWR | O_CLOEXEC);
 
-            assert(driDevice > 0);
+            rpi_assert(driDevice > 0);
 
             if (DEBUG_GLES) {
                 printf("-> DRI device ready: %s\n", devicePath.c_str());
@@ -217,7 +234,7 @@ void AminoGfxRPi::initEGL() {
         printf("Could not create the GBM device! Please check your permissions (e.g. run with root privileges).\n");
     }
 
-    assert(displayType);
+    rpi_assert(displayType);
 
     if (DEBUG_GLES) {
         printf("-> created GBM device\n");
@@ -229,7 +246,7 @@ void AminoGfxRPi::initEGL() {
     if (display == EGL_NO_DISPLAY) {
         display = eglGetDisplay(displayType);
 
-        assert(display != EGL_NO_DISPLAY);
+        rpi_assert(display != EGL_NO_DISPLAY);
 
         if (DEBUG_GLES) {
             printf("-> got EGL display\n");
@@ -238,7 +255,7 @@ void AminoGfxRPi::initEGL() {
         //initialize the EGL display connection
         res = eglInitialize(display, NULL, NULL);
 
-        assert(res != EGL_FALSE);
+        rpi_assert(res != EGL_FALSE);
 
         if (DEBUG_GLES) {
             printf("-> EGL initialized\n");
@@ -291,7 +308,7 @@ void AminoGfxRPi::initEGL() {
     //this uses a BRCM extension that gets the closest match, rather than standard which returns anything that matches
     res = eglSaneChooseConfigBRCM(display, attribute_list, &config, 1, &num_config);
 
-    assert(EGL_FALSE != res);
+    rpi_assert(EGL_FALSE != res);
 #endif
 
 #ifdef EGL_GBM
@@ -300,15 +317,15 @@ void AminoGfxRPi::initEGL() {
 
     res = eglGetConfigs(display, NULL, 0, &count);
 
-    assert(EGL_FALSE != res);
+    rpi_assert(EGL_FALSE != res);
 
     //get configs
     EGLConfig *configs = (EGLConfig *)malloc(count * sizeof *configs);
 
     res = eglChooseConfig(display, attribute_list, configs, count, &count);
 
-    assert(EGL_FALSE != res);
-    assert(count > 0);
+    rpi_assert(EGL_FALSE != res);
+    rpi_assert(count > 0);
 
     if (DEBUG_GLES) {
         printf("-> configs found: %i\n", count);
@@ -347,7 +364,7 @@ void AminoGfxRPi::initEGL() {
         }
     }
 
-    assert(pos != -1);
+    rpi_assert(pos != -1);
 
     config = configs[pos];
     free(configs);
@@ -356,7 +373,7 @@ void AminoGfxRPi::initEGL() {
     //choose OpenGL ES 2
     res = eglBindAPI(EGL_OPENGL_ES_API);
 
-    assert(EGL_FALSE != res);
+    rpi_assert(EGL_FALSE != res);
 
     //create an EGL rendering context
     static const EGLint context_attributes[] = {
@@ -366,20 +383,23 @@ void AminoGfxRPi::initEGL() {
 
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
 
-    assert(context != EGL_NO_CONTEXT);
+    rpi_assert(context != EGL_NO_CONTEXT);
+
+
+
 
 #ifdef EGL_DISPMANX
     //get display size (see http://elinux.org/Raspberry_Pi_VideoCore_APIs#graphics_get_display_size)
     int32_t success = graphics_get_display_size(0 /* LCD */, &screenW, &screenH);
 
-    assert(success >= 0); //Note: check display resolution (force if not connected to display)
+    rpi_assert(success >= 0); //Note: check display resolution (force if not connected to display)
 #endif
 
 #ifdef EGL_GBM
     //get display resolutions
     drmModeRes *resources = drmModeGetResources(driDevice);
 
-    assert(resources);
+    rpi_assert(resources);
 
     //find connector
     drmModeConnector *connector = NULL;
@@ -559,18 +579,18 @@ void AminoGfxRPi::initEGL() {
     screenH = mode_info.vdisplay;
 
     //find an encoder
-    assert(connector->encoder_id);
+    rpi_assert(connector->encoder_id);
 
     drmModeEncoder *encoder = drmModeGetEncoder(driDevice, connector->encoder_id);
 
-    assert(encoder);
+    rpi_assert(encoder);
 
     //find a CRTC
     if (encoder->crtc_id) {
         crtc = drmModeGetCrtc(driDevice, encoder->crtc_id);
 
-        assert(crtc);
-        assert(crtc->crtc_id);
+        rpi_assert(crtc);
+        rpi_assert(crtc->crtc_id);
     }
 
     drmModeFreeEncoder(encoder);
@@ -578,8 +598,8 @@ void AminoGfxRPi::initEGL() {
     drmModeFreeResources(resources);
 #endif
 
-    assert(screenW > 0);
-    assert(screenH > 0);
+    rpi_assert(screenW > 0);
+    rpi_assert(screenH > 0);
 
     if (DEBUG_GLES) {
         printf("RPI: display size = %d x %d\n", screenW, screenH);
@@ -600,7 +620,7 @@ TV_DISPLAY_STATE_T* AminoGfxRPi::getDisplayState() {
      */
     TV_DISPLAY_STATE_T *tvstate = (TV_DISPLAY_STATE_T *)malloc(sizeof(TV_DISPLAY_STATE_T));
 
-    assert(tvstate);
+    rpi_assert(tvstate);
 
     if (vc_tv_get_display_state(tvstate) != 0) {
         free(tvstate);
@@ -1003,13 +1023,13 @@ void AminoGfxRPi::initRenderer() {
     //activate context (needed by JS code to create shaders)
     EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
 
-    assert(EGL_FALSE != res);
+    rpi_assert(EGL_FALSE != res);
 
     //swap interval
     if (swapInterval != 0) {
         res = eglSwapInterval(display, swapInterval);
 
-        assert(res == EGL_TRUE);
+        rpi_assert(res == EGL_TRUE);
     }
 
     //input
@@ -1077,7 +1097,7 @@ EGLSurface AminoGfxRPi::createDispmanxSurface() {
     EGLSurface surface = eglCreateWindowSurface(display, config, &native_window, NULL);
 
     //Note: happens for instance if there is a resource leak (restart the RPi in this case)
-    assert(surface != EGL_NO_SURFACE);
+    rpi_assert(surface != EGL_NO_SURFACE);
 
     return surface;
 }
@@ -1091,11 +1111,11 @@ EGLSurface AminoGfxRPi::createGbmSurface() {
     //create surface
     gbmSurface = gbm_surface_create((gbm_device*)displayType, mode_info.hdisplay, mode_info.vdisplay, GBM_BO_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
 
-    assert(gbmSurface);
+    rpi_assert(gbmSurface);
 
     EGLSurface surface = eglCreateWindowSurface(display, config, gbmSurface, NULL);
 
-    assert(surface != EGL_NO_SURFACE);
+    rpi_assert(surface != EGL_NO_SURFACE);
 
     return surface;
 }
@@ -1304,7 +1324,7 @@ bool AminoGfxRPi::bindContext() {
 
     EGLBoolean res = eglMakeCurrent(display, surface, surface, context);
 
-    assert(res == EGL_TRUE);
+    rpi_assert(res == EGL_TRUE);
 
     return true;
 }
@@ -1314,16 +1334,21 @@ void AminoGfxRPi::renderingDone() {
         printf("renderingDone()\n");
     }
 
+    EGLint err = eglGetError();
+    if (err != EGL_SUCCESS) {
+        printf("ERROR: egl error before swap: %x", err);
+    }
+
     //swap buffer
     EGLBoolean res = eglSwapBuffers(display, surface);
 
-    assert(res == EGL_TRUE);
+    rpi_assert (res == EGL_TRUE);
 
 #ifdef EGL_GBM
     //lock current front buffer and return a new bo
     struct gbm_bo *bo = gbm_surface_lock_front_buffer(gbmSurface);
 
-    assert(bo);
+    rpi_assert(bo);
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
 
@@ -1376,8 +1401,8 @@ void AminoGfxRPi::renderingDone() {
 
         int res = drmModeAddFB2(driDevice, mode_info.hdisplay, mode_info.vdisplay, format, handles, pitches, offsets, &fb, plane_flags);
 
-        assert(res == 0);
-        assert(fb);
+        rpi_assert(res == 0);
+        rpi_assert(fb);
 
         fbCache.insert(std::pair<uint32_t, uint32_t>(handle, fb));
 
@@ -1390,7 +1415,7 @@ void AminoGfxRPi::renderingDone() {
             //set CRTC once
             int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
-            assert(res2 == 0);
+            rpi_assert(res2 == 0);
         }
     }
 
@@ -1422,7 +1447,7 @@ void AminoGfxRPi::renderingDone() {
         //debug
         //printf("-> page flip res: %d (EINVAL=%d EBUSY=%d)\n", res2, EINVAL, EBUSY);
 
-        assert(res2 == 0);
+        rpi_assert(res2 == 0);
 
         if (res2 == 0) {
             pageFlipPending = true;
@@ -1445,7 +1470,7 @@ void AminoGfxRPi::renderingDone() {
 
             int ret = select(driDevice + 1, &fds, NULL, NULL, NULL);
 
-            assert(ret);
+            rpi_assert(ret);
 
             //debug
             /*
@@ -1461,7 +1486,7 @@ void AminoGfxRPi::renderingDone() {
             //handle events
             ret = drmHandleEvent(driDevice, &ev);
 
-            assert(ret == 0);
+            rpi_assert(ret == 0);
 
             //debug
             /*
@@ -1477,7 +1502,7 @@ void AminoGfxRPi::renderingDone() {
 
         int res2 = drmModeSetCrtc(driDevice, crtc->crtc_id, fb, 0, 0, &connector_id, 1, &mode_info);
 
-        assert(res2 == 0);
+        rpi_assert(res2 == 0);
     }
 
     //free previous
@@ -1860,6 +1885,7 @@ void AminoGfxRPi::updateWindowTitle() {
  * Shared atlas texture has changed.
  */
 void AminoGfxRPi::atlasTextureHasChanged(texture_atlas_t *atlas) {
+    rpi_assert(!isMainThread());
     //check single instance case
     if (instanceCount == 1) {
         return;
@@ -1873,6 +1899,7 @@ void AminoGfxRPi::atlasTextureHasChanged(texture_atlas_t *atlas) {
  * Handle on main thread.
  */
 void AminoGfxRPi::atlasTextureHasChangedHandler(JSCallbackUpdate *update) {
+    rpi_assert(isMainThread());
     AminoGfx *gfx = static_cast<AminoGfx *>(update->obj);
     texture_atlas_t *atlas = (texture_atlas_t *)update->data;
 
@@ -1925,7 +1952,7 @@ void AminoGfxRPi::destroyEGLImageHandler(AsyncValueUpdate *update, int state) {
         return;
     }
 
-    assert(update->data);
+    rpi_assert(update->data);
 
     if (DEBUG_VIDEOS) {
         printf("destroying EGL image\n");
@@ -1933,7 +1960,7 @@ void AminoGfxRPi::destroyEGLImageHandler(AsyncValueUpdate *update, int state) {
 
     EGLBoolean res = eglDestroyImageKHR(display, (EGLImageKHR)update->data);
 
-    assert(res == EGL_TRUE);
+    rpi_assert(res == EGL_TRUE);
 }
 
 //static initializers
@@ -1966,6 +1993,7 @@ AminoJSObject* AminoGfxRPiFactory::create() {
 }
 
 void crashHandler(int sig) {
+    printf("ERROR: CRASH HANDLER\n");
     void *array[10];
     size_t size;
 
@@ -1978,6 +2006,7 @@ void crashHandler(int sig) {
     size = backtrace(array, 10);
 
     //print out all the frames to stderr
+    printf("Error: signal %d (process=%d, thread=%d, uvThread=%lu):\n", sig, pid, tid, (unsigned long)threadId);
     fprintf(stderr, "Error: signal %d (process=%d, thread=%d, uvThread=%lu):\n", sig, pid, tid, (unsigned long)threadId);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
     exit(1);
