@@ -19,6 +19,7 @@ declare module "aminogfx-gl" {
         createRect(): Rect;
         createImageView(): ImageView;
         createCircle(): Circle;
+        createPolygon(): Polygon;
         createText(): Text;
         createTexture(): Texture;
         on(type: 'press', node: Node|null, cb: (e: {
@@ -30,6 +31,7 @@ declare module "aminogfx-gl" {
         on(type: 'key.press', node: Node|null, cb: (e: {
             type: 'key.press',
             keycode: number,
+            key?: 'LEFT'|'RIGHT'|'UP'|'DOWN';
             char?: string,
             shift?: boolean,
         }) => void): void;
@@ -70,6 +72,7 @@ declare module "aminogfx-gl" {
         readonly: boolean;
         anim(props?: AnimParams): Anim;
         watch(cb: (val: T, prop: Property<O, T>, obj: O) => void): O;
+        curAnim?: Anim;
     }
 
     export abstract class Node {
@@ -89,6 +92,8 @@ declare module "aminogfx-gl" {
         opacity: Property<this>;
         id: Property<this, string>;
 
+        parent?: Group;
+
         acceptsMouseEvents: boolean;
         acceptsKeyboardEvents: boolean;
 
@@ -103,6 +108,8 @@ declare module "aminogfx-gl" {
         add(...nodes: Node[]): this;
         remove(...nodes: Node[]): this;
         clear(): this;
+        insertBefore(node: Node, sibling: Node): this;
+        insertAfter(node: Node, sibling: Node): this;
     }
 
     export class Rect extends Node {
@@ -128,6 +135,7 @@ declare module "aminogfx-gl" {
     export class Polygon extends Node {
         fill: Property<this, string>;
         filled: Property<this, boolean>;
+        geometry: Property<this, Float32Array>;
     }
 
     export class Circle extends Polygon {
@@ -173,5 +181,6 @@ declare module "aminogfx-gl" {
         autoreverse(val: boolean): this;
         timefunc(func: 'linear'|'cubicIn'|'cubicOut'|'cubicInOut'): this;
         start<T = Node>(refTime?: number): T;
+        stop<T = Node>(): T;
     }
 }

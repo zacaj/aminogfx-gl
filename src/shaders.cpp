@@ -116,6 +116,10 @@ GLuint AnyShader::compileShader(std::string source, const GLenum type) {
         return -1;
     }
 
+#ifdef PRECISION
+    if (type == GL_FRAGMENT_SHADER)
+        source = "precision highp float;\n" + source;
+#endif
 #ifdef EGL_GBM
     //add define
     source = "#define EGL_GBM\n" + source;

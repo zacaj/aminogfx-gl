@@ -4,7 +4,7 @@ Rough WIP fixes and modifications:
     - Windows support is missing video, jpeg, etc support, since I didn't want to deal with all those libraries, etc when porting
     - Linux support is probably complete, but untested
 - RPI
-    - only tested on RPi 3 + Zero W with fake KMS driver, not RPi 4
+    - tested on RPi 3 + Zero W with fake KMS driver, on RPi 4 with dtoverlay=vc4-fkms-v3d and max_framebuffers=2
     - Builds using older DispManX code instead of newer GBM, to work with older RPi/driver
     - partial keyboard support (needs more keys mapped from linux to glfw codes)
 - Functionality

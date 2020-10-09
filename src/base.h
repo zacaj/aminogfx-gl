@@ -822,7 +822,7 @@ public:
 
         //methods
         Nan::SetPrototypeMethod(tpl, "_start", Start);
-        Nan::SetPrototypeMethod(tpl, "stop", Stop);
+        Nan::SetPrototypeMethod(tpl, "_stop", Stop);
 
         //template function
         return tpl;

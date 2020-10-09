@@ -2470,6 +2470,15 @@ Anim.prototype.checkStarted = function () {
     }
 };
 
+Anim.prototype.stop = function() {
+    if (this.started) {
+        this._stop();
+        this.started = false;
+    }
+    return this.obj;
+};
+
+
 /*
  * Start the animation.
  */
@@ -2643,6 +2652,10 @@ function makeProp(obj, name, val) {
             throw new Error('not an amino object');
         }
 
+        if (this.curAnim && this.curAnim.started) {
+            throw new Error('already animated');
+        }
+
         if (!this.propId) {
             throw new Error('property cannot be animated');
         }
@@ -2655,6 +2668,8 @@ function makeProp(obj, name, val) {
             }
         }
         anim.obj = obj;
+
+        this.curAnim = anim;
 
         return anim;
     };
