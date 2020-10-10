@@ -1294,7 +1294,6 @@ void AminoGfx::updateTextNodes() {
         AminoText *item = textureUpdates[i];
 
         item->updateTexture();
-        base_assert(instanceCount <= 1);
         //inform other amino instances to update shared texture
         texture_atlas_t *atlas = item->fontSize->fontTexture->atlas;
 
@@ -1680,8 +1679,8 @@ void AminoText::addTextGlyphs(vertex_buffer_t *buffer, texture_font_t *font, con
                         size_t count = vertex_buffer_size(buffer);
                         size_t start = count - (i - wrapPos);
 
-                        printf("remove %i of %i\n", (int)start, (int)count);
-                        printf("wrapping pos=%d start=%d count=%d wrapPos=%d\n", i, start, count, wrapPos);
+                        // printf("remove %i of %i\n", (int)start, (int)count);
+                        // printf("wrapping pos=%d start=%d count=%d wrapPos=%d\n", i, start, count, wrapPos);
 
                         //remove white space
                         vertex_buffer_erase(buffer, start);
