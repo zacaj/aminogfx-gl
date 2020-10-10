@@ -59,8 +59,10 @@ AminoJSObject::AminoJSObject(std::string name): name(name) {
  */
 AminoJSObject::~AminoJSObject() {
     if (DEBUG_BASE) {
-        printf("%s destructor %x\n", name.c_str(), this);
+        printf("%s destructor %lx\n", name.c_str(), this);
     }
+
+    AminoJSEventObject *eventHandler = getEventHandler();
 
     if (!destroyed) {
         destroyAminoJSObject();
@@ -68,7 +70,7 @@ AminoJSObject::~AminoJSObject() {
 
     //free properties
     for (std::map<uint32_t, AnyProperty *>::iterator iter = propertyMap.begin(); iter != propertyMap.end(); iter++) {
-        delete iter->second;
+        eventHandler->propertyDeleted(iter->second);
     }
 
     //debug
@@ -839,7 +841,6 @@ std::string* AminoJSObject::toNewString(v8::Local<v8::Value> &value) {
 uint32_t AminoJSObject::activeInstances = 0;
 uint32_t AminoJSObject::totalInstances = 0;
 std::vector<AminoJSObject *> AminoJSObject::jsInstances;
-std::set<AminoJSObject::AnyProperty*> AminoJSObject::deletedProps;
 
 //
 // AminoJSObject::AnyProperty
@@ -850,14 +851,14 @@ std::set<AminoJSObject::AnyProperty*> AminoJSObject::deletedProps;
  */
 AminoJSObject::AnyProperty::AnyProperty(int type, AminoJSObject *obj, std::string name, uint32_t id): type(type), obj(obj), name(name), id(id) {
     if (DEBUG_PROPERTIES) {
-        printf("create property %i %s %i %x %x %s %x\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
+        printf("create property %i %s %i %lx %lx %s %lx\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
     }
 }
 
 AminoJSObject::AnyProperty::~AnyProperty() {
-    deletedProps.insert(this);
     if (DEBUG_PROPERTIES) {
-        printf("destroy property %i %s %i %x %x %s %x\n", this->type, this->name.c_str(), this->id, this, this->obj, this->obj->name.c_str(), (int*)((int*)this)[0]);
+        base_js_assert(this->type == -1);
+        printf("destroy property %i %s %i %lx\n", this->type, this->name.c_str(), this->id, this);
     }
 }
 
@@ -924,8 +925,7 @@ std::string AminoJSObject::FloatProperty::toString() {
  */
 v8::Local<v8::Value> AminoJSObject::FloatProperty::toValue() {
     if (DEBUG_PROPERTIES) {
-        printf("prop to value %i %s %i %x %s\n", this->type, this->name.c_str(), this->id, this, this->obj->name.c_str());
-        base_js_assert(deletedProps.find(this) == deletedProps.end());
+        printf("prop to value %i %s %i %lx %s\n", this->type, this->name.c_str(), this->id, this, this->obj->name.c_str());
     }
     return Nan::New<v8::Number>(value);
 }
@@ -1832,7 +1832,7 @@ void AminoJSObject::ObjectProperty::freeAsyncData(void *data) {
 // AminoJSObject::AnyAsyncUpdate
 //
 
-AminoJSObject::AnyAsyncUpdate::AnyAsyncUpdate(int32_t type): type(type) {
+AminoJSObject::AnyAsyncUpdate::AnyAsyncUpdate(int32_t type): type(type),property(NULL) {
     //empty
 }
 
@@ -1927,7 +1927,8 @@ void AminoJSObject::AsyncValueUpdate::apply() {
 // AminoJSObject::JSPropertyUpdate
 //
 
-AminoJSObject::JSPropertyUpdate::JSPropertyUpdate(AnyProperty *property): AnyAsyncUpdate(ASYNC_JS_UPDATE_PROPERTY), property(property) {
+AminoJSObject::JSPropertyUpdate::JSPropertyUpdate(AnyProperty *property): AnyAsyncUpdate(ASYNC_JS_UPDATE_PROPERTY) {
+    this->property = property;
     //empty
 }
 
@@ -1942,12 +1943,10 @@ AminoJSObject::JSPropertyUpdate::~JSPropertyUpdate() {
 void AminoJSObject::JSPropertyUpdate::apply() {
     if (DEBUG_PROPERTIES) {
         base_js_assert(property);
-        printf("prop update %i %s %i %x %x %s %x\n", property->type, property->name.c_str(), property->id, property, property->obj, property->obj->name.c_str(), (int*)((int*)property)[0]);
+        printf("prop update %i %s %i %lx %lx %s %lx\n", property->type, property->name.c_str(), property->id, property, property->obj, property->obj->name.c_str(), (int*)((int*)property)[0]);
         base_js_assert(!property->obj->destroyed);
     }
-    if (deletedProps.find(property) != deletedProps.end()) {
-        return;
-    }
+    // base_js_assert(getEventHandler()-deletedProps.find(property) == deletedProps.end());
 
     v8::Local<v8::Value> value = property->toValue();
 
@@ -2121,13 +2120,18 @@ void AminoJSEventObject::handleJSUpdates() {
         for (std::size_t i = 0; i < jsUpdates->size(); i++) {
             AnyAsyncUpdate *item = (*jsUpdates)[i];
 
-            item->apply();
+            if (deletedProps.find(item->property) == deletedProps.end())
+                item->apply();
             delete item;
         }
 
+        for (auto p : deletedProps) {
+            p->type = -1;
+            delete p;
+        }
+        deletedProps.clear();
         jsUpdates->clear();
     }
-    deletedProps.clear();
 
     asyncLock.unlock();
     // base_js_assert(res == 0);
@@ -2365,6 +2369,25 @@ bool AminoJSEventObject::enqueueJSPropertyUpdate(AnyProperty *prop) {
     return enqueueJSUpdate(new JSPropertyUpdate(prop));
 }
 
+void AminoJSEventObject::propertyDeleted(AnyProperty* prop) {
+    asyncLock.lock();
+    deletedProps.insert(prop);
+    std::vector<AnyAsyncUpdate*>::iterator it = jsUpdates->begin();
+    while(it != jsUpdates->end())
+    {
+        if((*it)->property == prop)
+        {
+            if (DEBUG_PROPERTIES) {
+                printf("removed queued update %lx for prop %lx\n", *it, prop);
+            }
+            it = jsUpdates->erase(it);
+        }
+        else
+            it++;
+    }
+    asyncLock.unlock();
+}
+
 /**
  * Add JS update to run on main thread.
  */
@@ -2396,8 +2419,9 @@ bool AminoJSEventObject::enqueueJSUpdate(AnyAsyncUpdate *update) {
 /**
  * Constructor.
  */
-AminoJSEventObject::AsyncPropertyUpdate::AsyncPropertyUpdate(AnyProperty *property, void *data): AnyAsyncUpdate(ASYNC_UPDATE_PROPERTY), property(property), data(data) {
+AminoJSEventObject::AsyncPropertyUpdate::AsyncPropertyUpdate(AnyProperty *property, void *data): AnyAsyncUpdate(ASYNC_UPDATE_PROPERTY), data(data) {
     base_js_assert(property);
+    this->property = property;
 
     //retain instance to target object
     property->retain();

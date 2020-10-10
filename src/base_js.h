@@ -316,6 +316,7 @@ protected:
     class AnyAsyncUpdate {
     public:
         int32_t type;
+        AnyProperty* property;
 
         AnyAsyncUpdate(int32_t type);
         virtual ~AnyAsyncUpdate();
@@ -325,7 +326,6 @@ protected:
 
     class AsyncPropertyUpdate : public AnyAsyncUpdate {
     public:
-        AnyProperty *property;
         void *data;
 
         //helpers
@@ -381,7 +381,6 @@ protected:
 
         void apply() override;
     private:
-        AnyProperty *property;
     };
 
     class JSCallbackUpdate;
@@ -424,7 +423,6 @@ private:
 
 public:
 
-    static std::set<AnyProperty*> deletedProps;
     std::string getName();
 
     void retain();
@@ -457,6 +455,8 @@ public:
     bool enqueueJSPropertyUpdate(AnyProperty *prop) override;
     bool enqueueJSUpdate(AnyAsyncUpdate *update);
 
+    void propertyDeleted(AnyProperty* prop);
+
     bool isMainThread();
 
 protected:
@@ -472,6 +472,7 @@ private:
     std::vector<AnyAsyncUpdate *> *asyncUpdates = NULL;
     std::vector<AnyAsyncUpdate *> *asyncDeletes = NULL;
     std::vector<AnyAsyncUpdate *> *jsUpdates = NULL;
+    std::set<AnyProperty*> deletedProps;
 
     std::thread::id mainThread;
     std::recursive_mutex asyncLock; //Note: can block for a while
