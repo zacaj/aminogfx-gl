@@ -2,6 +2,13 @@ declare module "aminogfx-gl" {
     export class AminoGfx {
         start(done: (err?: any) => void): void;
 
+        constructor(createParams?: {
+            display?: 'HDMI-A-1'|'HDMI-A-2';
+            resolution?: '1080p@60';
+        });
+
+        x: Property<this>;
+        y: Property<this>;
         w: Property<this>;
         h: Property<this>;
         title: Property<this, string>;
@@ -93,6 +100,7 @@ declare module "aminogfx-gl" {
         id: Property<this, string>;
 
         parent?: Group;
+        amino: AminoGfx;
 
         acceptsMouseEvents: boolean;
         acceptsKeyboardEvents: boolean;
