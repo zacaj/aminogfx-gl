@@ -78,7 +78,7 @@ declare module "aminogfx-gl" {
     & {
         readonly: boolean;
         anim(props?: AnimParams): Anim;
-        watch(cb: (val: T, prop: Property<O, T>, obj: O) => void): O;
+        watch(cb: (val: T, prop: Property<O, T>, obj: O) => void, callNow?: boolean): O;
         curAnim?: Anim;
     }
 

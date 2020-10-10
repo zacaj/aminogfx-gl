@@ -2568,12 +2568,15 @@ function makeProp(obj, name, val) {
      *
      * Callback: (value, property, object)
      */
-    prop.watch = function (fun) {
+    prop.watch = function (fun, callNow) {
         if (!fun) {
             throw new Error('function undefined for property ' + name + ' on object with value ' + val);
         }
 
         this.listeners.push(fun);
+
+        if (callNow)
+            fun(prop.value);
 
         return obj;
     };
